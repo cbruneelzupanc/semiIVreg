@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>semiIVreg: A package for semi-IV regressions in R • semiIVreg</title>
+<title>Performance of semi-IVs • semiIVreg</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="semiIVreg: A package for semi-IV regressions in R">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Performance of semi-IVs">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -30,8 +30,8 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../index.html">Get started</a></li>
-<li class="active nav-item"><a class="nav-link" href="../articles/semiIVreg.html">Model and Guidelines</a></li>
-<li class="nav-item dropdown">
+<li class="nav-item"><a class="nav-link" href="../articles/semiIVreg.html">Model and Guidelines</a></li>
+<li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-more" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">More</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-more">
 <li><a class="dropdown-item" href="../articles/semiIVreg_montecarlo.html">Performance comparison</a></li>
@@ -56,14 +56,13 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>semiIVreg: A package for semi-IV regressions in R</h1>
+      <h1>Performance of semi-IVs</h1>
                         <h4 data-toc-skip class="author"><a href="https://www.cbruneel.com/" class="external-link">Christophe Bruneel-Zupanc</a></h4>
             
-            <h4 data-toc-skip class="date">last modified:
-2024-07-22</h4>
+            <h4 data-toc-skip class="date">22-07-2024</h4>
       
 
-      <div class="d-none name"><code>semiIVreg.Rmd</code></div>
+      <div class="d-none name"><code>semiIVreg_montecarlo.Rmd</code></div>
     </div>
 
     
@@ -74,9 +73,8 @@
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
 <p>This package provides estimation procedure with semi-IVs, as in <span class="citation">Bruneel-Zupanc (2024)</span>.<br>
-In particular, the main function <code><a href="../reference/semiivreg.html">semiivreg()</a></code> estimates the
-marginal treatment effect (MTE) and marginal treatment response
-(MTR).</p>
+In particular, <code>semiivreg</code> estimates the marginal treatment
+effect (MTE) and marginal treatment response (MTR).</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -339,12 +337,12 @@ the propensity score and the estimated marginal treatment effects
 <span></span>
 <span><span class="co"># semi-IV regression</span></span>
 <span><span class="va">semiiv</span> <span class="op">=</span> <span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">|</span><span class="va">w1</span>, data<span class="op">=</span><span class="va">roydata</span><span class="op">)</span> </span></code></pre></div>
-<p><img src="semiIVreg_files/figure-html/mte-1.png" width="672" style="display: block; margin: auto;"></p>
+<p><img src="semiIVreg_montecarlo_files/figure-html/mte-1.png" width="672" style="display: block; margin: auto;"></p>
 <p>One can also easily extract a plot for the marginal treatment
 responses (MTR):</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">semiiv</span><span class="op">$</span><span class="va">plot</span><span class="op">$</span><span class="va">mtr</span></span></code></pre></div>
-<p><img src="semiIVreg_files/figure-html/mtr-1.png" width="480" style="display: block; margin: auto;"></p>
+<p><img src="semiIVreg_montecarlo_files/figure-html/mtr-1.png" width="480" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level2 unnumbered">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
