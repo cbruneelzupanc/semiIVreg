@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>semiIVreg: A package for semi-IV regressions in R • semiIVreg</title>
+<title>semiIVreg: a package for semi-IV regressions in R • semiIVreg</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="semiIVreg: A package for semi-IV regressions in R">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="semiIVreg: a package for semi-IV regressions in R">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -34,7 +34,8 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-more" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">More</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-more">
-<li><a class="dropdown-item" href="../articles/semiIVreg_montecarlo.html">Performance comparison</a></li>
+<li><a class="dropdown-item" href="../articles/semiIVreg_homogenousTE.html">Estimation with Homogenous Treatment Effect</a></li>
+    <li><a class="dropdown-item" href="../articles/semiIVreg_heterogenousTE.html">Estimation with general Heterogenous Treatment Effect</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
@@ -56,7 +57,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>semiIVreg: A package for semi-IV regressions in R</h1>
+      <h1>semiIVreg: a package for semi-IV regressions in R</h1>
                         <h4 data-toc-skip class="author"><a href="https://www.cbruneel.com/" class="external-link">Christophe Bruneel-Zupanc</a></h4>
             
             <h4 data-toc-skip class="date">last modified:
@@ -68,15 +69,25 @@
 
     
     
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://www.cbruneel.com/" class="external-link">semiIVreg</a></span><span class="op">)</span></span></code></pre></div>
+<!--
+
+``` r
+library(semiIVreg)
+```
+-->
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
+<!-- <center>
+![](images/causal_graph.png)
+</center> -->
 <p>This package provides estimation procedure with semi-IVs, as in <span class="citation">Bruneel-Zupanc (2024)</span>.<br>
 In particular, the main function <code><a href="../reference/semiivreg.html">semiivreg()</a></code> estimates the
 marginal treatment effect (MTE) and marginal treatment response
 (MTR).</p>
+<div style="text-align: center;">
+<p><img src="images/causal_graph.png" alt="" width="400"></p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -86,7 +97,7 @@ GitHub <a href="https://github.com/cbruneelzupanc/semiIVreg/" class="external-li
 It can be conveniently installed via the <code>install_github()</code>
 function from the <a href="https://CRAN.R-project.org/package=remotes" class="external-link"><strong>remotes</strong></a>
 package.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"cbruneelzupanc/semiIVreg"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -139,7 +150,7 @@ to be the same across both potential outcomes (i.e.,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>β</mi><mn>0</mn><mi>X</mi></msubsup><mo>=</mo><msubsup><mi>β</mi><mn>1</mn><mi>X</mi></msubsup></mrow><annotation encoding="application/x-tex">\beta^X_{0} = \beta^X_{1}</annotation></semantics></math>).
 To do so, specify:</p></li>
 </ul>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">|</span><span class="va">w1</span><span class="op">|</span><span class="va">x</span>, <span class="va">data</span><span class="op">)</span></span></code></pre></div>
 <p>In general, different effect of the covariates across alternatives
 (i.e.,
@@ -203,7 +214,7 @@ By default, the function
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mrow><mo stretchy="true" form="prefix">(</mo><mo>⋅</mo><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">g(\cdot)</annotation></semantics></math>
 is given by the simple linear specification above, but the code allows
 specifying any other first stage. For example:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span>  <span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">+</span><span class="va">x</span><span class="op">|</span><span class="va">w1</span><span class="op">+</span><span class="va">x</span>, <span class="va">data</span>,</span>
 <span>            propensity_formula <span class="op">=</span> <span class="va">d</span><span class="op">~</span><span class="va">w0</span><span class="op">+</span><span class="va">w1</span><span class="op">+</span><span class="va">w0</span><span class="op">:</span><span class="va">w1</span><span class="op">+</span><span class="va">w0</span><span class="op">:</span><span class="va">x</span><span class="op">+</span><span class="va">w1</span><span class="op">:</span><span class="va">x</span><span class="op">+</span><span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">w0</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">+</span><span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">w1</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>By default, the estimation assumes a <em>probit model</em> for the
@@ -333,7 +344,7 @@ for the fact that the propensity score is estimated in
 a semi-IV regression. By default, it reports the common support plot of
 the propensity score and the estimated marginal treatment effects
 (MTE).</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://www.cbruneel.com/" class="external-link">semiIVreg</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">roydata</span><span class="op">)</span> <span class="co"># load the data from a simulated Roy model</span></span>
 <span></span>
@@ -342,7 +353,7 @@ the propensity score and the estimated marginal treatment effects
 <p><img src="semiIVreg_files/figure-html/mte-1.png" width="672" style="display: block; margin: auto;"></p>
 <p>One can also easily extract a plot for the marginal treatment
 responses (MTR):</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">semiiv</span><span class="op">$</span><span class="va">plot</span><span class="op">$</span><span class="va">mtr</span></span></code></pre></div>
 <p><img src="semiIVreg_files/figure-html/mtr-1.png" width="480" style="display: block; margin: auto;"></p>
 </div>

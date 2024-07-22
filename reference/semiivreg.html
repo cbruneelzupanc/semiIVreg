@@ -29,7 +29,8 @@ Use semiivreg_boot to obtain 'correct' bootstrapped confidence intervals (takes 
 <li class="nav-item"><a class="nav-link" href="../articles/semiIVreg.html">Model and Guidelines</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-more" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">More</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-more"><li><a class="dropdown-item" href="../articles/semiIVreg_montecarlo.html">Performance comparison</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-more"><li><a class="dropdown-item" href="../articles/semiIVreg_homogenousTE.html">Estimation with Homogenous Treatment Effect</a></li>
+    <li><a class="dropdown-item" href="../articles/semiIVreg_heterogenousTE.html">Estimation with general Heterogenous Treatment Effect</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -145,6 +146,9 @@ Inserting a trimming_value generates automatic_trim = TRUE automatically.</p></d
 
 <dt><code>$ref_indiv</code></dt>
 <dd><p>Reference individual(s) at which we evaluate the MTE and MTR.</p></dd>
+
+<dt><code>$Xdat</code></dt>
+<dd><p>Original covariates, just used for bootstrap function.</p></dd>
 
 
 </dl></dd>
