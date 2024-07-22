@@ -1,0 +1,9 @@
+pandoc: 3.1.11
+pkgdown: 2.1.0
+pkgdown_sha: ~
+articles:
+  semiIVreg: semiIVreg.html
+last_built: 2024-07-22T17:04Z
+urls:
+  reference: https://cbruneelzupanc.github.io/semiIVreg/reference
+  article: https://cbruneelzupanc.github.io/semiIVreg/articles
