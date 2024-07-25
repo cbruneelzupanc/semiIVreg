@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>semiIVreg: a package for semi-IV regressions in R • semiIVreg</title>
+<title>semiIVreg: a package for semi-IV regression in R • semiIVreg</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="semiIVreg: a package for semi-IV regressions in R">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="semiIVreg: a package for semi-IV regression in R">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -57,11 +57,11 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>semiIVreg: a package for semi-IV regressions in R</h1>
+      <h1>semiIVreg: a package for semi-IV regression in R</h1>
                         <h4 data-toc-skip class="author"><a href="https://www.cbruneel.com/" class="external-link">Christophe Bruneel-Zupanc</a></h4>
             
             <h4 data-toc-skip class="date">last modified:
-2024-07-22</h4>
+2024-07-25</h4>
       
 
       <div class="d-none name"><code>semiIVreg.Rmd</code></div>
@@ -143,8 +143,12 @@ that each
 contains <em>at least one excluded variable</em> (see <span class="citation">Bruneel-Zupanc (2024)</span>).</p></li>
 <li><p><strong>Covariates</strong>:
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math>
-are the covariates that affect both potential outcomes. One can restrict
-the effect of
+are the covariates that affect both potential outcomes. By default,
+wants different effect of the covariates across alternatives, (i.e.,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>β</mi><mn>0</mn><mi>X</mi></msubsup><mo>≠</mo><msubsup><mi>β</mi><mn>1</mn><mi>X</mi></msubsup></mrow><annotation encoding="application/x-tex">\beta^X_{0} \neq \beta^X_{1}</annotation></semantics></math>).
+To do so, include the covariates separately in both MTR formulas:
+<code>semiivreg(y~d|w0+x|w1+x, data)</code>. One can restrict the effect
+of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math>
 to be the same across both potential outcomes (i.e.,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>β</mi><mn>0</mn><mi>X</mi></msubsup><mo>=</mo><msubsup><mi>β</mi><mn>1</mn><mi>X</mi></msubsup></mrow><annotation encoding="application/x-tex">\beta^X_{0} = \beta^X_{1}</annotation></semantics></math>).
@@ -152,11 +156,6 @@ To do so, specify:</p></li>
 </ul>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">|</span><span class="va">w1</span><span class="op">|</span><span class="va">x</span>, <span class="va">data</span><span class="op">)</span></span></code></pre></div>
-<p>In general, different effect of the covariates across alternatives
-(i.e.,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>β</mi><mn>0</mn><mi>X</mi></msubsup><mo>≠</mo><msubsup><mi>β</mi><mn>1</mn><mi>X</mi></msubsup></mrow><annotation encoding="application/x-tex">\beta^X_{0} \neq \beta^X_{1}</annotation></semantics></math>).
-To be specified by including the covariates in the semi-IVs:
-<code>semiivreg(y~d|w0+x|w1+x, data)</code>.</p>
 <ul>
 <li>
 <strong>Unobservables</strong>:
