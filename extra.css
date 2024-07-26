@@ -1,2 +1,79 @@
 /* Edit pkgdown/extra.css to customize the theme */
+@import url('https://fonts.googleapis.com/css?family=Roboto:300,500');
 
+body {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+}
+
+/* The "default" hyperlinks: default bright blue, hover pinkish */
+a       { color: #ae1c0c; }
+a:hover {
+  color: #570e06; /* Darker shade of the primary color */
+}
+
+/* Font size for the content and the navigation bar (top): increase
+ * font size by a factor of 1.3 (1.3 elements, global) */
+#navbar, div.contents { font-size: 1.1em; }
+
+#tocnav > ul > li > a:hover {
+    color: #f7d3cf;
+}
+
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+}
+
+b, strong, th {
+    font-weight: 500;
+}
+
+
+
+.dropdown-menu > li {
+    background-color: white;
+}
+.dropdown-menu > li > a:hover {
+    color: #ae1c0c;
+}
+.navbar .navbar-nav > li:hover,
+.navbar .navbar-nav > li.dropdown:hover {
+    background-color: #f7d3cf;
+}
+.navbar .navbar-nav > li > a:hover, .navbar .navbar-nav > li.dropdown > a:hover,
+.navbar .navbar-nav > li:hover > a, .navbar .navbar-nav > li.dropdown:hover > a {
+    background-color: #f7d3cf;
+}
+.navbar .navbar-nav > .active {
+    background-color: #ececec;
+}
+.navbar .navbar-nav > .active:hover {
+    background-color: #f7d3cf;
+}
+.navbar .navbar-nav > .active:hover > *,
+.navbar .navbar-nav > .active > a:hover {
+    background-color: transparent;
+}
+.navbar .navbar-nav > li.dropdown.open:hover,
+.navbar .navbar-nav > li.dropdown:hover {
+    background-color: #f7d3cf;
+}
+.navbar .navbar-nav > li.dropdown.open:hover,
+.navbar .navbar-nav > li.dropdown:hover,
+.navbar .navbar-nav > li.dropdown > *:hover {
+}
+.navbar .navbar-nav > .active > a,
+.navbar .navbar-nav > .active > a:hover {
+    background-color: transparent;
+}
+
+
+/* Hide the favicon next to the title in the page content */
+.page-header .pkg-favicon {
+  display: none;
+}
+
+.pkg-logo {
+  display: none;
+}
