@@ -6,21 +6,28 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Estimator Performance: general heterogenous treatment effect model • semiIVreg</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Estimator Performance: general heterogenous treatment effect model">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="../deps/MathJax-3.2.2/tex-chtml.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
+<meta property="og:title" content="Estimator Performance: general heterogenous treatment effect model">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="default" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="inverse" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">semiIVreg</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,9 +48,8 @@
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
       </ul>
 <ul class="navbar-nav">
-<li class="nav-item"><form class="form-inline" role="search">
- <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
-</form></li>
+<li class="nav-item"><a class="nav-link" href="../search.html"><span class="fa fa-search"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/cbruneelzupanc/semiIVreg"><span class="fa fa-github"></span></a></li>
       </ul>
 </div>
 
@@ -56,8 +62,7 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-
-      <h1>Estimator Performance: general heterogenous treatment effect model</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Estimator Performance: general heterogenous treatment effect model</h1>
                         <h4 data-toc-skip class="author"><a href="https://www.cbruneel.com/" class="external-link">Christophe Bruneel-Zupanc</a></h4>
             
             <h4 data-toc-skip class="date">22-07-2024</h4>
@@ -113,18 +118,12 @@ effects using the <code><a href="../reference/simul_data.html">simul_data()</a><
 </h3>
 <p>Let us apply directly the <code><a href="../reference/semiivreg.html">semiivreg()</a></code>function. Compute
 the MTE and MTR for a reference individuals with average value of the
-semi-IVs, i.e.,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>W</mi><mn>0</mn></msub><mo>,</mo><msub><mi>W</mi><mn>1</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>0</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">(W_0, W_1) = (0, 0)</annotation></semantics></math>
-here. Remark: the
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mi>T</mi><mi>E</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo>,</mo><msub><mi>w</mi><mn>0</mn></msub><mo>,</mo><msub><mi>w</mi><mn>1</mn></msub><mo>,</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">MTE(u, w_0, w_1, x)</annotation></semantics></math>
-depend on
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>X</mi><annotation encoding="application/x-tex">X</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mn>0</mn></msub><mo>,</mo><msub><mi>W</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">W_0, W_1</annotation></semantics></math>,
-so always need to pick a reference individual. By default,
-<code>semiivreg</code> computes the average individuals (for the
-continuous covariates and semi-IVs), and takes the ‘reference level’ for
-factor variables.</p>
+semi-IVs, i.e., <span class="math inline">\((W_0, W_1) = (0, 0)\)</span>
+here. Remark: the <span class="math inline">\(MTE(u, w_0, w_1,
+x)\)</span> depend on <span class="math inline">\(X\)</span> and <span class="math inline">\(W_0, W_1\)</span>, so always need to pick a
+reference individual. By default, <code>semiivreg</code> computes the
+average individuals (for the continuous covariates and semi-IVs), and
+takes the ‘reference level’ for factor variables.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">semiiv</span> <span class="op">=</span> <span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">|</span><span class="va">w1</span>, <span class="va">data</span>, ref_indiv <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>w0<span class="op">=</span><span class="fl">0</span>, w1<span class="op">=</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="semiIVreg_heterogenousTE_files/figure-html/raw-1.png" width="672" style="display: block; margin: auto;"></p>
@@ -151,12 +150,9 @@ estimation to a given common support, it’s very easy to do in
 <h3 id="comparison-with-the-truth">Comparison with the truth<a class="anchor" aria-label="anchor" href="#comparison-with-the-truth"></a>
 </h3>
 <p>Let us compute the ‘true’ underlying MTE (we estimate it using the
-true unobserved
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Y</mi><mn>1</mn></msub><annotation encoding="application/x-tex">Y_1</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Y</mi><mn>0</mn></msub><annotation encoding="application/x-tex">Y_0</annotation></semantics></math>
-here, it would be better if we used the known closed form solution
-instead, but at the margin it’s the same).</p>
+true unobserved <span class="math inline">\(Y_1\)</span> and <span class="math inline">\(Y_0\)</span> here, it would be better if we used
+the known closed form solution instead, but at the margin it’s the
+same).</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># True MTE and MTR estimations </span></span>
 <span><span class="va">seq_p</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, by<span class="op">=</span><span class="fl">0.001</span><span class="op">)</span>; <span class="va">data</span><span class="op">$</span><span class="va">diff</span> <span class="op">=</span> <span class="va">data</span><span class="op">$</span><span class="va">y1</span> <span class="op">-</span> <span class="va">data</span><span class="op">$</span><span class="va">y0</span>; <span class="va">pol_degree</span><span class="op">=</span><span class="fl">5</span></span>
