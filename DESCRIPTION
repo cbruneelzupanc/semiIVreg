@@ -1,0 +1,27 @@
+Package: semiIVreg
+Title: Semi-Instrumental Variable (semi-IV) Regression
+Version: 1.0.0
+Authors@R: 
+    person(given = "Christophe", 
+           family = "Bruneel", 
+           role = c("aut", "cre"),
+           email = "christophe.bruneel@gmail.com", 
+	   comment = c(ORCID = "https://orcid.org/0000-0002-2758-9199",
+                         URL = "https://cbruneel.com"))
+Description: semi-Instrumental Variable (semi-IV) estimation for general models, from Bruneel-Zupanc (2024). The main semiivreg() function is designed to work as easily as lm() or ivreg(). It automatically provides estimation of the marginal treatment effects (MTE) as well as eventual ATE (if the treatment effects were, in fact, homogenous). 
+Encoding: UTF-8
+Suggests: 
+    knitr,
+    rmarkdown,
+    roxygen2,
+    ivreg
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports: 
+    data.table, ggplot2, gridExtra, MASS, stats
+License: MIT + file LICENSE
+Depends: 
+    R (>= 2.10)
+LazyData: true
+URL: https://www.cbruneel.com/, https://cbruneelzupanc.github.io/semiIVreg/
+VignetteBuilder: knitr

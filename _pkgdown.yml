@@ -1,0 +1,90 @@
+url: https://cbruneelzupanc.github.io/semiIVreg/
+template:
+  bootstrap: 5
+  mathjax: true
+  #katex: true
+  #math-rendering: mathjax #katex #mathjax
+  #bslib:
+  #  bootswatch: simplex
+  #  primary: "#ae1c0c" #"#800e14"#"#5a2aac" #"#db93a4" #"#ae1c0c"  # Replace with your desired primary color
+  #  #secondary: "#FFFFFF"
+  #  #bg: "#FFFFFF" #"#000000" #"#F0F0F0"#"#ffffff" #"#800e14" #"#ffffff"
+  #  #fg: "#000000"
+  assets:
+    #favicon: pkgdown/favicon.ico
+    css:
+      - pkgdown/extra.css
+    #js:
+    #  - pkgdown/custom.js
+    
+  opengraph:
+    image:
+      src: logo1.png
+    twitter:
+      creator: "@CBruneelZupanc"
+      card: summary
+
+navbar:
+  title: "semiIVreg"
+  type: default #type: inverse #default
+  components:
+    twitter:
+      icon: fa-twitter
+      href: https://twitter.com/CBruneelZupanc
+      aria-label: Twitter
+    github:
+      icon: fa-github
+      href: https://github.com/cbruneelzupanc/semiIVreg
+      aria-label: Github
+    intro:
+      text: "Get started"
+      href: index.html
+    main:
+      text: "Model and Guidelines"
+      href: articles/semiIVreg.html
+    articles:
+      text: "More"
+      menu:
+        - text: "Estimation with Homogenous Treatment Effect"
+          href: articles/semiIVreg_homogenousTE.html
+        - text: "Estimation with general Heterogenous Treatment Effect"
+          href: articles/semiIVreg_heterogenousTE.html
+    reference:
+      text: "Reference"
+      href: reference/index.html
+  structure:
+    left: [intro, main, articles, reference]
+    right: [search, twitter, github]
+#  right:
+#    - icon: fa-search
+#      href: search.html
+#    - icon: fa-github
+#      href: https://github.com/cbruneelzupanc/semiIVreg
+
+
+      
+reference:
+    - title: "main semi-IV Regression"
+      contents:
+        - semiivreg
+        - semiivreg_boot
+    - title: "Plotting functions"
+      contents:
+        - supp_plot_fun
+        - mtr_plot_fun
+        - mte_plot_fun
+    - title: "Simulating Roy models"
+      contents:
+        - simul_data
+    - title: "Datasets"
+      contents:
+        - roydata
+        - roydata2
+    - title: "Internal functions"
+      contents:
+        - mtr_fun
+        - Kappa_fun
+        - kdu_transform_fun
+        - Kappa_homogenous_fun
+        - ku_transform_homogenous_fun
+        - construct_data

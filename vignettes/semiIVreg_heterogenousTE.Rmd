@@ -1,0 +1,291 @@
+---
+title: "Estimator Performance: general heterogenous treatment effect model"
+author: "[Christophe Bruneel-Zupanc](https://www.cbruneel.com/)"
+date: "Last modified: 2024-07-22"
+output:
+  rmarkdown::html_vignette:
+    highlight: monochrome
+    toc: true
+  rmarkdown::html_document:
+    toc: true
+    toc_depth: 2
+  pdf_document:
+    highlight: monochrome
+bibliography: semiIVreg.bib
+biblio-style: "apalike"
+vignette: >
+  %\VignetteKeywords{instrumental variables, semi-IVs, causal inference}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteIndexEntry{Estimator Performance: general heterogenous treatment effect model}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", echo = TRUE, fig.retina = 2#,#fig.height=4, fig.width=5, fig.align='center'
+)
+if (!requireNamespace("ivreg", quietly = TRUE)) {
+  install.packages("ivreg")
+}
+library(ivreg)
+options(scipen=8)
+```
+
+Let us compare the performance of the semi-IV estimator in a **generalized Roy model** with **heterogenous treatment effects**. The simulation specification comes from @bruneel2024. It is close to the counterpart standard IV simulated Roy models used in @heckman2006understanding or @heckmanvytlacil2007b. 
+
+
+## Simulate data
+
+We simulate generalized Roy models using the `simul_data()`function. 
+See the documentation of the function for details about the model. Depending on the chosen parameters, we can simulate a model with homogenous/heterogenous treatment effects, as well as with valid IVs eventually. That's what we will do here. 
+In every simulation we do not include covariates (set all their effect to 0), but these can be easily included. 
+
+
+
+```{r model1} 
+# Model
+library(semiIVreg)
+N = 50000; set.seed(1234)
+# Specification
+model_type = "heterogenous"
+param_error = c(1, 1, 0.6, 0.5) # var_u0, var_u1, cov_u0u1, var_cost (the mean cost = constant in D*) # if heterogenous
+param_Z = c(0, 0, 0, 0, 1.5, 1.5, 0.9) # meanW0 state0, meanW1 state0, meanW0 state1, meanW1 state1, varW0, varW1, covW0W1
+param_p = c(0, -0.7, 0.7, 0, 0, 0) # constant, alphaW0, alphaW1, alphaW0W1, effect of state, effect of parent educ
+param_y0 = c(3.2, 0.8, 0, 0) # intercept, effect of Wd, effect of state, effect of parent educ;
+param_y1 = c(3.2+0.4, 0.5, 0, 0) # the +0.2 = Average treatment effect; effect of W1, effect of state, effect of parent educ;
+param_genX = c(0.4, 0, 2)
+
+data = simul_data(N, model_type, param_y0, param_y1, param_p, param_Z, param_genX, param_error)
+```
+
+## semi-IV regression
+
+Let us apply directly the `semiivreg()`function. Compute the MTE and MTR for a reference individuals with average value of the semi-IVs, i.e., $(W_0, W_1) = (0, 0)$ here. Remark: the $MTE(u, w_0, w_1, x)$ depend on $X$ and $W_0, W_1$, so always need to pick a reference individual. By default, `semiivreg` computes the average individuals (for the continuous/binary covariates and semi-IVs), and takes the 'reference level' for factor variables. 
+
+In terms of estimation method, by default, `semivreg()` estimates the second-stage with local polynomial regression, in the spirit of the double residual regression for partially linear models of @robinson1988root. This is specified by using the default `est_method="locpoly"`.
+This estimation as the advantage of being robust to misspecification of the control function $\kappa_d(u)$ functional form.   
+
+```{r raw, fig.height=3, fig.width=7, fig.align='center'}
+semiiv = semiivreg(y~d|w0|w1, data, ref_indiv = data.frame(w0=0, w1=0))
+```
+
+
+Let us report also the marginal treatment responses (MTR):
+```{r mtr, fig.height=4, fig.width=5, fig.align='center'}
+mte_plot = semiiv$plot$mte; 
+mtr_plot = semiiv$plot$mtr;
+mtr_plot
+```
+
+
+**Direct effect of the semi-IVs.**   
+
+
+Also estimates the effect of the semi-IV on their respective potential outcomes. To see these: 
+```{r direct, fig.height=4, fig.width=5, fig.align='center'}
+summary(semiiv$estimate$est0)
+summary(semiiv$estimate$est1);
+# To be compared with:
+param_y0[2]; param_y1[2]
+```
+Notice that these standard errors are biased because they do not take into account that the propensity score is estimated. 
+
+
+**Standard errors.**   
+
+To get proper standard errors of the MTE/MTR and effects of the semi-IVs with the default `"locpoly"`estimation method, use the bootstrap with the function `semiivreg_boot()`. This takes longer to estimate though.   
+
+
+
+
+**Bandwidth Specification.**   
+
+By default, with `est_method="locpoly"`, if no bandwidth is provided, the bandwidth are computed using the `bw_method`. The default `bw_method` is a simple `plug-in` rule of thumb estimator for pace. *Other methods (e.g., cross validation) to be implemented later.* To extract the bandwidth after the estimation, run `semiiv$bw`. 
+
+One can also pre-specify some of the bandwidth directly, as shown below. The parameters `bwd` are the bandwidth for the first residual regression of $Y_d$ and $W_d$ (and $X$) on $\widehat{P}$, that estimates respectively $E[Y_d|P]$, $E[W_d|P]$ and $E[X|P]$, in order to get the effects of the semi-IVs on their potential outcomes. For $W_d$ and $X$, the order of the variable depends on the order specified in the original `formula`. Be sure to match the variables in the correct order (be careful with `factor` for example). One way to check is to first run without specifying the bandwidth and then checking the order of the variables in `semiiv$estimate$est0` and `semiiv$estimate$est1`.   
+
+`bw_y0` and `bw_y1` are the bandwidth for the second part. They are much more important and governs the smoothness of the MTE and MTR function. 
+
+
+For example, let us increase smoothing by increasing the bandwidth.
+
+```{r smooth, fig.height=3, fig.width=7, fig.align='center'}
+semiiv$bw
+semiiv = semiivreg(y~d|w0|w1, data, ref_indiv = data.frame(w0=0, w1=0),
+                   bw_method = "plug-in", bw_y0 = 0.20, bw_y1 = 0.20)
+```
+
+
+
+**Polynomial degree.**  
+
+One can also specify the degree of each local polynomial estimation with `pol_degree_locpoly1` and `pol_degree_locpoly2`. Following @fangijbels1996 of setting the degree equal to the order of the derivative function we want to estimate $+1$, by default we set `pol_degree_locpoly1 = 1` because there we want to estimate a function directly, and `pol_degree_locpoly2 = 2` because in the MTE/MTR stage we want to estimate derivatives of the control function $\kappa_d(u)$.   
+
+
+
+**Propensity Score estimation.**  
+
+One can also extract the propensity score estimation. With a large number of observation, the fit is almost perfect and the bias due to the fact that $P$ is estimated will be very small. 
+
+```{r propensity, fig.height=4, fig.width=5, fig.align='center'}
+firststage = semiiv$estimate$propensity
+# Cannot be compared with param_p directly if V gets rescaled -> but can compare the predicted P with the truth
+Phat = predict(firststage, newdata=data, type="response")
+
+summary(Phat - data$P) # almost perfect; 
+```
+
+
+
+
+
+## semi-IV sieve regression
+
+Another approach is to simply specify flexibly $\kappa_d(u)$, with polynomials for example, in the spirit of sieve estimation. This is potentially less flexible (even though it still is), but as the advantage of being faster and giving analytical confidence intervals (biased because they do not take into account the fact that $P$ is estimated). To use this estimation method, specify `est_method="sieve"`.
+
+
+```{r sieve, fig.height=3, fig.width=7, fig.align='center'}
+semiiv2 = semiivreg(y~d|w0|w1, data, ref_indiv = data.frame(w0=0, w1=0), 
+                    est_method="sieve", pol_degree_sieve=5, 
+                    plotting=FALSE)
+
+mte_plot2 = semiiv2$plot$mte; mtr_plot2 = semiiv2$plot$mtr
+grid.arrange(mte_plot2, mtr_plot2, ncol=2)
+
+```
+
+`pol_degree_sieve` controls the flexibility of the control function that is used, by controlling the degree of the polynomial used. By default we set it to $5$.  
+
+
+
+Let us compare the two estimation methods results. 
+```{r sievecompare, fig.height=3, fig.width=7, fig.align='center'}
+# If want to plot on the same plot, need some manipulation of the data
+
+dat = semiiv$data$RES # take the original data
+dat$V = dat$Phat
+
+# for MTE:
+mte_plot2 = mte_plot2 + geom_line(aes(x=V, y=mte), linetype="dashed", col="#db93a4", na.rm=TRUE, data=dat)
+
+
+# for MTR need some manipulation
+dat_plot = dat;
+dat1 = dat_plot; dat1$mtr = dat_plot$mtr1; dat1$Treatment = 1
+dat0 = dat_plot; dat0$mtr = dat_plot$mtr0; dat0$Treatment = 0;
+dat2 = rbind(dat1, dat0)
+dat2$Treatment = as.factor(dat2$Treatment)
+
+mtr_plot2 = mtr_plot2 + geom_line(aes(x=V, y=mtr, col=Treatment, group=Treatment), linetype="dashed", na.rm=TRUE, data=dat2)
+
+grid.arrange(mte_plot2, mtr_plot2, ncol=2)
+
+```
+
+
+
+
+## Comparison with the truth
+
+Let us compute the 'true' underlying MTE. Given the model specification, with 
+\[
+\begin{pmatrix}
+U_0 \\
+U_1 
+\end{pmatrix}
+\sim N \left( \begin{pmatrix} 0 \\ 0 \end{pmatrix},
+\begin{pmatrix}
+\sigma_{U_0}^2 & \sigma_{U_0U_1} \\
+\sigma_{U_0U_1} & \sigma_{U_1}^2
+\end{pmatrix}
+\right)
+\]
+and 
+\[ V = - (U_1 - U_0 - C) \text{ where } C \sim N(0, \sigma_C^2) \perp (U_0, U_1). \]
+Simple computation gives that $V \sim N(0, \sigma_{U_0}^2 + \sigma_{U_1}^2 - 2 \sigma_{U_0U_1} + \sigma_C^2)$. Let us introduce $U_D = F_V(V)$ the uniform normalized $V$ shock. 
+Now, $k_d(u) = \mathbb{E}[U_d | U_D=u]$. So, we have that $k_d(u) = \mathbb{E}[U_d | V=F_V^{-1}(u)]$. Given the specification above, $V$ and $U_d$ are bivariate normal and we have that:
+\[
+\begin{aligned}
+k_0(u) &= \frac{\sigma_{U_0}^2 - \sigma_{U_0U_1}}{\sigma_V^2} \big(F_{V}^{-1}(u) - \mu_V \big), \\
+k_1(u) &= \frac{-\sigma_{U_1}^2 + \sigma_{U_0U_1}}{\sigma_V^2} \big(F_{V}^{-1}(u) - \mu_V \big)
+\end{aligned}
+\]
+Then, the true MTR and MTE are given by
+\[ 
+\begin{aligned}
+MTR_0(w_0, u) &= \delta_0 + w_0 \beta_0 +  k_0(u), \\
+MTR_1(w_1, u) &= \delta_1 + w_1 \beta_1 +  k_1(u), \\
+MTE(w_0, w_1, u) &= MTR_1(w_0, u) - MTR_0(w_1, u)
+\end{aligned}
+\]
+
+Evaluate the MTR and MTE at $(w_0, w_1) = (0, 0)$. 
+
+
+
+
+```{r mte_true, fig.height=3, fig.width=7, fig.align='center'}
+# True MTE and MTR estimations 
+seq_p = seq(0, 1, by=0.001); 
+w0 = 0; w1 = 0; 
+sigma_V2 = param_error[1] + param_error[2] - 2*param_error[3] + param_error[4] # = var(V); var(data$V)
+covU0V = param_error[1] - param_error[3] # = cov(data$U0, data$V)
+covU1V = -param_error[2] + param_error[3] # = cov(data$U1, data$V)
+ku0 = covU0V/sigma_V2*(qnorm(seq_p) - 0) # 0 = mean(V)
+ku1 = covU1V/sigma_V2*(qnorm(seq_p) - 0) # 0 = mean(V)
+true_mtr0 = param_y0[1] + param_y0[2]*w0 + ku0
+true_mtr1 = param_y1[1] + param_y1[2]*w1 + ku1
+true_mte = true_mtr1 - true_mtr0
+
+newdata = data.frame(Ud=seq_p, w0=0, w1=0)
+newdata$true_mte = true_mte; newdata$true_mtr1 = true_mtr1; newdata$true_mtr0 = true_mtr0
+
+## # Remark: alternative estimation method if the truth does not have a simple closed form formula:
+## data$diff = data$y1 - data$y0; pol_degree=5
+## true_model_mte = lm(diff~w1 + w0 + poly(Ud, pol_degree, raw=TRUE), data); # MTE
+## true_model_mtr1 = lm(y1 ~w1+poly(Ud, pol_degree, raw=TRUE), data) # MTR1
+## true_model_mtr0 = lm(y0 ~w0+poly(Ud, pol_degree, raw=TRUE), data) # MTR0
+## newdata$true_mte = predict(true_model_mte, newdata); 
+## newdata$true_mtr1 = predict(true_model_mtr1, newdata); newdata$true_mtr0 = predict(true_model_mtr0, newdata)
+
+
+# Comparison:
+mte_plot2 = mte_plot2 + geom_line(data=newdata, aes(x=Ud, y=true_mte), linetype="dashed", col="red")
+mtr_plot2 = mtr_plot2 + geom_line(data=newdata, aes(x=Ud, y=true_mtr1), linetype="dashed", col="blue") +
+  geom_line(data=newdata, aes(x=Ud, y=true_mtr0), linetype="dashed", col="orange")
+
+grid.arrange(mte_plot2, mtr_plot2, ncol=2)
+
+```
+
+
+Overall, we see that on the common support, the MTE are very precisely estimated here. What is remarkable is that we do not exploit the parametric knowledge of the underlying distribution of the shocks at all. 
+
+Compared to the homogenous treatment effect models, the estimation with heterogenous treatment effects requires more observations. Otherwise, the MTE are not well estimated at the tails of the common support. A solution is just to trim the estimation on the set on which the parameters are well identified then. 
+
+
+
+
+
+## Other options
+
+
+**Trimming the Support.**   
+
+These seems relatively well estimated, except at the tails where the common support is not entirely satisfied, while the MTE is only identified on the common support. If one wants to restrict the estimation to a given common support, it is very easy to do in `semiivreg()`. 
+
+```{r mte_trim1, fig.height=3, fig.width=7, fig.align='center'}
+semiiv1 = semiivreg(y~d|w0|w1, data, 
+                    ref_indiv = data.frame(w0=0, w1=0), 
+                    common_supp_trim = c(0.1, 0.90),
+                    plotting=FALSE)
+mte_plot = semiiv1$plot$mte; mtr_plot = semiiv1$plot$mtr;
+grid.arrange(mtr_plot, mte_plot, ncol=2)
+```
+
+
+
+## References
+
+

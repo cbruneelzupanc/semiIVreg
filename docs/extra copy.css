@@ -1,0 +1,48 @@
+/* Edit pkgdown/extra.css to customize the theme */
+
+/* Color:
+ * logo-purple:     #8709b0;
+ */
+
+@import url('https://fonts.googleapis.com/css?family=Roboto:300,500');
+
+/* Increase the font size of the body text */
+body {
+  font-size: 1.5em;  /* Adjust this value as needed */
+}
+
+/* Optionally, increase the font size of specific elements */
+h1, h2, h3 {
+  font-size: 1.7em;  /* Adjust the value for headers */
+}
+
+h4, h5, h6 {
+  font-size: 1.5em;  /* Adjust the value for headers */
+}
+
+.navbar {
+  font-size: 1.1em;  /* Adjust the value for the navbar */
+}
+
+/* The "default" hyperlinks: default bright blue, hover pinkish */
+a       { color: #8709b0;}
+
+#tocnav > ul > li > a:hover {
+    color: #8709b0;
+}
+
+
+/* Change the background color of the navbar */
+.navbar {
+  background-color: #000000;  /* Set the navbar background to black */
+}
+
+/* Change the color of the navbar text */
+.navbar a {
+  color: #ffffff;  /* Set the navbar text color to white for better contrast */
+}
+
+/* Optionally, change the color of the navbar text on hover */
+.navbar a:hover {
+  color: #cccccc;  /* Change the text color on hover */
+}

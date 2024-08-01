@@ -1,0 +1,234 @@
+---
+title: "Simulating Generalized Roy Models"
+author: "[Christophe Bruneel-Zupanc](https://www.cbruneel.com/)"
+date: "Last modified: 2024-07-22"
+output:
+  rmarkdown::html_vignette:
+    highlight: monochrome
+    toc: true
+  rmarkdown::html_document:
+    toc: true
+    toc_depth: 2
+  pdf_document:
+    highlight: monochrome
+bibliography: semiIVreg.bib
+biblio-style: "apalike"
+vignette: >
+  %\VignetteKeywords{instrumental variables, semi-IVs, causal inference}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteIndexEntry{Simulating Generalized Roy Models}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", echo = TRUE, fig.retina = 2#,#fig.height=4, fig.width=5, fig.align='center'
+)
+options(scipen=8)
+```
+
+
+To perform simulation exercise and check the quality of our estimators, `simul_data` simulates generalized Roy models with semi-IVs. This note describes the exact model that is simulated by the function. It allows for quite flexible models, with very general treatment effect heterogeneity. But one can also use it to simulate models with homogenous treatment effects, or even more standard models where the semi-IVs are valid IVs. 
+
+
+# The Generalized Roy Model
+
+This function simulates a generalized Roy model as described in @bruneel2024.
+
+**Potential Outcomes**. The potential outcomes (e.g., earnings) are given by:
+
+\[
+Y_0 = \delta_{0} + \beta_{0} W_0 + X \beta_{0X} + U_0,
+\]
+
+\[
+Y_1 = \delta_{1} + \beta_{1} W_1 + X \beta_{1X} + U_1,
+\]
+
+where \(W_0, W_1\) are the observed **semi-IVs** excluded from \(Y_1\) and \(Y_0\) respectively, \(X=(X_1, X_2)\) is a vector of a binary (\(X_1\), e.g., location) and a continuous (\(X_2\), e.g., education of the parents) observable **covariates**, and \(U_0, U_1\) are unobservable errors.
+
+**Selection Problem**. We only observe the outcome
+
+\[
+Y = (1-D) Y_0 + D Y_1.
+\]
+
+where \(D\) represents the (binary) treatment decision (e.g., education choice), given by the following selection rule:
+
+\[
+\begin{aligned}
+D^* &= g(W_0, W_1, X) - V \\
+&= - ( \alpha + \alpha_0 W_0 + \alpha_1 W_1 + \alpha_2 W_0 \times W_1 + \alpha_{X_1} X_1 + \alpha_{X_2} X_2) - V, \\
+\text{ with } \quad D &= \mathbb{I}(D^* > 0),
+\end{aligned}
+\]
+
+where \(V\) is the main unobservable probability shock, and the higher \(V\), the more likely one is to be treated. Note that we *normalize* \(U_D=F_{V}(V)\) to get the normalized probability shock \(U_D \sim \mathcal{U}(0, 1)\). \(U_D\) can be interpreted as unobserved resistance to treatment. The closer \(U_D\) is to 0, the more likely the individual is to be treated.
+
+This specification yields that the probability of treatment is given by:
+
+\[
+\textrm{Pr}(D=1 | W_0, W_1, X) = \textrm{Pr}(V < g(W_0, W_1, X)).
+\]
+
+Thus, ceteris paribus, the lower \(g\), the higher the probability of treatment.
+
+
+
+## Unobservables specification
+
+The specification of the unobservable depends on the model type.
+
+### Heterogenous treatment effects
+For the general **heterogeneous treatment effect model**, we have:
+
+\[
+\begin{pmatrix}
+U_0 \\
+U_1
+\end{pmatrix}
+\sim \mathcal{N}\left(
+\begin{pmatrix}
+0 \\
+0
+\end{pmatrix},
+\begin{pmatrix}
+\sigma^2_{U0} & \sigma_{U0U1} \\
+\sigma_{U0U1} & \sigma^2_{U1}
+\end{pmatrix}
+\right),
+\]
+
+\[
+C \sim \mathcal{N}(\mu_{\text{cost}}, \sigma^2_{\text{cost}}),
+\]
+
+\[
+V = -(U_1 - U_0 - C).
+\]
+
+
+
+
+```{r model1} 
+library(semiIVreg)
+# Example of general model with heterogenous treatment effects
+N = 100000; set.seed(1234)
+model_type = "heterogenous"
+param_error = c(1, 1, 0.6, 0.5) # var_u0, var_u1, cov_u0u1, var_cost (the mean cost = constant in D*) # if heterogenous
+param_Z = c(0, 0, 0, 0, 1.5, 1.5, 0.9) # meanW0 state0, meanW1 state0, meanW0 state1, meanW1 state1, varW0, varW1, covW0W1
+param_p = c(0, -0.7, 0.7, 0, 0, 0) # constant, alphaW0, alphaW1, alphaW0W1, effect of state, effect of parent educ
+param_y0 = c(3.2, 0.8, 0, 0) # intercept, effect of Wd, effect of state, effect of parent educ;
+param_y1 = c(3.2+0.4, 0.5, 0, 0) # the +0.2 = Average treatment effect; effect of W1, effect of state, effect of parent educ;
+param_genX = c(0.4, 0, 2)
+
+data = simul_data(N, model_type, param_y0, param_y1, param_p, param_Z, param_genX, param_error)
+```
+
+Note that this is the specification that simulates the dataset `roydata` dataset available in the package, which can be loaded using `data(roydata)`.
+
+
+
+
+
+### Homogenous treatment effect
+
+For the restricted **homogeneous treatment effect model**:
+
+\[
+\begin{pmatrix}
+U \\
+V
+\end{pmatrix}
+\sim \mathcal{N}\left(
+\begin{pmatrix}
+0 \\
+\mu_{V}
+\end{pmatrix},
+\begin{pmatrix}
+\sigma^2_{U} & \sigma_{UV} \\
+\sigma_{UV} & \sigma^2_{V}
+\end{pmatrix}
+\right),
+\]
+
+\[
+U_0 = U_1 = U.
+\]
+
+In both cases, \(V\) is normally distributed, such that the selection equation is a probit model.
+
+**Covariates and Semi-IVs Specification**. The covariates are generated by
+
+\[
+X_1 \sim \text{Bernoulli}(p_{X_1}) \text{ and } X_2 \sim \mathcal{N}(\mu_{X_2}, \sigma^2_{X_2}).
+\]
+
+The semi-IVs are \(X_1\)-specific and are given by:
+
+\[
+\begin{pmatrix}
+W_0 \\
+W_1
+\end{pmatrix}
+\sim \mathcal{N}\left(
+\begin{pmatrix}
+\mu_{W0,x_1} \\
+\mu_{W1,x_1}
+\end{pmatrix},
+\begin{pmatrix}
+\sigma^2_{W0} & \sigma_{W0W1} \\
+\sigma_{W0W1} & \sigma^2_{W1}
+\end{pmatrix}
+\right),
+\]
+
+where the means \(\mu_{W0,x_1}\) and \(\mu_{W1,x_1}\) depend on the binary covariate \(X_1=x_1\).
+
+
+
+```{r model2} 
+# Model with homogenous treatment effects - not the same param_error to specify. 
+library(semiIVreg)
+N = 10000; set.seed(1234)
+model_type = "homogenous"
+param_error = c(1, 1.5, -0.6) # var_u, var_v, cov_uv # if homogenous
+param_Z = c(0, 0, 0, 0, 1.5, 1.5, 0.9) # meanW0 state0, meanW1 state0, meanW0 state1, meanW1 state1, varW0, varW1, covW0W1
+param_p = c(0, -0.5, 0.5, 0, 0, 0) # constant, alphaW0, alphaW1, alphaW0W1, effect of state, effect of parent educ
+param_y0 = c(3.2, 0.8, 0, 0) # intercept, effect of Wd, effect of state, effect of parent educ;
+param_y1 = c(3.2+0.4, 0.5, 0, 0) # the +0.2 = Average treatment effect; effect of W1, effect of state, effect of parent educ;
+param_genX = c(0.4, 0, 2) # probability state=1 (instead of 0), mean_parenteduc, sd_parenteduc (parenteduc drawn as continuous)
+
+data = simul_data(N, model_type, param_y0, param_y1, param_p, param_Z, param_genX, param_error)
+```
+
+This is the function that is used to simulate the dataset `roydata2` available in the package, that can be loaded using `data(roydata2)`. 
+
+
+
+
+# Simulating Standard IV MTE Models
+
+This function can be used to model problems with IVs used to estimate Marginal Treatment Effects, by setting the effect of the semi-IVs on their respective outcomes to zero. The coefficients can be adjusted to mimic the Roy models of Heckman, Urzua and Vytlacil (2006), or Heckman and Vytlacil (2007). Small adjustments inside the function allow mimicking the simulation of Andresen (2018) (mtefe in Stata), but with only 2 regions (state).
+
+```{r model3} 
+# Example of generalized Roy Model where the semi-IVs are valid IVs
+N = 50000; set.seed(1234)
+model_type = "heterogenous"
+param_error = c(1, 1, 0.6, 0.5) # var_u0, var_u1, cov_u0u1, var_cost (the mean cost = constant in D*) # if heterogenous
+param_Z = c(0, 0, 0, 0, 1.5, 1.5, 0.9) # meanW0 state0, meanW1 state0, meanW0 state1, meanW1 state1, varW0, varW1, covW0W1
+param_p = c(0, -0.7, 0.7, 0, 0, 0) # constant, alphaW0, alphaW1, alphaW0W1, effect of state, effect of parent educ
+param_y0 = c(3.2, 0, 0, 0) # intercept, effect of Wd, effect of state, effect of parent educ;
+param_y1 = c(3.2+0.4, 0, 0, 0) # the +0.2 = Average treatment effect; effect of W1, effect of state, effect of parent educ;
+param_genX = c(0.4, 0, 2)
+
+data = simul_data(N, model_type, param_y0, param_y1, param_p, param_Z, param_genX, param_error)
+
+param_y0[2]; # W0 is a valid IV because no direct effect on Y0
+param_y1[2]; # W1 is a valid IV because no direct effect on Y1
+```
+
+## References
+
+

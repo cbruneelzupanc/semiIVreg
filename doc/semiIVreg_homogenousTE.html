@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Christophe Bruneel-Zupanc" />
+
+
+<title>Estimator Performance: homogenous treatment effect model</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { font-weight: bold; } 
+code span.an { font-style: italic; } 
+code span.cf { font-weight: bold; } 
+code span.co { font-style: italic; } 
+code span.cv { font-style: italic; } 
+code span.do { font-style: italic; } 
+code span.dt { text-decoration: underline; } 
+code span.er { font-weight: bold; } 
+code span.in { font-style: italic; } 
+code span.kw { font-weight: bold; } 
+code span.pp { font-weight: bold; } 
+code span.wa { font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+margin-bottom: 0em;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Estimator Performance: homogenous treatment
+effect model</h1>
+<h4 class="author"><a href="https://www.cbruneel.com/">Christophe
+Bruneel-Zupanc</a></h4>
+<h4 class="date">Last modified: 2024-07-22</h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#simulating-data" id="toc-simulating-data">Simulating
+data</a></li>
+<li><a href="#model-with-homogenous-treatment-effects" id="toc-model-with-homogenous-treatment-effects">Model with homogenous
+treatment effects</a>
+<ul>
+<li><a href="#simulate-data" id="toc-simulate-data">Simulate
+data</a></li>
+<li><a href="#true-unobserved-homogenous-treatment-effects" id="toc-true-unobserved-homogenous-treatment-effects">True unobserved
+homogenous Treatment Effects</a></li>
+<li><a href="#naive-ols" id="toc-naive-ols">Naive OLS</a></li>
+<li><a href="#wrongly-assuming-that-the-semi-ivs-are-valid-ivs" id="toc-wrongly-assuming-that-the-semi-ivs-are-valid-ivs">Wrongly
+assuming that the semi-IVs are valid IVs</a></li>
+<li><a href="#semi-iv-estimation-with-semiivreg" id="toc-semi-iv-estimation-with-semiivreg">semi-IV estimation with
+<code>semiivreg</code></a></li>
+<li><a href="#alternative-semi-iv-strategy-based-on-iv-quantile-regression" id="toc-alternative-semi-iv-strategy-based-on-iv-quantile-regression">Alternative
+semi-IV strategy: based on IV-quantile regression</a></li>
+</ul></li>
+<li><a href="#references" id="toc-references">References</a></li>
+</ul>
+</div>
+
+<p>Let us compare the performance of the semi-IV estimator under
+different violation of the standard IV assumptions. This note mimics the
+Appendix on <span class="citation">Bruneel-Zupanc (2024)</span>.</p>
+<div id="simulating-data" class="section level2">
+<h2>Simulating data</h2>
+<p>We simulate generalized Roy models using the
+<code>simul_data()</code>function. See the documentation of the function
+for details about the model. Depending on the chosen parameters, we can
+simulate a model with homogenous/heterogenous treatment effects, as well
+as with valid IVs eventually. That’s what we will do here. In every
+simulation we do not include covariates (set all their effect to 0), but
+these can be easily included.</p>
+</div>
+<div id="model-with-homogenous-treatment-effects" class="section level2">
+<h2>Model with homogenous treatment effects</h2>
+<div id="simulate-data" class="section level3">
+<h3>Simulate data</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># Model 1</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(semiIVreg)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>N <span class="ot">=</span> <span class="dv">10000</span>; <span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>model_type <span class="ot">=</span> <span class="st">&quot;homogenous&quot;</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>param_error <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="fl">1.5</span>, <span class="sc">-</span><span class="fl">0.6</span>) <span class="co"># var_u, var_v, cov_uv # if homogenous</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>param_Z <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">1.5</span>, <span class="fl">1.5</span>, <span class="fl">0.9</span>) <span class="co"># meanW0 state0, meanW1 state0, meanW0 state1, meanW1 state1, varW0, varW1, covW0W1</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>param_p <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="sc">-</span><span class="fl">0.5</span>, <span class="fl">0.5</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>) <span class="co"># constant, alphaW0, alphaW1, alphaW0W1, effect of state, effect of parent educ</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>param_y0 <span class="ot">=</span> <span class="fu">c</span>(<span class="fl">3.2</span>, <span class="fl">0.8</span>, <span class="dv">0</span>, <span class="dv">0</span>) <span class="co"># intercept, effect of Wd, effect of state, effect of parent educ;</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>param_y1 <span class="ot">=</span> <span class="fu">c</span>(<span class="fl">3.2+0.4</span>, <span class="fl">0.5</span>, <span class="dv">0</span>, <span class="dv">0</span>) <span class="co"># the +0.2 = Average treatment effect; effect of W1, effect of state, effect of parent educ;</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>param_genX <span class="ot">=</span> <span class="fu">c</span>(<span class="fl">0.4</span>, <span class="dv">0</span>, <span class="dv">2</span>) <span class="co"># probability state=1 (instead of 0), mean_parenteduc, sd_parenteduc (parenteduc drawn as continuous)</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>data <span class="ot">=</span> <span class="fu">simul_data</span>(N, model_type, param_y0, param_y1, param_p, param_Z, param_genX, param_error)</span></code></pre></div>
+<p>This is a model with homogenous Treatment Effects (conditional on
+<span class="math inline">\(W_0, W_1\)</span>).</p>
+</div>
+<div id="true-unobserved-homogenous-treatment-effects" class="section level3">
+<h3>True unobserved homogenous Treatment Effects</h3>
+<p>Here, at <span class="math inline">\((W_0, W_1) = (0, 0)\)</span>,
+the effect is always 0.4 (see the parameters). To see this, let us just
+use the true <em>unobserved</em> potential outcomes (only observed
+thanks to the simulation).</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>data<span class="sc">$</span>true_TE <span class="ot">=</span> data<span class="sc">$</span>y1 <span class="sc">-</span> data<span class="sc">$</span>y0</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">lm</span>(true_TE <span class="sc">~</span> w0 <span class="sc">+</span> w1, data))</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt; lm(formula = true_TE ~ w0 + w1, data = data)</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&gt; Residuals:</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt;        Min         1Q     Median         3Q        Max </span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt; -5.753e-13 -1.600e-16  5.000e-17  2.700e-16  1.548e-13 </span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt; Coefficients:</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt;               Estimate Std. Error            t value Pr(&gt;|t|)    </span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt; (Intercept)  4.000e-01  6.099e-17   6558145526539307   &lt;2e-16 ***</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; w0          -8.000e-01  6.196e-17 -12911565410646968   &lt;2e-16 ***</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; w1           5.000e-01  6.226e-17   8030568306192379   &lt;2e-16 ***</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt; ---</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt; Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; Residual standard error: 6.099e-15 on 9997 degrees of freedom</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&gt; Multiple R-squared:      1,  Adjusted R-squared:      1 </span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="co">#&gt; F-statistic: 8.343e+31 on 2 and 9997 DF,  p-value: &lt; 2.2e-16</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>true_param <span class="ot">=</span> <span class="fu">c</span>(param_y0[<span class="dv">1</span>], param_y1[<span class="dv">1</span>] <span class="sc">-</span> param_y0[<span class="dv">1</span>], param_y0[<span class="dv">2</span>], param_y1[<span class="dv">2</span>]); true_param</span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co">#&gt; [1] 3.2 0.4 0.8 0.5</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co"># constant y0, constant y1 - constant y0, effects of w0 on y0, effects of w1 on y1.</span></span></code></pre></div>
+<p>This is the true model that we would like to recover. Note that it is
+a perfect fit because it is exactly the same error term in both
+potential outcomes, <span class="math inline">\(U_0 = U_1 = U\)</span>.
+If we had an additional error term but uncorrelated with the rest, we
+would estimate the same coefficients (but with more noise).</p>
+</div>
+<div id="naive-ols" class="section level3">
+<h3>Naive OLS</h3>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>naive_ols <span class="ot">=</span> <span class="fu">lm</span>(y <span class="sc">~</span> d <span class="sc">+</span> w0 <span class="sc">+</span> w1, data); <span class="fu">summary</span>(naive_ols)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt; lm(formula = y ~ d + w0 + w1, data = data)</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; Residuals:</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt;     Min      1Q  Median      3Q     Max </span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; -4.0776 -0.6767  0.0018  0.6924  3.9086 </span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; Coefficients:</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)    </span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; (Intercept)  2.70023    0.01464  184.47   &lt;2e-16 ***</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; d            1.17707    0.02126   55.37   &lt;2e-16 ***</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt; w0           0.28488    0.01068   26.66   &lt;2e-16 ***</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt; w1           0.36167    0.01075   33.66   &lt;2e-16 ***</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt; ---</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">#&gt; Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt; Residual standard error: 1.008 on 9996 degrees of freedom</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt; Multiple R-squared:   0.45,  Adjusted R-squared:  0.4498 </span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; F-statistic:  2726 on 3 and 9996 DF,  p-value: &lt; 2.2e-16</span></span></code></pre></div>
+<p>Obviously, the naive OLS estimator is biased, because there is
+endogeneity: <span class="math inline">\(U\)</span> is correlated with
+<span class="math inline">\(D\)</span> and <span class="math inline">\(Y\)</span>. It overestimates the effect of the
+treatment <span class="math inline">\(D\)</span> to be 1. This is
+because individuals with high <span class="math inline">\(U\)</span>
+both select themself more into <span class="math inline">\(D=1\)</span>
+and have a higher <span class="math inline">\(Y\)</span>. Indeed <span class="math inline">\(E(U | D=1) &gt; E(U | D=0)\)</span>, and <span class="math inline">\(U\)</span> is negatively correlated with <span class="math inline">\(V\)</span> (cf the covariance parameter in
+<code>param_error</code>), so the higher <span class="math inline">\(U\)</span>, the lower <span class="math inline">\(V\)</span>, and the lower <span class="math inline">\(V\)</span>, the more likely one is to select <span class="math inline">\(D=1\)</span>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">mean</span>(data<span class="sc">$</span>U1[<span class="fu">which</span>(data<span class="sc">$</span>d <span class="sc">==</span> <span class="dv">1</span>)]); <span class="fu">mean</span>(data<span class="sc">$</span>U0[<span class="fu">which</span>(data<span class="sc">$</span>d<span class="sc">==</span><span class="dv">0</span>)])</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; [1] 0.3521838</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; [1] -0.3516911</span></span></code></pre></div>
+</div>
+<div id="wrongly-assuming-that-the-semi-ivs-are-valid-ivs" class="section level3">
+<h3>Wrongly assuming that the semi-IVs are valid IVs</h3>
+<p>What is we assume that <span class="math inline">\(W_0\)</span> and
+<span class="math inline">\(W_1\)</span> are valid IVs (i.e., that they
+have no direct effect on their respective potential outcomes)?</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">library</span>(ivreg) <span class="co"># remark: ivreg is not required otherwise in semiivreg, only in this vignette. </span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>valid_iv <span class="ot">=</span> <span class="fu">ivreg</span>(y <span class="sc">~</span> d <span class="sc">|</span> w0 <span class="sc">+</span> w1 <span class="sc">+</span> w0<span class="sc">:</span>w1, <span class="at">data=</span>data); <span class="fu">summary</span>(valid_iv)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; ivreg(formula = y ~ d | w0 + w1 + w0:w1, data = data)</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; Residuals:</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt;      Min       1Q   Median       3Q      Max </span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; -5.42133 -0.82741  0.01821  0.83379  4.51746 </span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; Coefficients:</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)    </span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; (Intercept)  2.85027    0.04109   69.37   &lt;2e-16 ***</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; d            0.88099    0.07832   11.25   &lt;2e-16 ***</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; Diagnostic tests:</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt;                   df1  df2 statistic  p-value    </span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt; Weak instruments    3 9996    371.29  &lt; 2e-16 ***</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt; Wu-Hausman          1 9997     12.88 0.000333 ***</span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt; Sargan              2   NA   3268.63  &lt; 2e-16 ***</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt; ---</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt; Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt; Residual standard error: 1.24 on 9998 degrees of freedom</span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt; Multiple R-Squared: 0.1681,  Adjusted R-squared: 0.1681 </span></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="co">#&gt; Wald test: 126.5 on 1 and 9998 DF,  p-value: &lt; 2.2e-16</span></span></code></pre></div>
+<p>The estimated coefficients is also completely biased here, because it
+assumes the semi-IVs have no effect on the outcomes while they do.</p>
+</div>
+<div id="semi-iv-estimation-with-semiivreg" class="section level3">
+<h3>semi-IV estimation with <code>semiivreg</code></h3>
+<p>Let us now see how the semi-IV estimator performs. To specify the
+estimation with homogenous treatment effects, we specify
+<code>est_method=&quot;homogenous&quot;</code>. This performs a sieve-like
+estimation but with an additional constraint which restrict the MTE to
+be constant by imposing constraints on the control function <span class="math inline">\(\kappa_0(p)\)</span> and <span class="math inline">\(\kappa_1(p)\)</span>.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>semiiv <span class="ot">=</span> <span class="fu">semiivreg</span>(y<span class="sc">~</span>d<span class="sc">|</span>w0<span class="sc">|</span>w1, data, <span class="at">est_method=</span><span class="st">&quot;homogenous&quot;</span>, <span class="at">plotting=</span><span class="cn">FALSE</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>semiiv_homogenous <span class="ot">=</span> semiiv<span class="sc">$</span>estimate<span class="sc">$</span>est <span class="co"># extract the coefficients from the homogenous TE specification</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>summary_coeff <span class="ot">=</span> <span class="fu">summary</span>(semiiv_homogenous)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>summary_coeff<span class="sc">$</span>coefficients[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>,] <span class="co"># only print the first 4 coefficients, the other correspond to the control function of P</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt;              Estimate Std. Error   t value          Pr(&gt;|t|)</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; (Intercept) 3.2058476 0.03396914 94.375286 0.000000000000000</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; I(d)        0.3890825 0.06534782  5.954025 0.000000002704391</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; I(1 - d):w0 0.8029398 0.01193786 67.259916 0.000000000000000</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; I(d):w1     0.4972506 0.01178864 42.180500 0.000000000000000</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>true_param</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; [1] 3.2 0.4 0.8 0.5</span></span></code></pre></div>
+<p>The estimated coefficients are very close to the truth, with
+relatively small standard errors here, even though the sample size is
+modest (10000 observations).</p>
+<p>Be cautious though: the standard errors are computed <em>without</em>
+taking into account the fact that the propensity score is estimated in a
+first stage. We can correct this estimation with
+<code>semiivreg_boot()</code>. But typically, if the first stage is well
+estimated, the bias in the standard errors is small, as visible
+below.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>semiivboot <span class="ot">=</span> <span class="fu">semiivreg_boot</span>(y<span class="sc">~</span>d<span class="sc">|</span>w0<span class="sc">|</span>w1, data, <span class="at">Nboot=</span><span class="dv">200</span>, <span class="at">est_method=</span><span class="st">&quot;homogenous&quot;</span>, <span class="at">plotting=</span><span class="cn">FALSE</span>) <span class="co"># reduce the number of bootstrap simulation for speed;  </span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>boot_se <span class="ot">=</span> semiivboot<span class="sc">$</span>estimate<span class="sc">$</span>coeff<span class="sc">$</span>std_error[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>res <span class="ot">=</span> <span class="fu">as.data.frame</span>(<span class="fu">cbind</span>(summary_coeff<span class="sc">$</span>coefficients[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>], boot_se)); <span class="fu">colnames</span>(res) <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;Estimate&quot;</span>, <span class="st">&quot;wrong analytic SE&quot;</span>, <span class="st">&quot;Bootstrapped SE&quot;</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>res</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt;              Estimate wrong analytic SE Bootstrapped SE</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt; (Intercept) 3.2058476        0.03396914      0.03480909</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt; I(d)        0.3890825        0.06534782      0.06576680</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; I(1 - d):w0 0.8029398        0.01193786      0.01389785</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt; I(d):w1     0.4972506        0.01178864      0.01250709</span></span></code></pre></div>
+</div>
+<div id="alternative-semi-iv-strategy-based-on-iv-quantile-regression" class="section level3">
+<h3>Alternative semi-IV strategy: based on IV-quantile regression</h3>
+<p>As described in <span class="citation">Bruneel-Zupanc (2024)</span>,
+there is another general nonparametric identification strategy with
+semi-IV, building on the IV-quantile regression (IVQR) framework of
+<span class="citation">Chernozhukov and Hansen (2005)</span>. In the
+model with homogenous treatment effect, this strategy requires that some
+interaction <span class="math inline">\(W_0 \times W_1\)</span> is
+relevant for the selection into treatment. The intuition is that this
+interaction now serves as IV for the treatment <span class="math inline">\(D\)</span> within this framework. The nice feature
+of this strategy is that it can be implemented with standard IV
+estimation, e.g., <code>ivreg()</code> in R.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>semiivqr <span class="ot">=</span> <span class="fu">ivreg</span>(y<span class="sc">~</span>d<span class="sc">+</span><span class="fu">I</span>(<span class="dv">1</span><span class="sc">-</span>d)<span class="sc">:</span>w0 <span class="sc">+</span> <span class="fu">I</span>(d)<span class="sc">:</span>w1<span class="sc">|</span>w0<span class="sc">+</span>w1<span class="sc">+</span>w0<span class="sc">:</span>w1, <span class="at">data=</span>data)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">summary</span>(semiivqr)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt;      arithmetic operators in their names;</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt;   the printed representation of the hypothesis will be omitted</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; ivreg(formula = y ~ d + I(1 - d):w0 + I(d):w1 | w0 + w1 + w0:w1, </span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt;     data = data)</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; Residuals:</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt;       Min        1Q    Median        3Q       Max </span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt; -3.315219 -0.647210 -0.002237  0.644122  3.580389 </span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt; Coefficients:</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)    </span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="co">#&gt; (Intercept)   2.9539     0.8646   3.417 0.000637 ***</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="co">#&gt; d             0.8944     1.7323   0.516 0.605655    </span></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="co">#&gt; I(1 - d):w0   0.6523     0.5202   1.254 0.209907    </span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="co">#&gt; I(d):w1       0.6460     0.4998   1.293 0.196159    </span></span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a><span class="co">#&gt; Diagnostic tests:</span></span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a><span class="co">#&gt;                                 df1  df2 statistic p-value    </span></span>
+<span id="cb8-24"><a href="#cb8-24" tabindex="-1"></a><span class="co">#&gt; Weak instruments (d)              3 9996    371.29  &lt;2e-16 ***</span></span>
+<span id="cb8-25"><a href="#cb8-25" tabindex="-1"></a><span class="co">#&gt; Weak instruments (I(1 - d):w0)    3 9996   3228.13  &lt;2e-16 ***</span></span>
+<span id="cb8-26"><a href="#cb8-26" tabindex="-1"></a><span class="co">#&gt; Weak instruments (I(d):w1)        3 9996   3503.39  &lt;2e-16 ***</span></span>
+<span id="cb8-27"><a href="#cb8-27" tabindex="-1"></a><span class="co">#&gt; Wu-Hausman                        3 9993     46.22  &lt;2e-16 ***</span></span>
+<span id="cb8-28"><a href="#cb8-28" tabindex="-1"></a><span class="co">#&gt; Sargan                            0   NA        NA      NA    </span></span>
+<span id="cb8-29"><a href="#cb8-29" tabindex="-1"></a><span class="co">#&gt; ---</span></span>
+<span id="cb8-30"><a href="#cb8-30" tabindex="-1"></a><span class="co">#&gt; Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</span></span>
+<span id="cb8-31"><a href="#cb8-31" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-32"><a href="#cb8-32" tabindex="-1"></a><span class="co">#&gt; Residual standard error: 0.9535 on 9996 degrees of freedom</span></span>
+<span id="cb8-33"><a href="#cb8-33" tabindex="-1"></a><span class="co">#&gt; Multiple R-Squared: 0.5082,  Adjusted R-squared: 0.5081 </span></span>
+<span id="cb8-34"><a href="#cb8-34" tabindex="-1"></a><span class="co">#&gt; Wald test:  1914 on 3 and 9996 DF,  p-value: &lt; 2.2e-16</span></span></code></pre></div>
+<p>In this baseline model, the interaction is not significant in the
+first stage, so we have a problem of weak IVs. This is not the case in
+this baseline model, so the estimation blow up because the IV is
+irrelevant.</p>
+<p>However, if we specify an alternative model where the interaction is
+indeed relevant, we will also estimate correctly the homogenous
+treatment effect using this strategy. This is what we do now.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Model 2</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>N <span class="ot">=</span> <span class="dv">10000</span>; <span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>model_type <span class="ot">=</span> <span class="st">&quot;homogenous&quot;</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>param_error <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="fl">1.5</span>, <span class="sc">-</span><span class="fl">0.6</span>) <span class="co"># var_u, var_v, cov_uv # if homogenous</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>param_Z <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="fl">1.5</span>, <span class="fl">1.5</span>, <span class="fl">0.9</span>) <span class="co"># meanW0 state0, meanW1 state0, meanW0 state1, meanW1 state1, varW0, varW1, covW0W1</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>param_p <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="sc">-</span><span class="fl">0.3</span>, <span class="fl">0.4</span>, <span class="fl">0.3</span>, <span class="dv">0</span>, <span class="dv">0</span>) <span class="co"># constant, alphaW0, alphaW1, alphaW0W1, effect of state, effect of parent educ</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>param_y0 <span class="ot">=</span> <span class="fu">c</span>(<span class="fl">3.2</span>, <span class="fl">0.8</span>, <span class="dv">0</span>, <span class="dv">0</span>) <span class="co"># intercept, effect of Wd, effect of state, effect of parent educ;</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>param_y1 <span class="ot">=</span> <span class="fu">c</span>(<span class="fl">3.2+0.4</span>, <span class="fl">0.5</span>, <span class="dv">0</span>, <span class="dv">0</span>) <span class="co"># the +0.2 = Average treatment effect; effect of W1, effect of state, effect of parent educ;</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>param_genX <span class="ot">=</span> <span class="fu">c</span>(<span class="fl">0.4</span>, <span class="dv">0</span>, <span class="dv">2</span>) <span class="co"># probability state=1 (instead of 0), mean_parenteduc, sd_parenteduc (parenteduc drawn as continuous)</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>data2 <span class="ot">=</span> <span class="fu">simul_data</span>(N, model_type, param_y0, param_y1, param_p, param_Z, param_genX, param_error)</span></code></pre></div>
+<p>This is a model <code>param_p[4]</code> gives the effect of <span class="math inline">\(W_0\times W_1\)</span> on <span class="math inline">\(D\)</span>. It is different from 0 here. So the
+IVQR strategy should work.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>semiivqr2 <span class="ot">=</span> <span class="fu">ivreg</span>(y<span class="sc">~</span>d<span class="sc">+</span><span class="fu">I</span>(<span class="dv">1</span><span class="sc">-</span>d)<span class="sc">:</span>w0 <span class="sc">+</span> <span class="fu">I</span>(d)<span class="sc">:</span>w1<span class="sc">|</span>w0<span class="sc">+</span>w1<span class="sc">+</span>w0<span class="sc">:</span>w1, <span class="at">data=</span>data2); <span class="fu">summary</span>(semiivqr2)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#&gt; Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co">#&gt;      arithmetic operators in their names;</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt;   the printed representation of the hypothesis will be omitted</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; Call:</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; ivreg(formula = y ~ d + I(1 - d):w0 + I(d):w1 | w0 + w1 + w0:w1, </span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt;     data = data2)</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt; Residuals:</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="co">#&gt;       Min        1Q    Median        3Q       Max </span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co">#&gt; -3.611960 -0.676872 -0.003606  0.669898  3.886447 </span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="co">#&gt; Coefficients:</span></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="co">#&gt;             Estimate Std. Error t value  Pr(&gt;|t|)    </span></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="co">#&gt; (Intercept)  3.21013    0.03615  88.811   &lt; 2e-16 ***</span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a><span class="co">#&gt; d            0.37626    0.08777   4.287 0.0000183 ***</span></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="co">#&gt; I(1 - d):w0  0.80317    0.01516  52.976   &lt; 2e-16 ***</span></span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="co">#&gt; I(d):w1      0.49653    0.04179  11.882   &lt; 2e-16 ***</span></span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a><span class="co">#&gt; Diagnostic tests:</span></span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a><span class="co">#&gt;                                 df1  df2 statistic p-value    </span></span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a><span class="co">#&gt; Weak instruments (d)              3 9996    405.38  &lt;2e-16 ***</span></span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="co">#&gt; Weak instruments (I(1 - d):w0)    3 9996   8024.23  &lt;2e-16 ***</span></span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="co">#&gt; Weak instruments (I(d):w1)        3 9996   1676.42  &lt;2e-16 ***</span></span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="co">#&gt; Wu-Hausman                        3 9993     50.75  &lt;2e-16 ***</span></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="co">#&gt; Sargan                            0   NA        NA      NA    </span></span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a><span class="co">#&gt; ---</span></span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a><span class="co">#&gt; Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</span></span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a><span class="co">#&gt; Residual standard error: 1.005 on 9996 degrees of freedom</span></span>
+<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a><span class="co">#&gt; Multiple R-Squared: 0.4829,  Adjusted R-squared: 0.4828 </span></span>
+<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a><span class="co">#&gt; Wald test:  2101 on 3 and 9996 DF,  p-value: &lt; 2.2e-16</span></span></code></pre></div>
+<p>Indeed, it estimates the coefficients well. Notice that the
+<code>semiivreg()</code> function also works there:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>semiiv2 <span class="ot">=</span> <span class="fu">semiivreg</span>(y<span class="sc">~</span>d<span class="sc">|</span>w0<span class="sc">|</span>w1, <span class="at">data=</span>data2, <span class="at">est_method=</span><span class="st">&quot;homogenous&quot;</span>, <span class="at">plotting=</span><span class="cn">FALSE</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>semiiv2_homogenous <span class="ot">=</span> semiiv2<span class="sc">$</span>estimate<span class="sc">$</span>est <span class="co"># extract the coefficients from the homogenous TE specification</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>summary_coeff2 <span class="ot">=</span> <span class="fu">summary</span>(semiiv2_homogenous)</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>summary_coeff2<span class="sc">$</span>coefficients[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>,] <span class="co"># only print the first 4 coefficients, the other correspond to the control function of P</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt;              Estimate  Std. Error   t value      Pr(&gt;|t|)</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; (Intercept) 3.2053784 0.040632729 78.886614  0.000000e+00</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; I(d)        0.3868430 0.095396241  4.055117  5.048965e-05</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; I(1 - d):w0 0.8048831 0.009214952 87.345333  0.000000e+00</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; I(d):w1     0.5004888 0.018689574 26.779040 1.270063e-152</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>true_param</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co">#&gt; [1] 3.2 0.4 0.8 0.5</span></span></code></pre></div>
+<p>Thus <code>semiivreg()</code>is more flexible and should be used in
+any case. Notice that, in general the IVQR estimation will also have a
+higher variance of the estimate because it builds on the interaction as
+an IV so it requires it to have a large significant effects on the
+treatment to avoid weak IV concerns. While the <code>semiivreg()</code>
+only relies on the fact that each semi-IV is relevant by itself, which
+is relatively easier to satisfy. Especially if the semi-IVs have a
+strong impact on their respective potential outcome, they should be
+relevant as soon as there is selection into treatment based on gains
+(i.e., <span class="math inline">\(Y_1 - Y_0\)</span>).</p>
+</div>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2 class="unnumbered">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="ref-bruneel2024" class="csl-entry">
+Bruneel-Zupanc, Christophe. 2024. <span>“Don’t (Fully) Exclude Me, It’s
+Not Necessary! Identification with Semi-IVs.”</span> <a href="https://arxiv.org/abs/2303.12667">https://arxiv.org/abs/2303.12667</a>.
+</div>
+<div id="ref-chernozhukov2005iv" class="csl-entry">
+Chernozhukov, Victor, and Christian Hansen. 2005. <span>“An IV Model of
+Quantile Treatment Effects.”</span> <em>Econometrica</em> 73 (1):
+245–61.
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
