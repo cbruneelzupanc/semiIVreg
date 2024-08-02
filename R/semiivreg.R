@@ -73,7 +73,7 @@
 #' # The estimated model
 #' `semiivreg` estimates the marginal treatment effect (MTE) and marginal treatment response (MTR) of a binary treatment variable using semi-IVs, W0 and W1.
 #' As with standard IVs (see Andresen, 2018), we estimate a semi-parametric partially linear model, as described in Bruneel-Zupanc (2024).
-#' For more details on the model and estimation procedure, see the vignette \code{vignette("semiIVreg", package = "semiIVreg")}, also available online \href{../doc/semiIVreg.html}{here}.
+#' For more details on the model and estimation procedure, see the vignette \code{vignette("semiIVreg", package = "semiIVreg")}, also available online \href{https://cbruneelzupanc.github.io/semiIVreg/articles/semiIVreg.html}{here}.
 #' For more details on the use of the `semiivreg` function, see also the vignettes \code{vignette("semiIVreg_heterogenousTE", package = "semiIVreg")} and \code{vignette("semiIVreg_homogenousTE", package = "semiIVreg")}.
 #' For more details about causal inference with semi-IVs in general, see Bruneel-Zupanc (2024).
 #'

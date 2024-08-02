@@ -121,7 +121,7 @@ The estimated coefficients are very close to the truth, with relatively small st
 Be cautious though: the standard errors are computed *without* taking into account the fact that the propensity score is estimated in a first stage. We can correct this estimation with `semiivreg_boot()`. But typically, if the first stage is well estimated, the bias in the standard errors is small, as visible below. 
 <!-- , cache=TRUE} --> 
 ```{r semiivboot1} 
-semiivboot = semiivreg_boot(y~d|w0|w1, data, Nboot=100, est_method="homogenous", plotting=FALSE) # reduce the number of bootstrap simulation for speed;  
+semiivboot = semiivreg_boot(y~d|w0|w1, data, Nboot=200, est_method="homogenous", plotting=FALSE) # reduce the number of bootstrap simulation for speed;  
 boot_se = semiivboot$estimate$coeff$std_error[1:4]
 res = as.data.frame(cbind(summary_coeff$coefficients[1:4,1:2], boot_se)); colnames(res) = c("Estimate", "wrong analytic SE", "Bootstrapped SE")
 res

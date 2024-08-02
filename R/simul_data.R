@@ -2,10 +2,10 @@
 #'
 #'@description
 #' This function simulates data from the Generalized Roy Model with semi-IVs, following the simulation specified in Bruneel-Zupanc (2024). \cr
-#' For more details about the exact specification, see the vignettes \href{../doc/simul_data.html}{here} or by running \code{vignette("simul_data", package = "semiIVreg")}.
+#' For more details about the exact specification, see the vignettes \href{https://cbruneelzupanc.github.io/semiIVreg/reference/simul_data.html}{here} or by running \code{vignette("simul_data", package = "semiIVreg")}.
 
 #' @details This function simulates data from the Generalized Roy Model with semi-IVs, following the simulation specified in Bruneel-Zupanc (2024). \cr
-#' For more details about the exact specification, see the vignette \href{../doc/simul_data.html}{here} or by running \code{vignette("simul_data", package = "semiIVreg")}.
+#' For more details about the exact specification, see the vignette \href{.https://cbruneelzupanc.github.io/semiIVreg/reference/simul_data.html}{here} or by running \code{vignette("simul_data", package = "semiIVreg")}.
 #' One can use it to simulate general model with heterogenous treatment effects, but also restricted ones with homogenous treatment effects. \cr
 #' `simul_data` was used to simulate the dataset available with this package, `data(roydata)` to obtain the simulated model with heterogenous treatment effect, and `data(roydata2)` to obtain the simulated model with homogenous treatment effect.
 

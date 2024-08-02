@@ -281,10 +281,11 @@ depend on the binary covariate
 <p>This function can be used to model problems with IVs used to estimate
 Marginal Treatment Effects, by setting the effect of the semi-IVs on
 their respective outcomes to zero. The coefficients can be adjusted to
-mimic the Roy models of Heckman, Urzua and Vytlacil (2006), or Heckman
-and Vytlacil (2007). Small adjustments inside the function allow
-mimicking the simulation of Andresen (2018) (mtefe in Stata), but with
-only 2 regions (state).</p>
+mimic the Roy models of <span class="citation">James J. Heckman, Urzua,
+and Vytlacil (2006)</span>, or <span class="citation">James J. Heckman
+and Vytlacil (2007)</span>. Small adjustments inside the function allow
+mimicking the simulation of <span class="citation">(<strong>andresen2018?</strong>)</span> (mtefe in
+Stata), but with only 2 regions (state).</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Example of generalized Roy Model where the semi-IVs are valid IVs</span></span>
 <span><span class="va">N</span> <span class="op">=</span> <span class="fl">50000</span>; <span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1234</span><span class="op">)</span></span>
@@ -300,7 +301,7 @@ only 2 regions (state).</p>
 <span></span>
 <span><span class="va">param_y0</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>; <span class="co"># W0 is a valid IV because no direct effect on Y0</span></span>
 <span><span class="co">#&gt; [1] 0</span></span>
-<span><span class="va">param_y1</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>; <span class="co"># W1 is a valid IV because no direct effect on Y1</span></span>
+<span><span class="va">param_y1</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="co"># W1 is a valid IV because no direct effect on Y1</span></span>
 <span><span class="co">#&gt; [1] 0</span></span></code></pre></div>
 <div class="section level3">
 <h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
@@ -309,6 +310,21 @@ only 2 regions (state).</p>
 <div id="ref-bruneel2024" class="csl-entry">
 Bruneel-Zupanc, Christophe. 2024. <span>“Don’t (Fully) Exclude Me, It’s
 Not Necessary! Identification with Semi-IVs.”</span> <a href="https://arxiv.org/abs/2303.12667" class="external-link">https://arxiv.org/abs/2303.12667</a>.
+</div>
+<div id="ref-heckman2006understanding" class="csl-entry">
+Heckman, James J, Sergio Urzua, and Edward Vytlacil. 2006.
+<span>“Understanding Instrumental Variables in Models with Essential
+Heterogeneity.”</span> <em>The Review of Economics and Statistics</em>
+88 (3): 389–432.
+</div>
+<div id="ref-heckmanvytlacil2007b" class="csl-entry">
+Heckman, James J., and Edward J. Vytlacil. 2007. <span>“Chapter 71
+Econometric Evaluation of Social Programs, Part II: Using the Marginal
+Treatment Effect to Organize Alternative Econometric Estimators to
+Evaluate Social Programs, and to Forecast Their Effects in New
+Environments.”</span> In, edited by James J. Heckman and Edward E.
+Leamer, 6:4875–5143. Handbook of Econometrics. Elsevier.
+https://doi.org/<a href="https://doi.org/10.1016/S1573-4412(07)06071-0" class="external-link">https://doi.org/10.1016/S1573-4412(07)06071-0</a>.
 </div>
 </div>
 </div>

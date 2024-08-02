@@ -210,7 +210,7 @@ This is the function that is used to simulate the dataset `roydata2` available i
 
 # Simulating Standard IV MTE Models
 
-This function can be used to model problems with IVs used to estimate Marginal Treatment Effects, by setting the effect of the semi-IVs on their respective outcomes to zero. The coefficients can be adjusted to mimic the Roy models of Heckman, Urzua and Vytlacil (2006), or Heckman and Vytlacil (2007). Small adjustments inside the function allow mimicking the simulation of Andresen (2018) (mtefe in Stata), but with only 2 regions (state).
+This function can be used to model problems with IVs used to estimate Marginal Treatment Effects, by setting the effect of the semi-IVs on their respective outcomes to zero. The coefficients can be adjusted to mimic the Roy models of @heckman2006understanding, or @heckmanvytlacil2007b. Small adjustments inside the function allow mimicking the simulation of @andresen2018 (mtefe in Stata), but with only 2 regions (state).
 
 ```{r model3} 
 # Example of generalized Roy Model where the semi-IVs are valid IVs
@@ -226,7 +226,7 @@ param_genX = c(0.4, 0, 2)
 data = simul_data(N, model_type, param_y0, param_y1, param_p, param_Z, param_genX, param_error)
 
 param_y0[2]; # W0 is a valid IV because no direct effect on Y0
-param_y1[2]; # W1 is a valid IV because no direct effect on Y1
+param_y1[2] # W1 is a valid IV because no direct effect on Y1
 ```
 
 ## References
