@@ -200,13 +200,11 @@ To specify the bandwidth of the local polynomial regression, use `bw0` or `bw1`.
 
 - **Step 2.** On each subsample, compute the residuals $e_{Y_d} = Y_d - E(Y_d | D=d, \widehat{P})$, $e_{W_d} = W_d - E(W_d | D=d, \widehat{P})$ and $e_X^d = X - E(X | D=d, \widehat{P})$. Then, run the first residual regression, with a **no-intercept OLS**:  
 \[ e_{Y_d} = e_{W_d} \beta_d + e_X^d \beta^X_d + \tilde{U}_d. \]         
-This regression on the subsample with $D=d$, provides consistent estimates of $\beta_d$ and $\beta^X_d$. 
-
-<!--
-Indeed, it is equivalent to  
+This regression on the subsample with $D=d$, provides consistent estimates of $\beta_d$ and $\beta^X_d$.   
+Indeed, the residual equation is equivalent to  
 \[ Y_d - E[Y_d | D=d, \widehat{P}] = (W_d - E[W_d | D=d, \widehat{P}]) \beta_d + E(X - E[X | D=d, \widehat{P}]) \beta_d^X + (U_d - E[U_d | D=d, \widehat{P}]). \]
-Now, denote $\tilde{U}_d = U_d - E[U_d | D=d, \widehat{P}]$. We have $E[\tilde{U}_d | D=d,  \widehat{P}]] = 0$, so the no-intercept residual OLS regression give consistent estimates. 
--->
+and if we denote $\tilde{U}_d = U_d - E[U_d | D=d, \widehat{P}]$, we have $E[\tilde{U}_d | D=d,  \widehat{P}] = 0$, so the no-intercept residual OLS regression gives consistent estimates.   
+
 
 
 - **Step 3.** Construct $\tilde{Y}_d = Y - W_d \widehat{\beta_d} - X \widehat{\beta^X_d}$, on the sample with $D=d$, i.e., the outcome `net of the effect` of the covariates. We have 
