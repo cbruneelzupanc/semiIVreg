@@ -360,6 +360,8 @@ semiivreg = function(formula, data, propensity_formula=NULL,
     vcov = vcov(est)
     t_value = qt(1-conf_level/2, df = df.residual(est))
 
+    if(length(which(is.na(coeff))) > 0) { warning("Some coefficients are NA. May be impossible to evaluate for some reference individual. ") }
+
     # (ii) Construct kd(u) functions -> see formula in Andresen for e.g.
     # Done outside of here; kdu need to correspond to Kappa transformation
     # Then: kdu is equal to: kdu_transform_fun(seq_u, d=rep(d, length(u)))%*%coeffkd

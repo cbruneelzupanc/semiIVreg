@@ -108,7 +108,13 @@ mtr_fun = function(d, data, ref_indiv, seq_u,
 lpoly_regress = function(x, y, bw=NULL, bw_method = "plug-in", degree, drv) {
   # To be adjusted if wants to change
   if(is.null(bw)) {
-    if(bw_method == "plug-in") { bw = dpill(x, y) } # implement other methods later;
+    if(bw_method == "plug-in") {
+      xy <- cbind(x, y)
+      xy <- xy[sort.list(xy[, 1L]), ]
+      x1 <- xy[, 1L]
+      y1 <- xy[, 2L]
+      bw = dpill(x=x1, y=y1) # weirdly need to sort outside the function even though it's also done inside because can bug otherwise, no idea why!
+    } # implement other methods later;
   }
   reg = locpoly(x=x, y=y, drv=drv, bandwidth=bw, degree=degree)
   res = list(reg, bw); names(res) = c("reg", "bw")
@@ -154,12 +160,38 @@ mtr_fun_sieve = function(coeff, vcov, var_treatment, var_cov_2nd, ref_indiv, seq
 
   RES = REF # to save results
 
+  # Possible that some coefficients (e.g., some fixed effects) are NA -  but not a problem if does not concern the reference individual
+  coeff_base = coeff; vcov_base = vcov
+  index_NA = which(is.na(coeff_base))
+  if(length(index_NA > 0)) {
+    coeff = coeff[-index_NA]
+    vcov = vcov[-index_NA, -index_NA]
+  }
+
   # (i) MTR computation
-  mat1 = model.matrix(formula_MTR, data=REF1); mat1 = mat1[1:ntrue_rows, ] # reselect the proper rows once the bugs are avoided;
+  # MTR1:
+  mat1 = model.matrix(formula_MTR, data=REF1);
+  mat1 = mat1[1:ntrue_rows, ] # reselect the proper rows once the bugs are avoided;
+  if(length(index_NA) > 0) {
+    # check that ref individual does not have a characteristics in the missing column:
+    missing_col1 = mat1[, index_NA]
+    if(length(which(missing_col1 != 0)) > 0) { stop("Reference individual has a characteristic for which the coefficient could not be estimated")}
+    mat1 = mat1[, -index_NA]
+  }
   mtr1 = mat1%*%coeff;
 
-  mat0 = model.matrix(formula_MTR, data=REF0); mat0 = mat0[1:ntrue_rows, ]
-  mtr0 = mat0%*%coeff
+  # MTR0:
+  mat0 = model.matrix(formula_MTR, data=REF0);
+  mat0 = mat0[1:ntrue_rows, ]
+  if(length(index_NA) > 0) {
+    # check that ref individual does not have a characteristics in the missing column:
+    missing_col0 = mat0[, index_NA]
+    if(length(which(missing_col0 != 0)) > 0) { stop("Reference individual has a characteristic for which the coefficient could not be estimated")}
+    mat0 = mat0[, -index_NA]
+  }
+  mtr0 = mat0%*%coeff;
+
+
 
   # (ii) Marginal Treatment Effect: MTE(u, x)
   mat_mte = mat1 - mat0 # element by element addition
