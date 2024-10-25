@@ -6,6 +6,7 @@
   library(MASS)
   library(stats)
   library(KernSmooth)
+  library(locpol)
 }
 
 .onAttach <- function(libname, pkgname) {
@@ -16,6 +17,7 @@
   library(MASS)
   library(stats)
   library(KernSmooth)
+  library(locpol)
 }
 
 

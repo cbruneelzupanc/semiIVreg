@@ -21,7 +21,7 @@
 #' @param est_method Estimation method: default is "locpoly" for Robinson (1988) double residual regression for partially linear model. Other options include "sieve" to specify flexibly the control function as a polynomial with pol_degree_sieve, and "homogenous" which is a sieve where we also impose homogenous treatment effect.
 #' @param bw0,bw1 Bandwidth of the first residual regressions of Wd and X on Phat. Need to be specified in the order of the covariates as specified in the model. Be very careful with factors. Default NULL and computed using the specified bw_method.
 #' @param bw_y0,bw_y1 Bandwidth of the second regression of Y (net of the effects of the covariates) on Phat. Default NULL and computed using the specified bw_method.
-#' @param bw_method Method to compute the bandwidth of the local polynomial regressions. Default is simple "plug-in" method.
+#' @param bw_method Method to compute the bandwidth of the local polynomial regressions. Default is simple "rule-of-thumb" method. Alternatives include "cv" for cross-validation and "plug-in" for plug-in bw (Fan and Gijbels, 1996). Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. For replicability, set a seed before running semiivreg. Plug-in bandwidth is computed only with a degree that is odd.
 #' @param pol_degree_locpoly1 Degree of the local polynomial regression of the covariates on Phat. Default is 1 as recommended by Fan and Gijbels (1996) because we want to estimate the regular function.
 #' @param pol_degree_locpoly2 Degree of the local polynomial regression of Y (net of the effects of the covariates) on Phat. Default is 2 as recommended by Fan and Gijbels (1996) because we want to estimate the derivative function.
 #' @param pol_degree_sieve Degree of the polynomial transformation for the control function.
@@ -209,18 +209,30 @@ semiivreg = function(formula, data, propensity_formula=NULL,
     var_propensity = unique(c(var_w0, var_w1, var_covariates)) # unique to keep only one if some covariates in several potential outcomes with different effects
     var_propensity = var_propensity[which(var_propensity != "")]
     propensity_formula = as.formula(paste0(var_treatment, "~", paste0(var_propensity, collapse="+")))
-  }
 
-  # (i) Estimation:
-  if(firststage_model == "probit") {
-    propensity = glm(propensity_formula, family=binomial(link="probit"), data=data)
+
+    # (i) Estimation:
+    if(firststage_model == "probit") {
+      propensity = glm(propensity_formula, family=binomial(link="probit"), data=data)
+    }
+    if(firststage_model == "logit") {
+      propensity = glm(propensity_formula, family=binomial(link="logit"), data=data)
+    }
+    data$Phat = predict.glm(propensity, newdata=data, type="response")
+    #Phat = propensity$fitted.values # No because possibly missing values will make everything wrong;
+    Xdat$Phat = data$Phat
+
+  } else {
+
+    if(firststage_model == "probit") { # if propensity formula is well provided, can run it directly without any modif to the original data
+      propensity = glm(propensity_formula, family=binomial(link="probit"), data=data_orig)
+    }
+    if(firststage_model == "logit") {
+      propensity = glm(propensity_formula, family=binomial(link="logit"), data=data_orig)
+    }
+    data$Phat = predict.glm(propensity, newdata=data_orig, type="response") # add it to DATA -> should have the same ordering as data_orig
+    Xdat$Phat = data$Phat
   }
-  if(firststage_model == "logit") {
-    propensity = glm(propensity_formula, family=binomial(link="logit"), data=data)
-  }
-  data$Phat = predict.glm(propensity, newdata=data, type="response")
-  #Phat = propensity$fitted.values # No because possibly missing values will make everything wrong;
-  Xdat$Phat = data$Phat
 
 
   # (ii) Common Support

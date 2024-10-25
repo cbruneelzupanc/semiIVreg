@@ -40,7 +40,7 @@ by default takes the average value for the numerical covariates, and the referen
 
 \item{bw_y0, bw_y1}{Bandwidth of the second regression of Y (net of the effects of the covariates) on Phat. Default NULL and computed using the specified bw_method.}
 
-\item{bw_method}{Method to compute the bandwidth of the local polynomial regressions. Default is simple "plug-in" method.}
+\item{bw_method}{Method to compute the bandwidth of the local polynomial regressions. Default is simple "rule-of-thumb" method. Alternatives include "cv" for cross-validation and "plug-in" for plug-in bw (Fan and Gijbels, 1996). Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. For replicability, set a seed before running semiivreg. Plug-in bandwidth is computed only with a degree that is odd.}
 
 \item{pol_degree_locpoly1}{Degree of the local polynomial regression of the covariates on Phat. Default is 1 as recommended by Fan and Gijbels (1996) because we want to estimate the regular function.}
 

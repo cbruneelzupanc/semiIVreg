@@ -108,19 +108,40 @@ mtr_fun = function(d, data, ref_indiv, seq_u,
 lpoly_regress = function(x, y, bw=NULL, bw_method = "plug-in", degree, drv) {
   # To be adjusted if wants to change
   if(is.null(bw)) {
+    if(bw_method == "rule-of-thumb") {
+      bw = thumbBw(x, y, deg=degree, kernel=gaussK, weig = rep(1, length(y)))
+    }
     if(bw_method == "plug-in") {
-      xy <- cbind(x, y)
-      xy <- xy[sort.list(xy[, 1L]), ]
-      x1 <- xy[, 1L]
-      y1 <- xy[, 2L]
-      bw = dpill(x=x1, y=y1) # weirdly need to sort outside the function even though it's also done inside because can bug otherwise, no idea why!
-    } # implement other methods later;
+      # Gets long if too many observations... By default compute on subsample
+      sub_id = sample(1:length(x), min(4999, length(x))) # 5000 corresponds to .maxEvalPts in locpol
+      suby = y[sub_id]; subx = x[sub_id]
+      # requires degree to be odd number (not even)
+      if(degree %% 2 == 0) {
+        warning("Degree should be an odd number for plug-in bandwidth selection: reduced by 1 for bw computation.")
+        degree = degree - 1
+      }
+      bw <- pluginBw(subx, suby, deg=degree, kernel=gaussK, weig = rep(1, length(suby)))
+    }
+    if(bw_method == "cv") {
+      # Gets long if too many observations... By default compute on subsample
+      sub_id = sample(1:length(x), min(4999, length(x))) # 5000 corresponds to .maxEvalPts in locpol
+      suby = y[sub_id]; subx = x[sub_id]
+      range = range(subx); upper =  (range[2] - range[1])/2
+      lower = (range[2] - range[1])/1000
+      interval = c(lower, (range[2] - range[1])/2)
+      bw = regCVBwSelC(x=subx, y=suby, deg=degree, kernel=gaussK,weig=rep(1,length(suby)),
+                       interval = interval)
+      # bw very sensitive to interval choice;
+    }
+    ## # Remark: if want to allow for higher maxevalpts:
+    ## unlockBinding(".maxEvalPts", asNamespace("locpol"))
+    ## assign(".maxEvalPts", length(x) + 10, envir = asNamespace("locpol")) # Overwrite the value
+    ## lockBinding(".maxEvalPts", asNamespace("locpol")) # Lock the binding again to avoid unintended modifications
   }
   reg = locpoly(x=x, y=y, drv=drv, bandwidth=bw, degree=degree)
   res = list(reg, bw); names(res) = c("reg", "bw")
   return(res)
 }
-
 
 
 
