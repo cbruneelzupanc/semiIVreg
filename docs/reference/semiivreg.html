@@ -114,7 +114,7 @@ by default takes the average value for the numerical covariates, and the referen
 
 
 <dt id="arg-bw-method">bw_method<a class="anchor" aria-label="anchor" href="#arg-bw-method"></a></dt>
-<dd><p>Method to compute the bandwidth of the local polynomial regressions. Default is simple "plug-in" method.</p></dd>
+<dd><p>Method to compute the bandwidth of the local polynomial regressions. Default is simple "rule-of-thumb" method. Alternatives include "cv" for cross-validation and "plug-in" for plug-in bw (Fan and Gijbels, 1996). Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. For replicability, set a seed before running semiivreg. Plug-in bandwidth is computed only with a degree that is odd.</p></dd>
 
 
 <dt id="arg-pol-degree-locpoly-">pol_degree_locpoly1<a class="anchor" aria-label="anchor" href="#arg-pol-degree-locpoly-"></a></dt>

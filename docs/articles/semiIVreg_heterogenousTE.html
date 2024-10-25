@@ -157,17 +157,17 @@ potential outcomes. To see these:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Residuals:</span></span>
 <span><span class="co">#&gt;     Min      1Q  Median      3Q     Max </span></span>
-<span><span class="co">#&gt; -3.9207 -0.6516 -0.0029  0.6518  3.7547 </span></span>
+<span><span class="co">#&gt; -3.9165 -0.6515 -0.0026  0.6515  3.7574 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients:</span></span>
 <span><span class="co">#&gt;    Estimate Std. Error t value Pr(&gt;|t|)    </span></span>
-<span><span class="co">#&gt; w0 0.797722   0.005538   144.1   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; w0 0.797735   0.005537   144.1   &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Residual standard error: 0.9642 on 24914 degrees of freedom</span></span>
-<span><span class="co">#&gt; Multiple R-squared:  0.4544, Adjusted R-squared:  0.4544 </span></span>
-<span><span class="co">#&gt; F-statistic: 2.075e+04 on 1 and 24914 DF,  p-value: &lt; 2.2e-16</span></span>
+<span><span class="co">#&gt; Residual standard error: 0.9643 on 24914 degrees of freedom</span></span>
+<span><span class="co">#&gt; Multiple R-squared:  0.4545, Adjusted R-squared:  0.4545 </span></span>
+<span><span class="co">#&gt; F-statistic: 2.076e+04 on 1 and 24914 DF,  p-value: &lt; 2.2e-16</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">semiiv</span><span class="op">$</span><span class="va">estimate</span><span class="op">$</span><span class="va">est1</span><span class="op">)</span>;</span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Call:</span></span>
@@ -175,17 +175,17 @@ potential outcomes. To see these:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Residuals:</span></span>
 <span><span class="co">#&gt;     Min      1Q  Median      3Q     Max </span></span>
-<span><span class="co">#&gt; -3.6950 -0.6461 -0.0015  0.6511  3.7226 </span></span>
+<span><span class="co">#&gt; -3.6957 -0.6459 -0.0012  0.6513  3.7204 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients:</span></span>
 <span><span class="co">#&gt;    Estimate Std. Error t value Pr(&gt;|t|)    </span></span>
-<span><span class="co">#&gt; w1 0.507928   0.005501   92.34   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; w1 0.507895   0.005501   92.33   &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Residual standard error: 0.9609 on 25084 degrees of freedom</span></span>
-<span><span class="co">#&gt; Multiple R-squared:  0.2537, Adjusted R-squared:  0.2537 </span></span>
-<span><span class="co">#&gt; F-statistic:  8527 on 1 and 25084 DF,  p-value: &lt; 2.2e-16</span></span>
+<span><span class="co">#&gt; Multiple R-squared:  0.2536, Adjusted R-squared:  0.2536 </span></span>
+<span><span class="co">#&gt; F-statistic:  8525 on 1 and 25084 DF,  p-value: &lt; 2.2e-16</span></span>
 <span><span class="co"># To be compared with:</span></span>
 <span><span class="va">param_y0</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>; <span class="va">param_y1</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span></span>
 <span><span class="co">#&gt; [1] 0.8</span></span>
@@ -238,16 +238,16 @@ bandwidth.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">semiiv</span><span class="op">$</span><span class="va">bw</span></span>
 <span><span class="co">#&gt; $bw0</span></span>
-<span><span class="co">#&gt; [1] 0.02731236 0.02655623</span></span>
+<span><span class="co">#&gt; [1] 0.05207205 0.04511177</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw1</span></span>
-<span><span class="co">#&gt; [1] 0.06149219 0.04632702</span></span>
+<span><span class="co">#&gt; [1] 0.05169498 0.04093002</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw_y0</span></span>
-<span><span class="co">#&gt; [1] 0.08372171</span></span>
+<span><span class="co">#&gt; [1] 0.09666612</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw_y1</span></span>
-<span><span class="co">#&gt; [1] 0.0903293</span></span>
+<span><span class="co">#&gt; [1] 0.08831236</span></span>
 <span><span class="va">semiiv</span> <span class="op">=</span> <span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">|</span><span class="va">w1</span>, <span class="va">data</span>, ref_indiv <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>w0<span class="op">=</span><span class="fl">0</span>, w1<span class="op">=</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>                   bw_method <span class="op">=</span> <span class="st">"plug-in"</span>, bw_y0 <span class="op">=</span> <span class="fl">0.20</span>, bw_y1 <span class="op">=</span> <span class="fl">0.20</span><span class="op">)</span></span></code></pre></div>
 <p><img src="semiIVreg_heterogenousTE_files/figure-html/smooth-1.png" width="672" style="display: block; margin: auto;"></p>
