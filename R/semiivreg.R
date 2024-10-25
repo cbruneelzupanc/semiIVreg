@@ -133,7 +133,7 @@
 semiivreg = function(formula, data, propensity_formula=NULL,
                      ref_indiv =NULL, firststage_model = "probit",
                      est_method = "locpoly", # "locpoly", "sieve", or "homogenous".
-                     bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "plug-in",
+                     bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "rule-of-thumb",
                      pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
                      pol_degree_sieve = 5, conf_level = 0.05,
                      common_supp_trim=c(0,1), trimming_value=NULL, automatic_trim=FALSE,

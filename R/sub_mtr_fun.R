@@ -109,7 +109,14 @@ lpoly_regress = function(x, y, bw=NULL, bw_method = "plug-in", degree, drv) {
   # To be adjusted if wants to change
   if(is.null(bw)) {
     if(bw_method == "rule-of-thumb") {
-      bw = thumbBw(x, y, deg=degree, kernel=gaussK, weig = rep(1, length(y)))
+      bw = thumbBw(x, y, deg=degree, kernel=gaussK, weig = rep(1, length(y))) # might yield weird results when degree = 2
+      if(bw > max(x) - min(x)) {
+        bw = thumbBw(x, y, deg=degree-1, kernel=gaussK, weig = rep(1, length(y))) # reduce the degree
+        if(bw > max(x) - min(x)) { # if still greater:
+          warning("Rule-of-Thumb bw too large... Setting to (max(x)-min(x))/100 arbitrarily")
+          bw = (max(x) - min(x))/100
+        }
+      }
     }
     if(bw_method == "plug-in") {
       # Gets long if too many observations... By default compute on subsample
