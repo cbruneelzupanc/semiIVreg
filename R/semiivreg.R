@@ -14,11 +14,13 @@
 #'
 #' @param data Dataframe containing the data.
 #' @param propensity_formula Formula for the 1st stage. If nothing specified, just runs a probit of d ~ semi-iv0 + semi-iv1 + covariates (removing the redundant variables).
+#' @param propensity_data Data used to compute the 1st stage; ignore by default set to NULL and = data. Mainly useful for internal bootstrap function is the first stage formula is different from the default one.
 #' @param ref_indiv Specify the reference individual (in terms of covariates) at which we will evaluate the function. \cr
 #' by default takes the average value for the numerical covariates, and the reference level for factors. \cr
 #  Can also specify a data.frame with several reference individuals. The MTR and MTE will be computed for all of them. But the plot only for the first one.
 #' @param firststage_model By default, the first stage is a probit model. Can specify another model (e.g., "logit").
 #' @param est_method Estimation method: default is "locpoly" for Robinson (1988) double residual regression for partially linear model. Other options include "sieve" to specify flexibly the control function as a polynomial with pol_degree_sieve, and "homogenous" which is a sieve where we also impose homogenous treatment effect.
+#' @param se_type Type of standard errors if sieve/homogenous estimation. By default = "HC1". Can otherwise me any of the possibilities of vcovHC in the sandwich package. Also possible to have se_type="nonrobust" for the non-robust (lm default).
 #' @param bw0,bw1 Bandwidth of the first residual regressions of Wd and X on Phat. Need to be specified in the order of the covariates as specified in the model. Be very careful with factors. Default NULL and computed using the specified bw_method.
 #' @param bw_y0,bw_y1 Bandwidth of the second regression of Y (net of the effects of the covariates) on Phat. Default NULL and computed using the specified bw_method.
 #' @param bw_method Method to compute the bandwidth of the local polynomial regressions. Default is simple "rule-of-thumb" method. Alternatives include "cv" for cross-validation and "plug-in" for plug-in bw (Fan and Gijbels, 1996). Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. For replicability, set a seed before running semiivreg. Plug-in bandwidth is computed only with a degree that is odd.
@@ -48,14 +50,17 @@
 #'    \item{`$data`}{Original data used for the estimation where we added the propensity score estimated, named `Phat`, and where we made the transformation of the eventual `factor` variables as dummies.}
 #'    \item{`$ref_indiv`}{Reference individual(s) at which we evaluate the MTE and MTR.}
 #'    \item{`$Xdat`}{Set of covariates (this output is used for the bootstrap).}
+#'    \item{`$deltaX`}{Returns the estimated effects of the covariates and semi-IVs (without intercept) for the specified reference individuals.}
 #'  }}
 #'
 #' \item{`$estimate`}{Returns the estimation of:
 #' \describe{
 #'    \item{`$est, or $est0 and $est1`}{If `est_method = "locpoly"`, `est0` and `est1` returns the second stage estimates of the effect of the covariates and semi-IVs on their respective potential outcomes.
-#'    Coming out of the double residual regression à la Robinson (1988), running a no-intercept OLS of the residuals Y-E(Yd|P) on the residuals of every semi-IVs, Wd-E(Wd|P), and covariates, X-E(X|P). \cr
-#'    If `est_method = "sieve"` or `"homogenous"`, `$est` returns the second stage estimates of E(Yd | D, Wd, X, P) where the propensity score is controlled for with a flexible control function (polynomial), Kd(P).}
+#'    Coming out of the double residual regression à la Robinson (1988), running a no-intercept OLS of the residuals Y-E(Yd|P) on the residuals of every semi-IVs, Wd-E(Wd|P), and covariates, X-E(X|P). \cr}
+#'    \item{`$mtr0, $mtr1 and $mte`}{If `est_method = "sieve"` or `"homogenous"`, returns the functional form estimated for both MTR and MTE.}
+#'    \item{`$kv`}{Returns the estimated k_d(v) (=E(Ud|V=v)). Includes the constant. If sums with the effect of covariates and semi-IVs (deltadX), gives the mtr_d.}
 #'    \item{`$propensity`}{First stage estimate of the propensity score.}
+#'    \item{`$est_kappa`}{If `est_method = "sieve"` or `"homogenous"`, this returns the estimated model for E(Y|D=d, X, Wd, P). From this, we extract Kappad(P) = E(Ud | D=d, P=p) from which we compute the kd(v) and mtrd(v, x, wd) functions. }
 #'    \item{`$avg_MTE`}{Average of the MTE over the identified common support. If full common support, it is an estimate of the ATE(x, w0, w1). If `est_method="homogenous"`, the MTE is constant so it also gives the ATE(x, w0, w1).}
 #' }}
 #'
@@ -102,9 +107,10 @@
 #'@author
 #' Christophe Bruneel-Zupanc, \url{cbruneel.com}
 
-#' @usage semiivreg(formula, data, propensity_formula=NULL,
+#' @usage semiivreg(formula, data, propensity_formula=NULL, propensity_data = NULL,
 #'                  ref_indiv =NULL, firststage_model = "probit",
 #'                  est_method = "locpoly", # "locpoly", "sieve", or "homogenous".
+#'                  se_type = "HC1",
 #'                  bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "plug-in",
 #'                  pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
 #'                  pol_degree_sieve = 5, conf_level = 0.05,
@@ -130,9 +136,10 @@
 
 #' @rdname semiivreg
 #' @export
-semiivreg = function(formula, data, propensity_formula=NULL,
+semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = NULL,
                      ref_indiv =NULL, firststage_model = "probit",
                      est_method = "locpoly", # "locpoly", "sieve", or "homogenous".
+                     se_type = "HC1",
                      bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "rule-of-thumb",
                      pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
                      pol_degree_sieve = 5, conf_level = 0.05,
@@ -204,12 +211,15 @@ semiivreg = function(formula, data, propensity_formula=NULL,
 
   # 1. First stage: Propensity score estimation
   # --------------
+
+
   if(is.null(propensity_formula)) { # by default, simple only include w0 and w1, additively
     # Formula:
     var_propensity = unique(c(var_w0, var_w1, var_covariates)) # unique to keep only one if some covariates in several potential outcomes with different effects
     var_propensity = var_propensity[which(var_propensity != "")]
     propensity_formula = as.formula(paste0(var_treatment, "~", paste0(var_propensity, collapse="+")))
 
+    #if(is.null(propensity_data)) { propensity_data = data }
 
     # (i) Estimation:
     if(firststage_model == "probit") {
@@ -223,14 +233,16 @@ semiivreg = function(formula, data, propensity_formula=NULL,
     Xdat$Phat = data$Phat
 
   } else {
+    if(is.null(propensity_data)) { propensity_data = data_orig } # use the original data because maybe different transformation in 1st stage than in 2nd stage
+    # /!\ crucial that propensity_data is ordered same way as data;
 
     if(firststage_model == "probit") { # if propensity formula is well provided, can run it directly without any modif to the original data
-      propensity = glm(propensity_formula, family=binomial(link="probit"), data=data_orig)
+      propensity = glm(propensity_formula, family=binomial(link="probit"), data=propensity_data)
     }
     if(firststage_model == "logit") {
-      propensity = glm(propensity_formula, family=binomial(link="logit"), data=data_orig)
+      propensity = glm(propensity_formula, family=binomial(link="logit"), data=propensity_data)
     }
-    data$Phat = predict.glm(propensity, newdata=data_orig, type="response") # add it to DATA -> should have the same ordering as data_orig
+    data$Phat = predict.glm(propensity, newdata=propensity_data, type="response") # add it to DATA -> should have the same ordering as data_orig
     Xdat$Phat = data$Phat
   }
 
@@ -296,29 +308,39 @@ semiivreg = function(formula, data, propensity_formula=NULL,
     #if(var_covariates != "") { print("-- Common covariates treated as having generally different effect on D=0 and D=1") }
     # with Robinson, we don't allow the covariates to have the same effect on both D=0 and D=1
 
-    res0 = mtr_fun(d=0, data, ref_indiv, seq_u,
-                   bwd = bw0, bw_y = bw_y0, bw_method = bw_method,
-                   pol_degree1 = pol_degree_locpoly1, pol_degree2 = pol_degree_locpoly2,
-                   var_outcome=var_outcome, var_treatment=var_treatment, var_w0=var_w0, var_w1=var_w1, var_covariates=var_covariates)
-    res1 = mtr_fun(d=1, data, ref_indiv, seq_u,
-                   bwd = bw1, bw_y = bw_y1, bw_method = bw_method,
-                   pol_degree1 = pol_degree_locpoly1, pol_degree2 = pol_degree_locpoly2,
-                   var_outcome=var_outcome, var_treatment=var_treatment, var_w0=var_w0, var_w1=var_w1, var_covariates=var_covariates)
 
-    mtr0 = res0$RES; mtr1 = res1$RES
-    mtr1 = subset(mtr1, select=c("id", "Phat", "mtr1"))
-    RES = base::merge(mtr0, mtr1, by=c("id", "Phat")) # normal to have some NA
+    # locpoly-1) Estimate covariates effects and kd(v)
 
-    RES$mte = RES$mtr1 - RES$mtr0;
+    res0 = mtr_est_poly(d=0, data, seq_u,
+                        bwd = bw0, bw_y = bw_y0, bw_method = bw_method,
+                        pol_degree1 = pol_degree_locpoly1, pol_degree2 = pol_degree_locpoly2,
+                        var_outcome=var_outcome, var_treatment=var_treatment, var_w0=var_w0, var_w1=var_w1, var_covariates=var_covariates)
+    res1 = mtr_est_poly(d=1, data, seq_u,
+                        bwd = bw1, bw_y = bw_y1, bw_method = bw_method,
+                        pol_degree1 = pol_degree_locpoly1, pol_degree2 = pol_degree_locpoly2,
+                        var_outcome=var_outcome, var_treatment=var_treatment, var_w0=var_w0, var_w1=var_w1, var_covariates=var_covariates)
 
-    # Graphical Parameter:
-    conf_band = FALSE # No confidence band with this method
 
-    # Other outputs:
     est0 = res0$estd; est1 = res1$estd;
+    k0 = res0$kv; k1 = res1$kv;
+    #kv = merge(k0, k1, by="v") # useless, recreated after
+
+    # Other output to save
     bw0 = res0$bwd; bw_y0 = res0$bw_y;
     bw1 = res1$bwd; bw_y1 = res1$bw_y;
 
+
+    # locpoly-2) Estimate MTR0, MTR1 and MTE from this for the reference individual
+
+    eval_v = k0$v # same for k1.
+
+    PREDICT = mtr_fun_poly(ref_indiv=ref_indiv, eval_v=eval_v, est0=est0, est1=est1, k0=k0, k1=k1)
+    RES = PREDICT$est
+    deltaX = PREDICT$deltaX
+    kv = PREDICT$kv
+
+    # Graphical Parameter:
+    conf_band = FALSE # No confidence band with this method
     var_cov_2nd = NULL
   }
 
@@ -330,6 +352,8 @@ semiivreg = function(formula, data, propensity_formula=NULL,
 
   # Method 2: "Sieve" method -> Flexible polynomial specification for Kappa_d
   # ---------
+  # Either "sieve": general sieve with heterogenous treatment effects
+  # Or "homogenous": sieve with homogenous treatment effects.
 
   if(est_method %in% c("sieve", "homogenous")) {
 
@@ -346,21 +370,25 @@ semiivreg = function(formula, data, propensity_formula=NULL,
     var_d1 = paste0("I(", var_treatment, "):", var_w1) #var_d1 = paste0("I(", var_treatment, "*", var_w1, ")")
     var_cov_2nd = c(var_d1_base, var_d0, var_d1, var_covariates) # var_d0_base is the intercept.
     var_cov_2nd = var_cov_2nd[which(var_cov_2nd != "")] # if no covariates
-  }
 
-  # Method 2.1. General Sieve, with heterogenous Treatment Effects
-  # -----------
-  if(est_method == "sieve") {
 
-    # Sieve-1) Estimate E[Yd | D, Z, X]
+
+    # Sieve-1) Estimate E[Yd | D, Z, X, P]
     # ---------------------------------
     # -> gives estimate of Kappa_d(P) -> from kappa_d, obtains the MTR and MTE.
     # Estimate as a stacked regression (useful if want to impose same effect of covariates + practical afterwards)
-    formula_control_function = paste0("I(1-", var_treatment, "):Kappa_fun(Phat, pol_degree) + I(", var_treatment, "):Kappa_fun(Phat, pol_degree)")
-    formula_2nd_stage = as.formula(paste0(var_outcome, "~ ", paste0(var_cov_2nd, collapse="+"), "+", formula_control_function))
+    if(est_method == "sieve") {
+      formula_control_function = paste0("I(1-", var_treatment, "):Kappa_fun(Phat, pol_degree) + I(", var_treatment, "):Kappa_fun(Phat, pol_degree)")
+      formula_2nd_stage = as.formula(paste0(var_outcome, "~ ", paste0(var_cov_2nd, collapse="+"), "+", formula_control_function))
+    }
+    if(est_method == "homogenous") {
+      formula_control_function = paste0("I(-(1-", var_treatment, ")*Phat/(1-Phat) + ", var_treatment, "):Kappa_homogenous_fun(Phat, pol_degree)")
+      formula_2nd_stage= as.formula(paste0(var_outcome, "~ ", paste0(var_cov_2nd, collapse="+"), "+", formula_control_function))
+    }
 
     # Estimation
     est = lm(formula_2nd_stage, data)
+    est_kappa = est;
 
 
     # Sieve-2) Marginal Treatment Responses and MTE estimation
@@ -369,48 +397,72 @@ semiivreg = function(formula, data, propensity_formula=NULL,
 
     # (i) Extract Coefficients from the main estimation;
     coeff = coefficients(est)
-    vcov = vcov(est)
-    t_value = qt(1-conf_level/2, df = df.residual(est))
-
+    if(se_type == "nonrobust") {
+      vcov = vcov(est)
+    } else {
+      vcov = vcovHC(est, type = se_type) # robust standard errors;
+    }
+    df = df.residual(est)
+    t_value = qt(1-conf_level/2, df=df)
     if(length(which(is.na(coeff))) > 0) { warning("Some coefficients are NA. May be impossible to evaluate for some reference individual. ") }
 
-    # (ii) Construct kd(u) functions -> see formula in Andresen for e.g.
-    # Done outside of here; kdu need to correspond to Kappa transformation
-    # Then: kdu is equal to: kdu_transform_fun(seq_u, d=rep(d, length(u)))%*%coeffkd
+    # Additional correction: if robust standard errors, no row/column for NA coeff. Add them back;
+    ncoeff = length(coeff)
+    index_nonNA = which(!is.na(coeff))
+    if(se_type != "nonrobust") {
+      vcov_base = vcov;
+      vcov = matrix(NA, nrow=ncoeff, ncol=ncoeff)
+      vcov[index_nonNA, index_nonNA] = vcov_base
+    }
 
-    # (iii) Marginal Treatment Responses: MTR(u, x) and MTE(u, x)
-    RES = mtr_fun_sieve(coeff=coeff, vcov=vcov, var_treatment=var_treatment, var_cov_2nd=var_cov_2nd, ref_indiv=ref_indiv,
-                        seq_u=seq_u, homogenous=FALSE, pol_degree=pol_degree,
-                        conf_level=conf_level, t_value=t_value, Xdat = Xdat)
+    coeff_kappa = coeff;
+    vcov_kappa = vcov
 
+
+    # (ii) Transform into the coefficients for the MTR0 and MTR1:
+    # Known transformation from Kappa_d to kd(v) when Kappa is polynomial.
+    mcoeffs = mtr_coeff(coeff=coeff_kappa, vcov=vcov_kappa,
+                        var_treatment=var_treatment, est_method=est_method)
+    coeff = mcoeffs$coeff; vcov = mcoeffs$vcov; names_var = mcoeffs$variables
+
+    if(est_method == "homogenous") {
+      exp_to_replace = paste0("I(-(1 - ", var_treatment, ") * Phat/(1 - Phat) + ", var_treatment, "):Kappa_homogenous_fun(Phat, pol_degree)")
+      names_var = gsub(exp_to_replace, "kd(v): v^", names_var, fixed=TRUE)
+    } # just for easy readability
+
+    std_errors = sqrt(diag(vcov))
+    t_values <- coeff / std_errors
+    p_values <- 2 * pt(-abs(t_values), df = df)
+    table_stacked = data.frame(Variable = names_var,
+                               Estimate = unname(coeff),
+                               Std_Error = unname(std_errors),
+                               t_value = unname(t_values),
+                               p_value = unname(p_values))
+
+
+    # Also output a table of estimation results directly from here:
+    res_est = mtr_est(coeff=coeff, vcov=vcov, names_var=names_var, var_treatment=var_treatment, df=df, est_method=est_method)
+    est_mtr0 = res_est$table$mtr0
+    est_mtr1 = res_est$table$mtr1
+    est_mte = res_est$table$mte
+
+    coeff_stacked = coeff
+    coeff_mtr0 = res_est$coeff$mtr0; coeff_mtr1 = res_est$coeff$mtr1; coeff_mte = res_est$coeff$mte
+
+    vcov_stacked = vcov
+    vcov_mtr0 = res_est$vcov$mtr0; vcov_mtr1 = res_est$vcov$mtr1; vcov_mte = res_est$vcov$mte
+
+
+    # (iii) Marginal Treatment Responses: MTRd(v, x) and MTE(v, x)
+    # Using directly the coefficients from the correct functional form for the mtr.
+    PREDICT = mtr_predict_sieve(coeff=coeff, vcov=vcov, ref_indiv=ref_indiv,
+                                var_treatment=var_treatment, var_cov_2nd=var_cov_2nd, pol_degree=pol_degree,
+                                seq_u = seq_u, t_value = t_value, est_method=est_method, se_type=se_type)
+    RES = PREDICT$est
+    kv = PREDICT$kv
+    deltaX = PREDICT$deltaX
   }
 
-
-  # Method 2.2: "homogenous" method -> Homogenous treatment effects
-  # -----------
-  if(est_method == "homogenous") {
-
-    # Homogenous-1) Estimation of the regression
-    # Computation non trivial (see paper); note that it still allows for a flexible Kappa; only imposes that MTR1 - MTR0 is constant;
-    # Formula
-    formula_control_function_homogenous = paste0("I(-(1-", var_treatment, ")*Phat/(1-Phat) + ", var_treatment, "):Kappa_homogenous_fun(Phat, pol_degree)")
-    formula_2nd_stage_homogenous = as.formula(paste0(var_outcome, "~ ", paste0(var_cov_2nd, collapse="+"), "+", formula_control_function_homogenous))
-
-    # Estimation
-    est = lm(formula_2nd_stage_homogenous, data)
-
-    # Homogenous-2) MTR and MTE with homogenous TE
-    # Remark: implies flat (constant) MTE, but MTR can still vary.
-
-    # (i) Extract Coefficients from the main estimation;
-    coeff = coefficients(est)
-    vcov = vcov(est)
-    t_value = qt(1-conf_level/2, df = df.residual(est))
-
-    # (ii) MTR and MTE (MTE is constant here by construction)
-    RES = mtr_fun_sieve(coeff=coeff, vcov=vcov, var_treatment=var_treatment, var_cov_2nd=var_cov_2nd, ref_indiv=ref_indiv,
-                        seq_u = seq_u, homogenous=TRUE, pol_degree=pol_degree, conf_level=conf_level, t_value=t_value, Xdat=Xdat)
-  }
 
 
 
@@ -446,28 +498,47 @@ semiivreg = function(formula, data, propensity_formula=NULL,
   # 4. Return objects
   # -----------------
 
-  output_data = list(RES, data_not_trimmed, ref_indiv, Xdat); names(output_data) = c("RES", "data", "ref_indiv", "Xdat")
+  output_data = list(RES, deltaX, data_not_trimmed, ref_indiv, Xdat, Xdat_orig); names(output_data) = c("RES", "deltaX", "data", "ref_indiv", "Xdat", "Xdat_orig")
   output_plot = list(supp_plot, mtr_plot, mte_plot); names(output_plot) = c("supp", "mtr", "mte")
   output_supp = common_supp
-  output_call = list(new_formula, formula, var_treatment, var_outcome, var_w0, var_w1, var_covariates, var_cov_2nd); names(output_call) = c("formula", "formula_orig", "var_treatment", "var_outcome", "var_w0", "var_w1", "var_covariates", "var_cov_2nd")
+  output_call = list(new_formula, formula, var_treatment, var_outcome, var_w0, var_w1, var_covariates,
+                     var_cov_2nd, formula_X_orig, se_type, est_method, pol_degree_sieve,
+                     pol_degree_locpoly1, pol_degree_locpoly2, conf_level);
+  names(output_call) = c("formula", "formula_orig", "var_treatment", "var_outcome", "var_w0", "var_w1",
+                         "var_covariates", "var_cov_2nd", "formula_X_orig", "se_type", "est_method",
+                         "pol_degree_sieve", "pol_degree_locpoly1", "pol_degree_locpoly2",
+                         "conf_level")
+
 
   if(est_method %in% c("sieve", "homogenous")) {
-    output_estimate = list(est, propensity, avg_MTE);
-    names(output_estimate) = c("est", "propensity", "avg_MTE")
+    output_estimate = list(est_mtr0, est_mtr1, est_mte, kv, propensity, avg_MTE, table_stacked, est_kappa);
+    names(output_estimate) = c("mtr0", "mtr1", "mte", "kv", "propensity", "avg_MTE", "est", "est_kappa")
+
+    output_coeff = list(coeff_stacked, coeff_mtr0, coeff_mtr1, coeff_mte, coeff_kappa)
+    names(output_coeff) = c("coeff_stacked", "coeff_mtr0", "coeff_mtr1", "coeff_mte", "coeff_kappa")
+
+    output_vcov = list(vcov_stacked, vcov_mtr0, vcov_mtr1, vcov_mte, vcov_kappa)
+    names(output_vcov) = c("vcov_stacked", "vcov_mtr0", "vcov_mtr1", "vcov_mte", "vcov_kappa")
 
     output_bw = NA # not relevant for this method
+
   }
 
   if(est_method == "locpoly") {
-    output_estimate = list(est0, est1, propensity, avg_MTE);
-    names(output_estimate) = c("est0", "est1", "propensity", "avg_MTE")
+    output_estimate = list(est0, est1, kv, propensity, avg_MTE);
+    names(output_estimate) = c("est0", "est1", "kv", "propensity", "avg_MTE")
+    # don't call it mtr0 and mtr1 because it's not the entire function. It's only the covariates effect
 
-    output_bw = list(bw0, bw1, bw_y0, bw_y1)
-    names(output_bw) = c("bw0", "bw1", "bw_y0", "bw_y1")
+    output_bw = list(bw0, bw1, bw_y0, bw_y1, bw_method)
+    names(output_bw) = c("bw0", "bw1", "bw_y0", "bw_y1", "bw_method")
+
+    output_coeff = NA; output_vcov = NA;
   }
 
-  output = list(output_data, output_estimate, output_bw, output_plot, output_supp, output_call);
-  names(output) = c("data", "estimate", "bw", "plot", "supp", "call")
+  output = list(output_data, output_estimate, output_coeff, output_vcov,
+                output_bw, output_plot, output_supp, output_call);
+  names(output) = c("data", "estimate", "coeff", "vcov",
+                    "bw", "plot", "supp", "call")
 
   return(output)
 }
@@ -497,17 +568,18 @@ semiivreg = function(formula, data, propensity_formula=NULL,
 
 #' @rdname semiivreg
 #' @usage semiivreg_boot(formula, Nboot=500, data, propensity_formula=NULL, ref_indiv =NULL,
-#'                firststage_model="probit",
+#'                firststage_model="probit", est_method = "locpoly", se_type="HC1",
 #'                pol_degree_transform = 5, common_supp_trim=c(0,1), trimming_value = NULL,
 #'                automatic_trim = FALSE, plotting=TRUE, conf_level = 0.05, CI_method = "delta")
 #' @param Nboot Number of bootstrap samples.
 #' @param CI_method "delta" for delta method, "curve" for bootstrap the MTE curves directly. With est_method = "locpoly", only "curve" method is possible.
 #'
 #' @export
-semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL,
+semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, propensity_data=NULL,
                           ref_indiv =NULL, firststage_model = "probit",
                           est_method = "locpoly", # "locpoly", "sieve", or "homogenous".
-                          bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "plug-in",
+                          se_type="HC1",
+                          bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "rule-of-thumb",
                           pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
                           pol_degree_sieve = 5, conf_level = 0.05,
                           common_supp_trim=c(0,1), trimming_value=NULL, automatic_trim=FALSE,
@@ -519,9 +591,11 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL,
   # -------------------------------
   # to extract main estimate and eventually the support:
 
+  cat(sprintf("Bandwidth and MTR/MTE estimation on main sample... \r"))
+
   main_res = semiivreg(formula=formula, data=data, propensity_formula=propensity_formula,
                        ref_indiv = ref_indiv, firststage_model = firststage_model,
-                       est_method = est_method, bw0 = bw0, bw1 = bw1, bw_y0 = bw_y0, bw_y1 = bw_y1, bw_method = bw_method,
+                       est_method = est_method, se_type=se_type, bw0 = bw0, bw1 = bw1, bw_y0 = bw_y0, bw_y1 = bw_y1, bw_method = bw_method,
                        pol_degree_locpoly1 = pol_degree_locpoly1, pol_degree_locpoly2 = pol_degree_locpoly2,
                        pol_degree_sieve = pol_degree_sieve, conf_level = conf_level,
                        common_supp_trim = common_supp_trim, trimming_value = trimming_value, automatic_trim = automatic_trim, plotting=FALSE)
@@ -533,7 +607,7 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL,
   transform_formula = main_res$call$formula
 
   # Updated data:
-  orig_data = data;
+  orig_data = data; propensity_data = orig_data
   data = main_res$data$data
 
   # Extract the bandwidth (if est_method = "locpoly"):
@@ -549,11 +623,20 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL,
   # Remark: in every simulation, applies the same support for the estimates. So always put automatic_trim = FALSE and trimming_value = NULL
   #         The support will be determined by the common_supp_trim of the main regression.
 
+  seq_u = main_res$data$RES$Phat
+
+  var_treatment = main_res$call$var_treatment; var_cov_2nd = main_res$call$var_cov_2nd
+
+
+  cat(sprintf("Bandwidth and MTR/MTE estimation on main sample: Done. \n"))
 
 
 
   # 2. Bootstrap
   # ------------
+  #print("2/ Starting Bootstrap:")
+  #progressbar <- txtProgressBar(min = 0, max = Nboot, style = 3)
+
   BOOT = list()
   for(k in 1:Nboot) {
 
@@ -562,16 +645,20 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL,
     # Bootstrap sample
     bootstrap_indices <- sample(1:nrow(data), size = nrow(data), replace = TRUE)
     bootstrap_sample <- data[bootstrap_indices, ]
+    bootstrap_propensity_sample = propensity_data[bootstrap_indices, ]
 
     # semi-iv estimation
     boot_res = invisible(semiivreg(formula=transform_formula, data=bootstrap_sample,
+                                   propensity_data = bootstrap_propensity_sample,
                                    propensity_formula=propensity_formula,
                                    ref_indiv = ref_indiv, firststage_model = firststage_model,
-                                   est_method = est_method, bw0 = bw0, bw1 = bw1, bw_y0 = bw_y0, bw_y1 = bw_y1, bw_method = bw_method,
+                                   est_method = est_method, se_type=se_type, bw0 = bw0, bw1 = bw1, bw_y0 = bw_y0, bw_y1 = bw_y1, bw_method = bw_method,
                                    pol_degree_locpoly1 = pol_degree_locpoly1, pol_degree_locpoly2 = pol_degree_locpoly2,
                                    pol_degree_sieve = pol_degree_sieve, conf_level = conf_level,
                                    common_supp_trim = common_supp_trim_boot, trimming_value=NULL, automatic_trim=FALSE, plotting=FALSE))
     BOOT[[k]] = boot_res
+    #setTxtProgressBar(progressbar, k)
+    cat(sprintf("Bootstrap Progress: %d/%d", k, Nboot), "\r")
   }
 
 
@@ -581,15 +668,50 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL,
   if(est_method %in% c("sieve", "homogenous")) {
 
     BOOTest = list()
-    for(k in 1:Nboot) { BOOTest[[k]] = coefficients(BOOT[[k]]$estimate$est) }
+    for(k in 1:Nboot) { BOOTest[[k]] = BOOT[[k]]$coeff$coeff_stacked }
     EST = do.call('rbind', BOOTest)
     meanEST = apply(EST, 2, mean);
-    main_res_coeff = coefficients(main_res$estimate$est)
+    main_res_coeff = main_res$coeff$coeff_stacked #coefficients(main_res$estimate$est)
     vcov = cov(EST)
     standarderror = sqrt(diag(vcov))
     COEFF = data.frame(estimate=main_res_coeff, std_error=standarderror, boot_mean_estimate=meanEST)
+    # This will be used in the predict function after;
+
+
+    # Table of coefficients for MTR and MTE directly:
+    # if est_method = sieve or homogenous, can also DIRECTLY export table of results
+    BOOTmtr0 = list(); BOOTmtr1 = list(); BOOTmte = list()
+    for(k in 1:Nboot) {
+      BOOTmtr0[[k]] = BOOT[[k]]$coeff$coeff_mtr0
+      BOOTmtr1[[k]] = BOOT[[k]]$coeff$coeff_mtr1
+      BOOTmte[[k]] = BOOT[[k]]$coeff$coeff_mte
+    }
+    ESTmtr0 = do.call('rbind', BOOTmtr0)
+    ESTmtr1 = do.call('rbind', BOOTmtr1)
+    ESTmte = do.call('rbind', BOOTmte)
+
+    meanESTmtr0 = apply(ESTmtr0, 2, mean)
+    meanESTmtr1 = apply(ESTmtr1, 2, mean)
+    meanESTmte = apply(ESTmte, 2, mean)
+
+    main_res_mtr0 = main_res$coeff$coeff_mtr0
+    main_res_mtr1 = main_res$coeff$coeff_mtr1
+    main_res_mte = main_res$coeff$coeff_mte
+
+    vcov_mtr0 = cov(ESTmtr0)
+    vcov_mtr1 = cov(ESTmtr1)
+    vcov_mte = cov(ESTmte)
+
+    standarderror_mtr0 = sqrt(diag(vcov_mtr0))
+    standarderror_mtr1 = sqrt(diag(vcov_mtr1))
+    standarderror_mte = sqrt(diag(vcov_mte))
+
+    MTR0 = data.frame(estimate=main_res_mtr0, std_error=standarderror_mtr0, boot_mean_estimate=meanESTmtr0)
+    MTR1 = data.frame(estimate=main_res_mtr1, std_error=standarderror_mtr1, boot_mean_estimate=meanESTmtr1)
+    MTE = data.frame(estimate=main_res_mte, std_error=standarderror_mte, boot_mean_estimate=meanESTmte)
 
   }
+
 
 
   if(est_method == "locpoly") {
@@ -613,7 +735,16 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL,
     vcov = cov(EST)
     standarderror = sqrt(diag(vcov))
     COEFF = data.frame(estimate=main_res_coeff, std_error=standarderror, boot_mean_estimate=meanEST)
+
+
+    # Table of coefficients for MTR and MTE directly:
+    # -> not possible with locpoly
+    MTR0 = NULL; MTR1 = NULL; MTE = NULL
   }
+
+
+
+
 
 
 
@@ -631,19 +762,17 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL,
   # ---------
   if(CI_method == "delta") {
     if(! est_method %in% c("sieve", "homogenous")) { stop("Delta method only possible with est_method = 'sieve' or 'homogenous'")}
-
-    t_value = qt(1-conf_level/2, df = df.residual(main_res$estimate$est))
-    var_treatment = main_res$call$var_treatment; var_cov_2nd = main_res$call$var_cov_2nd
-    seq_u = seq(0, 1, by=0.001); pol_degree = pol_degree_sieve
-    Xdat = main_res$data$Xdat
+    df = df.residual(main_res$estimate$est_kappa)
+    t_value = qt(1-conf_level/2, df = df)
+    #seq_u = seq(0, 1, by=0.001);
+    pol_degree = pol_degree_sieve
 
     # Then simply return the main function results using this new vcov around the main estimates:
-    if(est_method == "homogenous") { homogenous = TRUE } else { homogenous = FALSE }
-    RES = mtr_fun_sieve(coeff=main_res_coeff,
-                        vcov=vcov, var_treatment=var_treatment, var_cov_2nd=var_cov_2nd, ref_indiv=ref_indiv,
-                        seq_u=seq_u, homogenous=homogenous, pol_degree=pol_degree,
-                        conf_level=conf_level, t_value=t_value, Xdat=Xdat)
-
+    PREDICT = mtr_predict_sieve(coeff=main_res_coeff,
+                                vcov=vcov, ref_indiv=ref_indiv,
+                                var_treatment=var_treatment, var_cov_2nd=var_cov_2nd, pol_degree=pol_degree,
+                                seq_u = seq_u, t_value = t_value, est_method=est_method, se_type=se_type)
+    RES = PREDICT$est
   }
 
   # Remark: with est_method="locpoly"
@@ -724,11 +853,119 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL,
   # ---------
   output_main = main_res;
   output_plot = list(main_supp_plot, mtr_plot, mte_plot); names(output_plot) = c("supp", "mtr", "mte")
-  output_estimate = list(RES, COEFF, vcov); names(output_estimate) = c("est", "coeff", "vcov")
+
+  output_estimate = list(RES, COEFF, vcov, MTR0, MTR1, MTE); names(output_estimate) = c("est", "coeff", "vcov", "mtr0", "mtr1", "mte")
+
 
   output = list(output_main, output_plot, output_estimate); names(output) = c("main", "plot", "estimate")
   return(output)
 }
+
+
+
+
+
+
+
+
+
+
+#' @rdname semiivreg
+#' @usage semiiv_predict(semiiv, newdata, seq_v=NULL)
+#' @param semiiv Object returns from a semiivreg estimation.
+#' @param newdata New data for which to predict the MTE and MTR.
+#' @param seq_v Sequence of v at which to predict the MTE and MTR. By default: NULL fits the default interval of the original semiivreg (equally space grid of proba, with step size of 0.001 on the common support).
+#' @export
+semiiv_predict = function(semiiv, newdata, seq_v=NULL) {
+  # seq_v = NULL means that we use the original sequence of the sieve
+  # can specify a single point for example if only want to estimate deltaX as an output!
+
+  # 1. Format the newdata according to formula
+  # This implies changing the factors, polynomials, log, etc. accordingly
+
+  formula = semiiv$call$formula_orig
+  formula_X_orig = semiiv$call$formula_X_orig
+  Xdat_orig = semiiv$data$Xdat_orig
+
+  name_all_X_orig = all.vars(formula_X_orig)
+  newdata1 = subset(newdata, select=name_all_X_orig) # remove potential "id"
+  # Transform into factors as in data:
+  for(j in 1:ncol(Xdat_orig)) {
+    if(is.factor(Xdat_orig[,j])) {
+      newdata1[,j] = factor(as.character(newdata1[,j]), levels=levels(Xdat_orig[,j]))
+    }
+  }
+  ref = rbind(newdata1, Xdat_orig) # inflate the data just to have all the levels of the factors;
+  res_ref = construct_data(formula, data=ref)
+
+  ref_indiv = res_ref$data[1:nrow(newdata1),] # "ref_indiv" = newdata changed
+  ref_indiv$id = 1:nrow(ref_indiv)
+  rownames(ref_indiv) = 1:nrow(ref_indiv)
+
+
+
+
+  # 2. Predict the MTR0, MTR1 and MTE for the new individuals
+  est_method = semiiv$call$est_method;
+  se_type = semiiv$call$se_type;
+  if(is.null(seq_v)) {
+    seq_u = sort(unique(semiiv$data$RES$Phat)) # the original sequence
+  } else { seq_u = seq_v } # if pre-specified
+
+  var_treatment = semiiv$call$var_treatment
+  var_cov_2nd = semiiv$call$var_cov_2nd
+
+  # 2.(i) Sieve or Homogenous
+
+  if(est_method %in% c("sieve", "homogenous")) {
+    coeff = semiiv$coeff$coeff_stacked
+    vcov = semiiv$vcov$vcov_stacked
+    pol_degree = semiiv$call$pol_degree_sieve
+    conf_level = semiiv$call$conf_level
+    df = df.residual(semiiv$estimate$est_kappa)
+    t_value = qt(1-conf_level/2, df=df)
+
+    # Support check:
+    supp = semiiv$supp;
+    if(length(which(seq_u < supp[1] | seq_u > supp[2])) > 0) {
+      warning("Some values of seq_v are outside of the common support. kd(v) will be extrapolated for these values. ")
+    } # Only returns a warning because can still compute with the functional form;
+
+    PREDICT = mtr_predict_sieve(coeff=coeff, vcov=vcov, ref_indiv=ref_indiv,
+                                var_treatment=var_treatment, var_cov_2nd=var_cov_2nd, pol_degree=pol_degree,
+                                seq_u = seq_u, t_value = t_value, est_method=est_method, se_type=se_type)
+
+  }
+
+
+  # 2.(ii) Local Polynomial
+
+  if(est_method == "locpoly") {
+
+    est0 = semiiv$estimate$est0
+    est1 = semiiv$estimate$est1
+    kv = semiiv$estimate$kv
+    k0 = subset(kv, select=c("v", "k0"))
+    k1 = subset(kv, select=c("v", "k1"))
+
+    # Support check:
+    # Already done within the function (returns error if outside)
+
+    PREDICT = mtr_fun_poly(ref_indiv=ref_indiv, eval_v=seq_u, est0=est0, est1=est1, k0=k0, k1=k1)
+  }
+
+
+  # 3. Output
+  RES = PREDICT$est
+  kv = PREDICT$kv
+  deltaX = PREDICT$deltaX
+
+  output = list(RES, deltaX, kv)
+  names(output) = c("est", "deltaX", "kv")
+  return(output)
+
+}
+
 
 
 NULL

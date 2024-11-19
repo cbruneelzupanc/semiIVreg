@@ -58,9 +58,10 @@ Use <code>semiivreg_boot</code> to obtain 'correct' bootstrapped confidence inte
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">semiivreg</span><span class="op">(</span><span class="va">formula</span>, <span class="va">data</span>, propensity_formula<span class="op">=</span><span class="cn">NULL</span>,</span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">semiivreg</span><span class="op">(</span><span class="va">formula</span>, <span class="va">data</span>, propensity_formula<span class="op">=</span><span class="cn">NULL</span>, propensity_data <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>                 ref_indiv <span class="op">=</span><span class="cn">NULL</span>, firststage_model <span class="op">=</span> <span class="st">"probit"</span>,</span>
 <span>                 est_method <span class="op">=</span> <span class="st">"locpoly"</span>, <span class="co"># "locpoly", "sieve", or "homogenous".</span></span>
+<span>                 se_type <span class="op">=</span> <span class="st">"HC1"</span>,</span>
 <span>                 bw0 <span class="op">=</span> <span class="cn">NULL</span>, bw1 <span class="op">=</span> <span class="cn">NULL</span>, bw_y0 <span class="op">=</span> <span class="cn">NULL</span>, bw_y1 <span class="op">=</span> <span class="cn">NULL</span>, bw_method <span class="op">=</span> <span class="st">"plug-in"</span>,</span>
 <span>                 pol_degree_locpoly1 <span class="op">=</span> <span class="fl">1</span>, pol_degree_locpoly2 <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>                 pol_degree_sieve <span class="op">=</span> <span class="fl">5</span>, conf_level <span class="op">=</span> <span class="fl">0.05</span>,</span>
@@ -68,9 +69,11 @@ Use <code>semiivreg_boot</code> to obtain 'correct' bootstrapped confidence inte
 <span>                 plotting<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">semiivreg_boot</span><span class="op">(</span><span class="va">formula</span>, Nboot<span class="op">=</span><span class="fl">500</span>, <span class="va">data</span>, propensity_formula<span class="op">=</span><span class="cn">NULL</span>, ref_indiv <span class="op">=</span><span class="cn">NULL</span>,</span>
-<span>               firststage_model<span class="op">=</span><span class="st">"probit"</span>,</span>
+<span>               firststage_model<span class="op">=</span><span class="st">"probit"</span>, est_method <span class="op">=</span> <span class="st">"locpoly"</span>, se_type<span class="op">=</span><span class="st">"HC1"</span>,</span>
 <span>               pol_degree_transform <span class="op">=</span> <span class="fl">5</span>, common_supp_trim<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span><span class="op">)</span>, trimming_value <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>               automatic_trim <span class="op">=</span> <span class="cn">FALSE</span>, plotting<span class="op">=</span><span class="cn">TRUE</span>, conf_level <span class="op">=</span> <span class="fl">0.05</span>, CI_method <span class="op">=</span> <span class="st">"delta"</span><span class="op">)</span></span></code></pre></div>
+<span>               automatic_trim <span class="op">=</span> <span class="cn">FALSE</span>, plotting<span class="op">=</span><span class="cn">TRUE</span>, conf_level <span class="op">=</span> <span class="fl">0.05</span>, CI_method <span class="op">=</span> <span class="st">"delta"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">semiiv_predict</span><span class="op">(</span><span class="va">semiiv</span>, <span class="va">newdata</span>, seq_v<span class="op">=</span><span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -92,6 +95,10 @@ with est_method = "locpoly": cannot restrict covariates to have common effects (
 <dd><p>Formula for the 1st stage. If nothing specified, just runs a probit of d ~ semi-iv0 + semi-iv1 + covariates (removing the redundant variables).</p></dd>
 
 
+<dt id="arg-propensity-data">propensity_data<a class="anchor" aria-label="anchor" href="#arg-propensity-data"></a></dt>
+<dd><p>Data used to compute the 1st stage; ignore by default set to NULL and = data. Mainly useful for internal bootstrap function is the first stage formula is different from the default one.</p></dd>
+
+
 <dt id="arg-ref-indiv">ref_indiv<a class="anchor" aria-label="anchor" href="#arg-ref-indiv"></a></dt>
 <dd><p>Specify the reference individual (in terms of covariates) at which we will evaluate the function. <br>
 by default takes the average value for the numerical covariates, and the reference level for factors. <br></p></dd>
@@ -103,6 +110,10 @@ by default takes the average value for the numerical covariates, and the referen
 
 <dt id="arg-est-method">est_method<a class="anchor" aria-label="anchor" href="#arg-est-method"></a></dt>
 <dd><p>Estimation method: default is "locpoly" for Robinson (1988) double residual regression for partially linear model. Other options include "sieve" to specify flexibly the control function as a polynomial with pol_degree_sieve, and "homogenous" which is a sieve where we also impose homogenous treatment effect.</p></dd>
+
+
+<dt id="arg-se-type">se_type<a class="anchor" aria-label="anchor" href="#arg-se-type"></a></dt>
+<dd><p>Type of standard errors if sieve/homogenous estimation. By default = "HC1". Can otherwise me any of the possibilities of vcovHC in the sandwich package. Also possible to have se_type="nonrobust" for the non-robust (lm default).</p></dd>
 
 
 <dt id="arg-bw-bw-">bw0, bw1<a class="anchor" aria-label="anchor" href="#arg-bw-bw-"></a></dt>
@@ -159,6 +170,18 @@ Inserting a trimming_value generates automatic_trim = TRUE automatically.</p></d
 <dt id="arg-ci-method">CI_method<a class="anchor" aria-label="anchor" href="#arg-ci-method"></a></dt>
 <dd><p>"delta" for delta method, "curve" for bootstrap the MTE curves directly. With est_method = "locpoly", only "curve" method is possible.</p></dd>
 
+
+<dt id="arg-semiiv">semiiv<a class="anchor" aria-label="anchor" href="#arg-semiiv"></a></dt>
+<dd><p>Object returns from a semiivreg estimation.</p></dd>
+
+
+<dt id="arg-newdata">newdata<a class="anchor" aria-label="anchor" href="#arg-newdata"></a></dt>
+<dd><p>New data for which to predict the MTE and MTR.</p></dd>
+
+
+<dt id="arg-seq-v">seq_v<a class="anchor" aria-label="anchor" href="#arg-seq-v"></a></dt>
+<dd><p>Sequence of v at which to predict the MTE and MTR. By default: NULL fits the default interval of the original semiivreg (equally space grid of proba, with step size of 0.001 on the common support).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -175,6 +198,9 @@ Inserting a trimming_value generates automatic_trim = TRUE automatically.</p></d
 <dt><code>$Xdat</code></dt>
 <dd><p>Set of covariates (this output is used for the bootstrap).</p></dd>
 
+<dt><code>$deltaX</code></dt>
+<dd><p>Returns the estimated effects of the covariates and semi-IVs (without intercept) for the specified reference individuals.</p></dd>
+
 
 </dl></dd>
 
@@ -182,11 +208,19 @@ Inserting a trimming_value generates automatic_trim = TRUE automatically.</p></d
 <dt><code>$estimate</code></dt>
 <dd><p>Returns the estimation of:</p><dl><dt><code>$est, or $est0 and $est1</code></dt>
 <dd><p>If <code>est_method = "locpoly"</code>, <code>est0</code> and <code>est1</code> returns the second stage estimates of the effect of the covariates and semi-IVs on their respective potential outcomes.
-Coming out of the double residual regression à la Robinson (1988), running a no-intercept OLS of the residuals Y-E(Yd|P) on the residuals of every semi-IVs, Wd-E(Wd|P), and covariates, X-E(X|P). <br>
-If <code>est_method = "sieve"</code> or <code>"homogenous"</code>, <code>$est</code> returns the second stage estimates of E(Yd | D, Wd, X, P) where the propensity score is controlled for with a flexible control function (polynomial), Kd(P).</p></dd>
+Coming out of the double residual regression à la Robinson (1988), running a no-intercept OLS of the residuals Y-E(Yd|P) on the residuals of every semi-IVs, Wd-E(Wd|P), and covariates, X-E(X|P). <br></p></dd>
+
+<dt><code>$mtr0, $mtr1 and $mte</code></dt>
+<dd><p>If <code>est_method = "sieve"</code> or <code>"homogenous"</code>, returns the functional form estimated for both MTR and MTE.</p></dd>
+
+<dt><code>$kv</code></dt>
+<dd><p>Returns the estimated k_d(v) (=E(Ud|V=v)). Includes the constant. If sums with the effect of covariates and semi-IVs (deltadX), gives the mtr_d.</p></dd>
 
 <dt><code>$propensity</code></dt>
 <dd><p>First stage estimate of the propensity score.</p></dd>
+
+<dt><code>$est_kappa</code></dt>
+<dd><p>If <code>est_method = "sieve"</code> or <code>"homogenous"</code>, this returns the estimated model for E(Y|D=d, X, Wd, P). From this, we extract Kappad(P) = E(Ud | D=d, P=p) from which we compute the kd(v) and mtrd(v, x, wd) functions.</p></dd>
 
 <dt><code>$avg_MTE</code></dt>
 <dd><p>Average of the MTE over the identified common support. If full common support, it is an estimate of the ATE(x, w0, w1). If <code>est_method="homogenous"</code>, the MTE is constant so it also gives the ATE(x, w0, w1).</p></dd>

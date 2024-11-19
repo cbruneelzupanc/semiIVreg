@@ -150,7 +150,7 @@ First, given estimated $\widehat{P}$, the second stage estimates the following s
 \[
 \begin{aligned}
 E[Y|D=0, W_0, X, \widehat{P}] &= \delta_{0} + W_0 \beta_0 + X \beta^X_{0} + \kappa_0(\widehat{P}), \\
-E[Y|D=0, W_1, X, \widehat{P}] &= \delta_{1} + W_1 \beta_1 + X \beta^X_{1} + \kappa_1(\widehat{P}), 
+E[Y|D=1, W_1, X, \widehat{P}] &= \delta_{1} + W_1 \beta_1 + X \beta^X_{1} + \kappa_1(\widehat{P}), 
 \end{aligned}
 \]
 where $\kappa_d(P)$ are **control functions**, equal to
@@ -208,12 +208,14 @@ and if we denote $\tilde{U}_d = U_d - E[U_d | D=d, \widehat{P}]$, we have $E[\ti
 
 
 - **Step 3.** Construct $\tilde{Y}_d = Y - W_d \widehat{\beta_d} - X \widehat{\beta^X_d}$, on the sample with $D=d$, i.e., the outcome `net of the effect` of the covariates. We have 
-\[\tilde{Y}_d = \delta_d + U_d := \tilde{\kappa}_d(P). \]
+\[\tilde{Y}_d = \delta_d + U_d. \]
+This yields
+\[ \tilde{\kappa}_d(P) = E[\tilde{Y}_d | D=d, P] \]
 
 
 
 - **Step 4.** Estimate $\tilde{\kappa}_d(P)$ using a second nonparametric local polynomial regression of $\tilde{Y}_d$ on $P$. 
-To specify the bandwidth of the local polynomial regression, use `bw_y0` or `bw_y1`. If not specified, the bandwidth are automatically computed using the method of `bw_method`. The default being a fast `"plug-in"` method from the library `KernSmooth`. We can also specify the degree of the polynomial with `pol_degree_locpoly2`. By default, equal to $2$ as recommended in @fangijbels2003 because we want to estimate the derivative, $\tilde{k}_d(u) = E[\delta_d + U_d|U_D=u]$. \\
+To specify the bandwidth of the local polynomial regression, use `bw_y0` or `bw_y1`. If not specified, the bandwidth are automatically computed using the method of `bw_method`. The default being a fast `"plug-in"` method from the library `KernSmooth`. We can also specify the degree of the polynomial with `pol_degree_locpoly2`. By default, equal to $2$ as recommended in @fangijbels2003 because we want to estimate the derivative, $\tilde{k}_d(u) = E[\delta_d + U_d|U_D=u]$. 
 Once we have $\tilde{\kappa}_d$, we can compute 
 \[
 \begin{aligned}
@@ -222,7 +224,7 @@ Once we have $\tilde{\kappa}_d$, we can compute
 \end{aligned}
 \]
 
-Using the $\widehat{\tilde{k}}_d(u)$ and the estimated \widehat{\beta}_d, \widehat{\beta}^X_d, we can compute the MTR on this subsample $D=d$, as 
+Using the $\widehat{\tilde{k}}_d(u)$ and the estimated $\widehat{\beta}_d, \widehat{\beta}^X_d$, we can compute the MTR on this subsample $D=d$, as 
 \[
 \begin{aligned}
 \widehat{MTR}_d(u, w_d, x) &= E(Y_d | X=x, W_d=w_d, U_D=u) = w_d \widehat{\beta}_d + x \widehat{\beta}^X_{d} + \widehat{\tilde{k}}_d(u).
@@ -302,7 +304,7 @@ Use `semiivreg_boot` to obtain 'correct' bootstrapped confidence intervals. <br>
 ## Illustration with simulated Roy model
 
 This illustrates what the `semiivreg()`command reports for a semi-IV regression. 
-By default, it reports the common support plot of the propensity score and the estimated marginal treatment effects (MTE). 
+By default, it reports the common support plot of the propensity score and the estimated marginal treatment effects (MTE). The `est_method = "locpoly"` by default. 
 
 ```{r mte, fig.height=3, fig.width=7, fig.align='center'} 
 library(semiIVreg)
@@ -318,8 +320,29 @@ semiiv$plot$mtr
 ```
 
 
+If one wants to use the sieve estimation method, simply run:
+```{r mte_sieve, fig.height=3, fig.width=7, fig.align='center'} 
+# semi-IV sieve regression
+semiiv = semiivreg(y~d|w0|w1, data=roydata, est_method="sieve") 
+semiiv$plot$mtr
+```
+
+One advantage of the sieve is that it reports confidence interval (though wrong because do not take into account the first stage error) and also gives a functional form for the MTR and MTE, obtainable by running the code below.
+
+```{r mtr_sieve, fig.height=4, fig.width=5, fig.align='center'}
+semiiv$est$mtr0; 
+semiiv$est$mtr1; 
+semiiv$est$mte
+```
+
+
+Similarly, homogenous treatment effects will also provide a functional form estimation.  
+
 
 For more details, see the vignettes on estimation with [heterogenous](https://cbruneelzupanc.github.io/semiIVreg/articles/semiIVreg_heterogenousTE.html) or [homogenous](https://cbruneelzupanc.github.io/semiIVreg/articles/semiIVreg_homogenousTE.html) treatment effects. Refer also to @bruneel2024. 
+
+
+
 
 
 

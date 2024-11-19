@@ -16,7 +16,7 @@ template:
       - pkgdown/extra.css
     #js:
     #  - pkgdown/custom.js
-    
+
   opengraph:
     image:
       src: logo1.png
@@ -62,7 +62,7 @@ navbar:
 #      href: https://github.com/cbruneelzupanc/semiIVreg
 
 
-      
+
 reference:
     - title: "main semi-IV Regression"
       contents:
@@ -82,7 +82,11 @@ reference:
         - roydata2
     - title: "Internal functions"
       contents:
-        - mtr_fun
+        - mtr_est_poly
+        - mtr_fun_poly
+        - mtr_coeff
+        - mtr_est
+        - mtr_predict_sieve
         - Kappa_fun
         - kdu_transform_fun
         - Kappa_homogenous_fun

@@ -7,6 +7,8 @@
   library(stats)
   library(KernSmooth)
   library(locpol)
+  library(sandwich)
+  library(lmtest)
 }
 
 .onAttach <- function(libname, pkgname) {
@@ -18,6 +20,8 @@
   library(stats)
   library(KernSmooth)
   library(locpol)
+  library(sandwich)
+  library(lmtest)
 }
 
 

@@ -110,20 +110,19 @@ Let us now see how the semi-IV estimator performs. To specify the estimation wit
 
 ```{r semiiv1}
 semiiv = semiivreg(y~d|w0|w1, data, est_method="homogenous", plotting=FALSE)
-semiiv_homogenous = semiiv$estimate$est # extract the coefficients from the homogenous TE specification
-summary_coeff = summary(semiiv_homogenous)
-summary_coeff$coefficients[1:4,] # only print the first 4 coefficients, the other correspond to the control function of P
+summary_coeff = semiiv$estimate$est # extract the coefficients from the homogenous TE specification
+summary_coeff[1:4,] # only print the first 4 coefficients, the other correspond to the control function of P
 true_param
 ```
 
 The estimated coefficients are very close to the truth, with relatively small standard errors here, even though the sample size is modest (`r N` observations). 
 
 Be cautious though: the standard errors are computed *without* taking into account the fact that the propensity score is estimated in a first stage. We can correct this estimation with `semiivreg_boot()`. But typically, if the first stage is well estimated, the bias in the standard errors is small, as visible below. 
-<!-- , cache=TRUE} --> 
-```{r semiivboot1} 
+
+```{r semiivboot1, cache=TRUE}
 semiivboot = semiivreg_boot(y~d|w0|w1, data, Nboot=200, est_method="homogenous", plotting=FALSE) # reduce the number of bootstrap simulation for speed;  
 boot_se = semiivboot$estimate$coeff$std_error[1:4]
-res = as.data.frame(cbind(summary_coeff$coefficients[1:4,1:2], boot_se)); colnames(res) = c("Estimate", "wrong analytic SE", "Bootstrapped SE")
+res = as.data.frame(cbind(summary_coeff[1:4,1:3], boot_se)); colnames(res) = c("Variable", "Estimate", "wrong analytic SE", "Bootstrapped SE")
 res
 ```
 
@@ -170,15 +169,24 @@ Notice that the `semiivreg()` function also works there:
 
 ```{r semiivreg2}
 semiiv2 = semiivreg(y~d|w0|w1, data=data2, est_method="homogenous", plotting=FALSE)
-semiiv2_homogenous = semiiv2$estimate$est # extract the coefficients from the homogenous TE specification
-summary_coeff2 = summary(semiiv2_homogenous)
-summary_coeff2$coefficients[1:4,] # only print the first 4 coefficients, the other correspond to the control function of P
+summary_coeff2 = semiiv2$estimate$est # extract the coefficients from the homogenous TE specification
+summary_coeff2[1:4,] # only print the first 4 coefficients, the other correspond to the control function of P
 true_param
 ```
 
 Thus `semiivreg()`is more flexible and should be used in any case. Notice that, in general the IVQR estimation will also have a higher variance of the estimate because it builds on the interaction as an IV so it requires it to have a large significant effects on the treatment to avoid weak IV concerns. 
-While the `semiivreg()` only relies on the fact that each semi-IV is relevant by itself, which is relatively easier to satisfy. Especially if the semi-IVs have a strong impact on their respective potential outcome, they should be relevant as soon as there is selection into treatment based on gains (i.e., $Y_1 - Y_0$). 
+While the `semiivreg()` only relies on the fact that each semi-IV is relevant by itself, which is relatively easier to satisfy. Especially if the semi-IVs have a strong impact on their respective potential outcome, they should be relevant as soon as there is selection into treatment based on gains (i.e., $Y_1 - Y_0$).   
 
+
+Remark: since we know the first stage includes the interaction, we might as well include it in semiivreg as follows (but the previous results not including where still ok, despite the bias in prediction of the propensity score because of the wrong formula)
+```{r semiivreg3}
+semiiv3 = semiivreg(y~d|w0|w1, propensity_formula = d~w0+w1+w0:w1, 
+                    data=data2, est_method="homogenous", plotting=FALSE)
+fstage = semiiv3$estimate$propensity; summary(fstage) # returns the first stage estimation
+summary_coeff3 = semiiv3$estimate$est # extract the coefficients from the homogenous TE specification
+summary_coeff3[1:4,] # only print the first 4 coefficients, the other correspond to the control function of P
+true_param
+```
 
 
 ## References

@@ -18,7 +18,7 @@ Suggests:
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports: 
-    data.table, ggplot2, gridExtra, MASS, stats, KernSmooth, locpol
+    data.table, ggplot2, gridExtra, MASS, stats, KernSmooth, locpol, sandwich, lmtest
 License: MIT + file LICENSE
 Depends: 
     R (>= 2.10)

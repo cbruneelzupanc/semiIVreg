@@ -3,11 +3,13 @@
 \name{semiivreg}
 \alias{semiivreg}
 \alias{semiivreg_boot}
+\alias{semiiv_predict}
 \title{Semi-IV Regression Function}
 \usage{
-semiivreg(formula, data, propensity_formula=NULL,
+semiivreg(formula, data, propensity_formula=NULL, propensity_data = NULL,
                  ref_indiv =NULL, firststage_model = "probit",
                  est_method = "locpoly", # "locpoly", "sieve", or "homogenous".
+                 se_type = "HC1",
                  bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "plug-in",
                  pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
                  pol_degree_sieve = 5, conf_level = 0.05,
@@ -15,9 +17,11 @@ semiivreg(formula, data, propensity_formula=NULL,
                  plotting=TRUE)
 
 semiivreg_boot(formula, Nboot=500, data, propensity_formula=NULL, ref_indiv =NULL,
-               firststage_model="probit",
+               firststage_model="probit", est_method = "locpoly", se_type="HC1",
                pol_degree_transform = 5, common_supp_trim=c(0,1), trimming_value = NULL,
                automatic_trim = FALSE, plotting=TRUE, conf_level = 0.05, CI_method = "delta")
+
+semiiv_predict(semiiv, newdata, seq_v=NULL)
 }
 \arguments{
 \item{formula}{Formula of the regression, of the form outcome ~ treatment | semi-iv0 | semi-iv1 | commoncovariates. \cr
@@ -29,12 +33,16 @@ with est_method = "locpoly": cannot restrict covariates to have common effects (
 
 \item{propensity_formula}{Formula for the 1st stage. If nothing specified, just runs a probit of d ~ semi-iv0 + semi-iv1 + covariates (removing the redundant variables).}
 
+\item{propensity_data}{Data used to compute the 1st stage; ignore by default set to NULL and = data. Mainly useful for internal bootstrap function is the first stage formula is different from the default one.}
+
 \item{ref_indiv}{Specify the reference individual (in terms of covariates) at which we will evaluate the function. \cr
 by default takes the average value for the numerical covariates, and the reference level for factors. \cr}
 
 \item{firststage_model}{By default, the first stage is a probit model. Can specify another model (e.g., "logit").}
 
 \item{est_method}{Estimation method: default is "locpoly" for Robinson (1988) double residual regression for partially linear model. Other options include "sieve" to specify flexibly the control function as a polynomial with pol_degree_sieve, and "homogenous" which is a sieve where we also impose homogenous treatment effect.}
+
+\item{se_type}{Type of standard errors if sieve/homogenous estimation. By default = "HC1". Can otherwise me any of the possibilities of vcovHC in the sandwich package. Also possible to have se_type="nonrobust" for the non-robust (lm default).}
 
 \item{bw0, bw1}{Bandwidth of the first residual regressions of Wd and X on Phat. Need to be specified in the order of the covariates as specified in the model. Be very careful with factors. Default NULL and computed using the specified bw_method.}
 
@@ -64,6 +72,12 @@ Inserting a trimming_value generates automatic_trim = TRUE automatically.}
 \item{Nboot}{Number of bootstrap samples.}
 
 \item{CI_method}{"delta" for delta method, "curve" for bootstrap the MTE curves directly. With est_method = "locpoly", only "curve" method is possible.}
+
+\item{semiiv}{Object returns from a semiivreg estimation.}
+
+\item{newdata}{New data for which to predict the MTE and MTR.}
+
+\item{seq_v}{Sequence of v at which to predict the MTE and MTR. By default: NULL fits the default interval of the original semiivreg (equally space grid of proba, with step size of 0.001 on the common support).}
 }
 \value{
 A list with the following elements:
@@ -74,14 +88,17 @@ A list with the following elements:
 \item{\verb{$data}}{Original data used for the estimation where we added the propensity score estimated, named \code{Phat}, and where we made the transformation of the eventual \code{factor} variables as dummies.}
 \item{\verb{$ref_indiv}}{Reference individual(s) at which we evaluate the MTE and MTR.}
 \item{\verb{$Xdat}}{Set of covariates (this output is used for the bootstrap).}
+\item{\verb{$deltaX}}{Returns the estimated effects of the covariates and semi-IVs (without intercept) for the specified reference individuals.}
 }}
 
 \item{\verb{$estimate}}{Returns the estimation of:
 \describe{
 \item{\verb{$est, or $est0 and $est1}}{If \code{est_method = "locpoly"}, \code{est0} and \code{est1} returns the second stage estimates of the effect of the covariates and semi-IVs on their respective potential outcomes.
-Coming out of the double residual regression à la Robinson (1988), running a no-intercept OLS of the residuals Y-E(Yd|P) on the residuals of every semi-IVs, Wd-E(Wd|P), and covariates, X-E(X|P). \cr
-If \code{est_method = "sieve"} or \code{"homogenous"}, \verb{$est} returns the second stage estimates of E(Yd | D, Wd, X, P) where the propensity score is controlled for with a flexible control function (polynomial), Kd(P).}
+Coming out of the double residual regression à la Robinson (1988), running a no-intercept OLS of the residuals Y-E(Yd|P) on the residuals of every semi-IVs, Wd-E(Wd|P), and covariates, X-E(X|P). \cr}
+\item{\verb{$mtr0, $mtr1 and $mte}}{If \code{est_method = "sieve"} or \code{"homogenous"}, returns the functional form estimated for both MTR and MTE.}
+\item{\verb{$kv}}{Returns the estimated k_d(v) (=E(Ud|V=v)). Includes the constant. If sums with the effect of covariates and semi-IVs (deltadX), gives the mtr_d.}
 \item{\verb{$propensity}}{First stage estimate of the propensity score.}
+\item{\verb{$est_kappa}}{If \code{est_method = "sieve"} or \code{"homogenous"}, this returns the estimated model for E(Y|D=d, X, Wd, P). From this, we extract Kappad(P) = E(Ud | D=d, P=p) from which we compute the kd(v) and mtrd(v, x, wd) functions. }
 \item{\verb{$avg_MTE}}{Average of the MTE over the identified common support. If full common support, it is an estimate of the ATE(x, w0, w1). If \code{est_method="homogenous"}, the MTE is constant so it also gives the ATE(x, w0, w1).}
 }}
 

@@ -120,7 +120,7 @@ semiiv = semiivreg(y~d|w0|w1, data, ref_indiv = data.frame(w0=0, w1=0),
 
 **Polynomial degree.**  
 
-One can also specify the degree of each local polynomial estimation with `pol_degree_locpoly1` and `pol_degree_locpoly2`. Following @fangijbels1996 of setting the degree equal to the order of the derivative function we want to estimate $+1$, by default we set `pol_degree_locpoly1 = 1` because there we want to estimate a function directly, and `pol_degree_locpoly2 = 2` because in the MTE/MTR stage we want to estimate derivatives of the control function $\kappa_d(u)$.   
+One can also specify the degree of each local polynomial estimation with `pol_degree_locpoly1` and `pol_degree_locpoly2`. Following @fangijbels2003 of setting the degree equal to the order of the derivative function we want to estimate $+1$, by default we set `pol_degree_locpoly1 = 1` because there we want to estimate a function directly, and `pol_degree_locpoly2 = 2` because in the MTE/MTR stage we want to estimate derivatives of the control function $\kappa_d(u)$.   
 
 
 
@@ -282,6 +282,20 @@ semiiv1 = semiivreg(y~d|w0|w1, data,
                     plotting=FALSE)
 mte_plot = semiiv1$plot$mte; mtr_plot = semiiv1$plot$mtr;
 grid.arrange(mtr_plot, mte_plot, ncol=2)
+```
+
+
+
+**Post-estimation prediction.**
+Imagine after estimating one wants to estimate the model for several individuals. One way is to directly specify several ref_indiv when running the initial regression. But if it's already estimated, one can simply use the `semiiv_predict` function. It also allows to predict only at a subset of specific values of $V$.  
+
+```{r mte_predict, fig.height=3, fig.width=7, fig.align='center'}
+newdata = data.frame(w0=seq(-1, 1, by=0.5), w1=0) # Predict the outcome
+
+pred = semiiv_predict(semiiv1, newdata=newdata)
+head(pred$RES) # the predicted values; -> can then be used to redo plots for example. 
+pred$deltaX # provides the shift in effect of X and Wd -> may be the only thing we care about, know that shifts the curve
+
 ```
 
 
