@@ -6,10 +6,10 @@
 #'
 #'
 #' @rdname mtr_fun
-#' @usage mtr_est_poly = function(d, data, seq_u,
-#'                                bwd = NULL, bw_y = NULL, bw_method = "plug-in",
-#'                                pol_degree1, pol_degree2,
-#'                                var_outcome, var_treatment, var_w0, var_w1, var_covariates)
+#' @usage mtr_est_poly(d, data, seq_u,
+#'                     bwd = NULL, bw_y = NULL, bw_method = "plug-in",
+#'                     pol_degree1, pol_degree2,
+#'                     var_outcome, var_treatment, var_w0, var_w1, var_covariates)
 #' @export
 mtr_est_poly = function(d, data, seq_u,
                         bwd = NULL, bw_y = NULL, bw_method = "plug-in",
@@ -83,7 +83,7 @@ mtr_est_poly = function(d, data, seq_u,
 
 
 #' @rdname mtr_fun
-#' @usage mtr_fun_poly = function(ref_indiv, est0, est1, k0, k1)
+#' @usage mtr_fun_poly(ref_indiv, est0, est1, k0, k1)
 #' @export
 mtr_fun_poly = function(ref_indiv, eval_v, est0, est1, k0, k1) {
 
