@@ -70,7 +70,7 @@
                         <h4 data-toc-skip class="author"><a href="https://www.cbruneel.com/" class="external-link">Christophe Bruneel-Zupanc</a></h4>
             
             <h4 data-toc-skip class="date">last modified:
-2024-10-26</h4>
+2024-11-19</h4>
       
 
       <div class="d-none name"><code>semiIVreg.Rmd</code></div>
@@ -84,6 +84,15 @@
 library(semiIVreg)
 #> KernSmooth 2.23 loaded
 #> Copyright M. P. Wand 1997-2009
+#> Loading required package: zoo
+#> 
+#> Attaching package: 'zoo'
+#> The following objects are masked from 'package:data.table':
+#> 
+#>     yearmon, yearqtr
+#> The following objects are masked from 'package:base':
+#> 
+#>     as.Date, as.Date.numeric
 ```
 -->
 <div class="section level2">
@@ -280,10 +289,10 @@ possible to estimate the propensity score outside of the
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>P</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\widehat{P}</annotation></semantics></math>,
 the second stage estimates the following semi-parametric
 <strong>partially linear model</strong> for the potential outcomes
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><mi>Y</mi><mo stretchy="false" form="prefix">|</mo><mi>D</mi><mo>=</mo><mn>0</mn><mo>,</mo><msub><mi>W</mi><mn>0</mn></msub><mo>,</mo><mi>X</mi><mo>,</mo><mover><mi>P</mi><mo accent="true">̂</mo></mover><mo stretchy="true" form="postfix">]</mo></mrow></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msub><mi>δ</mi><mn>0</mn></msub><mo>+</mo><msub><mi>W</mi><mn>0</mn></msub><msub><mi>β</mi><mn>0</mn></msub><mo>+</mo><mi>X</mi><msubsup><mi>β</mi><mn>0</mn><mi>X</mi></msubsup><mo>+</mo><msub><mi>κ</mi><mn>0</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><mover><mi>P</mi><mo accent="true">̂</mo></mover><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><mi>Y</mi><mo stretchy="false" form="prefix">|</mo><mi>D</mi><mo>=</mo><mn>0</mn><mo>,</mo><msub><mi>W</mi><mn>1</mn></msub><mo>,</mo><mi>X</mi><mo>,</mo><mover><mi>P</mi><mo accent="true">̂</mo></mover><mo stretchy="true" form="postfix">]</mo></mrow></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msub><mi>δ</mi><mn>1</mn></msub><mo>+</mo><msub><mi>W</mi><mn>1</mn></msub><msub><mi>β</mi><mn>1</mn></msub><mo>+</mo><mi>X</mi><msubsup><mi>β</mi><mn>1</mn><mi>X</mi></msubsup><mo>+</mo><msub><mi>κ</mi><mn>1</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><mover><mi>P</mi><mo accent="true">̂</mo></mover><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><mi>Y</mi><mo stretchy="false" form="prefix">|</mo><mi>D</mi><mo>=</mo><mn>0</mn><mo>,</mo><msub><mi>W</mi><mn>0</mn></msub><mo>,</mo><mi>X</mi><mo>,</mo><mover><mi>P</mi><mo accent="true">̂</mo></mover><mo stretchy="true" form="postfix">]</mo></mrow></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msub><mi>δ</mi><mn>0</mn></msub><mo>+</mo><msub><mi>W</mi><mn>0</mn></msub><msub><mi>β</mi><mn>0</mn></msub><mo>+</mo><mi>X</mi><msubsup><mi>β</mi><mn>0</mn><mi>X</mi></msubsup><mo>+</mo><msub><mi>κ</mi><mn>0</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><mover><mi>P</mi><mo accent="true">̂</mo></mover><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><mi>Y</mi><mo stretchy="false" form="prefix">|</mo><mi>D</mi><mo>=</mo><mn>1</mn><mo>,</mo><msub><mi>W</mi><mn>1</mn></msub><mo>,</mo><mi>X</mi><mo>,</mo><mover><mi>P</mi><mo accent="true">̂</mo></mover><mo stretchy="true" form="postfix">]</mo></mrow></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><msub><mi>δ</mi><mn>1</mn></msub><mo>+</mo><msub><mi>W</mi><mn>1</mn></msub><msub><mi>β</mi><mn>1</mn></msub><mo>+</mo><mi>X</mi><msubsup><mi>β</mi><mn>1</mn><mi>X</mi></msubsup><mo>+</mo><msub><mi>κ</mi><mn>1</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><mover><mi>P</mi><mo accent="true">̂</mo></mover><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{aligned}
 E[Y|D=0, W_0, X, \widehat{P}] &amp;= \delta_{0} + W_0 \beta_0 + X \beta^X_{0} + \kappa_0(\widehat{P}), \\
-E[Y|D=0, W_1, X, \widehat{P}] &amp;= \delta_{1} + W_1 \beta_1 + X \beta^X_{1} + \kappa_1(\widehat{P}), 
+E[Y|D=1, W_1, X, \widehat{P}] &amp;= \delta_{1} + W_1 \beta_1 + X \beta^X_{1} + \kappa_1(\widehat{P}), 
 \end{aligned}
 </annotation></semantics></math> where
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>κ</mi><mi>d</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>P</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\kappa_d(P)</annotation></semantics></math>
@@ -382,7 +391,9 @@ on the sample with
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mi>d</mi></mrow><annotation encoding="application/x-tex">D=d</annotation></semantics></math>,
 i.e., the outcome <code>net of the effect</code> of the covariates. We
 have
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi>Y</mi><mo accent="true">̃</mo></mover><mi>d</mi></msub><mo>=</mo><msub><mi>δ</mi><mi>d</mi></msub><mo>+</mo><msub><mi>U</mi><mi>d</mi></msub><mo>:=</mo><msub><mover><mi>κ</mi><mo accent="true">̃</mo></mover><mi>d</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>P</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">\tilde{Y}_d = \delta_d + U_d := \tilde{\kappa}_d(P). </annotation></semantics></math></p></li>
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi>Y</mi><mo accent="true">̃</mo></mover><mi>d</mi></msub><mo>=</mo><msub><mi>δ</mi><mi>d</mi></msub><mo>+</mo><msub><mi>U</mi><mi>d</mi></msub><mi>.</mi></mrow><annotation encoding="application/x-tex">\tilde{Y}_d = \delta_d + U_d. </annotation></semantics></math>
+This yields
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi>κ</mi><mo accent="true">̃</mo></mover><mi>d</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>P</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><msub><mover><mi>Y</mi><mo accent="true">̃</mo></mover><mi>d</mi></msub><mo stretchy="false" form="prefix">|</mo><mi>D</mi><mo>=</mo><mi>d</mi><mo>,</mo><mi>P</mi><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex"> \tilde{\kappa}_d(P) = E[\tilde{Y}_d | D=d, P] </annotation></semantics></math></p></li>
 <li><p><strong>Step 4.</strong> Estimate
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi>κ</mi><mo accent="true">̃</mo></mover><mi>d</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>P</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\tilde{\kappa}_d(P)</annotation></semantics></math>
 using a second nonparametric local polynomial regression of
@@ -400,7 +411,7 @@ default, equal to
 as recommended in <span class="citation">Fan and Gijbels (2003)</span>
 because we want to estimate the derivative,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi>k</mi><mo accent="true">̃</mo></mover><mi>d</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><msub><mi>δ</mi><mi>d</mi></msub><mo>+</mo><msub><mi>U</mi><mi>d</mi></msub><mo stretchy="false" form="prefix">|</mo><msub><mi>U</mi><mi>D</mi></msub><mo>=</mo><mi>u</mi><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\tilde{k}_d(u) = E[\delta_d + U_d|U_D=u]</annotation></semantics></math>.
-\ Once we have
+Once we have
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mover><mi>κ</mi><mo accent="true">̃</mo></mover><mi>d</mi></msub><annotation encoding="application/x-tex">\tilde{\kappa}_d</annotation></semantics></math>,
 we can compute
 <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msub><mover><mover><mi>k</mi><mo accent="true">̃</mo></mover><mo accent="true">̂</mo></mover><mn>1</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><msub><mi>δ</mi><mn>1</mn></msub><mo>+</mo><msub><mi>U</mi><mn>1</mn></msub><mo stretchy="false" form="prefix">|</mo><msub><mi>U</mi><mi>D</mi></msub><mo>=</mo><mi>u</mi><mo stretchy="true" form="postfix">]</mo></mrow><mo>=</mo><msub><mover><mover><mi>κ</mi><mo accent="true">̃</mo></mover><mo accent="true">̂</mo></mover><mn>1</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>+</mo><mi>u</mi><msub><mover><mover><mi>κ</mi><mo accent="true">̃</mo></mover><mo accent="true">̂</mo></mover><mn>1</mn></msub><mi>′</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><msub><mover><mover><mi>k</mi><mo accent="true">̃</mo></mover><mo accent="true">̂</mo></mover><mn>0</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><msub><mi>δ</mi><mn>0</mn></msub><mo>+</mo><msub><mi>U</mi><mn>0</mn></msub><mo stretchy="false" form="prefix">|</mo><msub><mi>U</mi><mi>D</mi></msub><mo>=</mo><mi>u</mi><mo stretchy="true" form="postfix">]</mo></mrow><mo>=</mo><msub><mover><mover><mi>κ</mi><mo accent="true">̃</mo></mover><mo accent="true">̂</mo></mover><mn>0</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>u</mi><mo stretchy="true" form="postfix">)</mo></mrow><msub><mover><mover><mi>κ</mi><mo accent="true">̃</mo></mover><mo accent="true">̂</mo></mover><mn>0</mn></msub><mi>′</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mtd></mtr></mtable><annotation encoding="application/x-tex">
@@ -412,7 +423,9 @@ we can compute
 </ul>
 <p>Using the
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mover><mi>k</mi><mo accent="true">̃</mo></mover><mo accent="true">̂</mo></mover><mi>d</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\widehat{\tilde{k}}_d(u)</annotation></semantics></math>
-and the estimated _d, ^X_d, we can compute the MTR on this subsample
+and the estimated
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi>β</mi><mo accent="true">̂</mo></mover><mi>d</mi></msub><mo>,</mo><msubsup><mover><mi>β</mi><mo accent="true">̂</mo></mover><mi>d</mi><mi>X</mi></msubsup></mrow><annotation encoding="application/x-tex">\widehat{\beta}_d, \widehat{\beta}^X_d</annotation></semantics></math>,
+we can compute the MTR on this subsample
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mi>d</mi></mrow><annotation encoding="application/x-tex">D=d</annotation></semantics></math>,
 as
 <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msub><mover><mrow><mi>M</mi><mi>T</mi><mi>R</mi></mrow><mo accent="true">̂</mo></mover><mi>d</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo>,</mo><msub><mi>w</mi><mi>d</mi></msub><mo>,</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mi>E</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>Y</mi><mi>d</mi></msub><mo stretchy="false" form="prefix">|</mo><mi>X</mi><mo>=</mo><mi>x</mi><mo>,</mo><msub><mi>W</mi><mi>d</mi></msub><mo>=</mo><msub><mi>w</mi><mi>d</mi></msub><mo>,</mo><msub><mi>U</mi><mi>D</mi></msub><mo>=</mo><mi>u</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><msub><mi>w</mi><mi>d</mi></msub><msub><mover><mi>β</mi><mo accent="true">̂</mo></mover><mi>d</mi></msub><mo>+</mo><mi>x</mi><msubsup><mover><mi>β</mi><mo accent="true">̂</mo></mover><mi>d</mi><mi>X</mi></msubsup><mo>+</mo><msub><mover><mover><mi>k</mi><mo accent="true">̃</mo></mover><mo accent="true">̂</mo></mover><mi>d</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mtd></mtr></mtable><annotation encoding="application/x-tex">
@@ -555,8 +568,8 @@ confidence intervals. <br><br></p>
 </h2>
 <p>This illustrates what the <code><a href="../reference/semiivreg.html">semiivreg()</a></code>command reports for
 a semi-IV regression. By default, it reports the common support plot of
-the propensity score and the estimated marginal treatment effects
-(MTE).</p>
+the propensity score and the estimated marginal treatment effects (MTE).
+The <code>est_method = "locpoly"</code> by default.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://www.cbruneel.com/" class="external-link">semiIVreg</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">roydata</span><span class="op">)</span> <span class="co"># load the data from a simulated Roy model</span></span>
@@ -569,6 +582,49 @@ responses (MTR):</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">semiiv</span><span class="op">$</span><span class="va">plot</span><span class="op">$</span><span class="va">mtr</span></span></code></pre></div>
 <p><img src="semiIVreg_files/figure-html/mtr-1.png" width="480" style="display: block; margin: auto;"></p>
+<p>If one wants to use the sieve estimation method, simply run:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># semi-IV sieve regression</span></span>
+<span><span class="va">semiiv</span> <span class="op">=</span> <span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">|</span><span class="va">w1</span>, data<span class="op">=</span><span class="va">roydata</span>, est_method<span class="op">=</span><span class="st">"sieve"</span><span class="op">)</span> </span></code></pre></div>
+<p><img src="semiIVreg_files/figure-html/mte_sieve-1.png" width="672" style="display: block; margin: auto;"></p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">semiiv</span><span class="op">$</span><span class="va">plot</span><span class="op">$</span><span class="va">mtr</span></span></code></pre></div>
+<p><img src="semiIVreg_files/figure-html/mte_sieve-2.png" width="672" style="display: block; margin: auto;"></p>
+<p>One advantage of the sieve is that it reports confidence interval
+(though wrong because do not take into account the first stage error)
+and also gives a functional form for the MTR and MTE, obtainable by
+running the code below.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">semiiv</span><span class="op">$</span><span class="va">est</span><span class="op">$</span><span class="va">mtr0</span>; </span>
+<span><span class="co">#&gt;      Variable    Estimate    Std_Error      t_value     p_value</span></span>
+<span><span class="co">#&gt; 1 (Intercept)   2.7581424 9.298226e-01   2.96631018 0.003014676</span></span>
+<span><span class="co">#&gt; 2  kd(v): v^1  -0.6853761 1.229132e+01  -0.05576099 0.955532327</span></span>
+<span><span class="co">#&gt; 3  kd(v): v^2  12.0175370 5.692871e+01   0.21109801 0.832811220</span></span>
+<span><span class="co">#&gt; 4  kd(v): v^3 -30.6762292 1.188494e+02  -0.25811010 0.796322466</span></span>
+<span><span class="co">#&gt; 5  kd(v): v^4  31.3667340 1.142864e+02   0.27445721 0.783733849</span></span>
+<span><span class="co">#&gt; 6  kd(v): v^5 -10.8461651 4.113650e+01  -0.26366279 0.792040318</span></span>
+<span><span class="co">#&gt; 7          w0   0.8002338 3.955818e-03 202.29288041 0.000000000</span></span>
+<span><span class="va">semiiv</span><span class="op">$</span><span class="va">est</span><span class="op">$</span><span class="va">mtr1</span>; </span>
+<span><span class="co">#&gt;      Variable    Estimate    Std_Error      t_value       p_value</span></span>
+<span><span class="co">#&gt; 1 (Intercept)   4.3655568  0.142511442  30.63302633 3.985092e-205</span></span>
+<span><span class="co">#&gt; 2  kd(v): v^1  -3.2471062  3.735243561  -0.86931580  3.846765e-01</span></span>
+<span><span class="co">#&gt; 3  kd(v): v^2   4.2847118 26.418324185   0.16218711  8.711588e-01</span></span>
+<span><span class="co">#&gt; 4  kd(v): v^3   4.5087919 75.498769743   0.05972007  9.523787e-01</span></span>
+<span><span class="co">#&gt; 5  kd(v): v^4 -17.9382899 93.543557546  -0.19176403  8.479274e-01</span></span>
+<span><span class="co">#&gt; 6  kd(v): v^5  11.5530308 41.752329058   0.27670387  7.820081e-01</span></span>
+<span><span class="co">#&gt; 7          w1   0.4977251  0.003904244 127.48309330  0.000000e+00</span></span>
+<span><span class="va">semiiv</span><span class="op">$</span><span class="va">est</span><span class="op">$</span><span class="va">mte</span></span>
+<span><span class="co">#&gt;      Variable    Estimate    Std_Error      t_value    p_value</span></span>
+<span><span class="co">#&gt; 1 (Intercept)   1.6074144 9.406804e-01    1.7087784 0.08749511</span></span>
+<span><span class="co">#&gt; 2  kd(v): v^1  -2.5617302 1.284634e+01   -0.1994132 0.84193997</span></span>
+<span><span class="co">#&gt; 3  kd(v): v^2  -7.7328252 6.275990e+01   -0.1232128 0.90193882</span></span>
+<span><span class="co">#&gt; 4  kd(v): v^3  35.1850210 1.408021e+02    0.2498898 0.80267307</span></span>
+<span><span class="co">#&gt; 5  kd(v): v^4 -49.3050239 1.476881e+02   -0.3338455 0.73849682</span></span>
+<span><span class="co">#&gt; 6  kd(v): v^5  22.3991960 5.861287e+01    0.3821549 0.70234729</span></span>
+<span><span class="co">#&gt; 7    + W1: w1   0.4977251 3.904244e-03  127.4830933 0.00000000</span></span>
+<span><span class="co">#&gt; 8    - W0: w0  -0.8002338 3.955818e-03 -202.2928804 0.00000000</span></span></code></pre></div>
+<p>Similarly, homogenous treatment effects will also provide a
+functional form estimation.</p>
 <p>For more details, see the vignettes on estimation with <a href="https://cbruneelzupanc.github.io/semiIVreg/articles/semiIVreg_heterogenousTE.html">heterogenous</a>
 or <a href="https://cbruneelzupanc.github.io/semiIVreg/articles/semiIVreg_homogenousTE.html">homogenous</a>
 treatment effects. Refer also to <span class="citation">Bruneel-Zupanc
