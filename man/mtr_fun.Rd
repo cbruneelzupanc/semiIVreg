@@ -9,12 +9,12 @@
 \alias{mtr_predict_sieve}
 \title{MTE and MTR sub-estimation functions}
 \usage{
-mtr_est_poly = function(d, data, seq_u,
-                               bwd = NULL, bw_y = NULL, bw_method = "plug-in",
-                               pol_degree1, pol_degree2,
-                               var_outcome, var_treatment, var_w0, var_w1, var_covariates)
+mtr_est_poly(d, data, seq_u,
+                    bwd = NULL, bw_y = NULL, bw_method = "plug-in",
+                    pol_degree1, pol_degree2,
+                    var_outcome, var_treatment, var_w0, var_w1, var_covariates)
 
-mtr_fun_poly = function(ref_indiv, est0, est1, k0, k1)
+mtr_fun_poly(ref_indiv, est0, est1, k0, k1)
 
 lpoly_regress(x, y, bw=NULL, bw_method="plug-in", degree, drv)
 
