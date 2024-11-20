@@ -152,7 +152,8 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
   # (i) Convert to data.frame + na.omit
   data = as.data.frame(data) # maybe problem with data loaded from Stata
   vars = all.vars(formula)
-  data = subset(data, select=vars); data = na.omit(data)
+  data = subset(data, select=vars);
+  data = na.omit(data)
   data = transform_factor(formula, data) # the variables which are specified as "factor(x)" are transformed into factors # done in order to ensure ordering with ref indiv
   data_orig = data;
 
@@ -498,7 +499,7 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
   # 4. Return objects
   # -----------------
 
-  output_data = list(RES, deltaX, data_not_trimmed, ref_indiv, Xdat, Xdat_orig); names(output_data) = c("RES", "deltaX", "data", "ref_indiv", "Xdat", "Xdat_orig")
+  output_data = list(RES, deltaX, data_not_trimmed, ref_indiv, Xdat, data_orig); names(output_data) = c("RES", "deltaX", "data", "ref_indiv", "Xdat", "data_orig")
   output_plot = list(supp_plot, mtr_plot, mte_plot); names(output_plot) = c("supp", "mtr", "mte")
   output_supp = common_supp
   output_call = list(new_formula, formula, var_treatment, var_outcome, var_w0, var_w1, var_covariates,
@@ -604,10 +605,11 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
   ref_indiv = main_res$data$ref_indiv
 
   # Updated formula
-  transform_formula = main_res$call$formula
+  transform_formula = main_res$call$formula # because use the transformed Xdata
 
   # Updated data:
-  orig_data = data; propensity_data = orig_data
+  orig_data = main_res$data$data_orig
+  propensity_data = orig_data
   data = main_res$data$data
 
   # Extract the bandwidth (if est_method = "locpoly"):
@@ -637,7 +639,10 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
   #print("2/ Starting Bootstrap:")
   #progressbar <- txtProgressBar(min = 0, max = Nboot, style = 3)
 
-  BOOT = list()
+  #BOOT = list()
+  BOOTest = list()
+  BOOTmtr0 = list(); BOOTmtr1 = list(); BOOTmte = list()
+  BOOTDAT = list()
   for(k in 1:Nboot) {
 
     #set.seed(1234*k) # just set seed outside
@@ -656,7 +661,29 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
                                    pol_degree_locpoly1 = pol_degree_locpoly1, pol_degree_locpoly2 = pol_degree_locpoly2,
                                    pol_degree_sieve = pol_degree_sieve, conf_level = conf_level,
                                    common_supp_trim = common_supp_trim_boot, trimming_value=NULL, automatic_trim=FALSE, plotting=FALSE))
-    BOOT[[k]] = boot_res
+    #BOOT[[k]] = boot_res
+
+    # Storing the N_boot simulation would take too much memory if big datasets
+    # Only extract the objects of interest:
+    if(est_method %in% c("sieve", "homogenous")) {
+      BOOTest[[k]] = boot_res$coeff$coeff_stacked
+      BOOTmtr0[[k]] = boot_res$coeff$coeff_mtr0
+      BOOTmtr1[[k]] = boot_res$coeff$coeff_mtr1
+      BOOTmte[[k]] = boot_res$coeff$coeff_mte
+
+    }
+    if(est_method == "locpoly") {
+      coeff0 = coefficients(boot_res$estimate$est0); names(coeff0) = paste0("Untreated_", names(coeff0))
+      coeff1 = coefficients(boot_res$estimate$est1); names(coeff1) = paste0("Treated_", names(coeff1))
+      coeff = c(coeff0, coeff1)
+      BOOTest[[k]] = coeff
+    }
+
+    bootdat = boot_res$data$RES; bootdat$boot_id = k; BOOTDAT[[k]] = bootdat
+
+    rm(boot_res)
+    if(k %% 10 == 0) { gc() } # clean memory regularly
+
     #setTxtProgressBar(progressbar, k)
     cat(sprintf("Bootstrap Progress: %d/%d", k, Nboot), "\r")
   }
@@ -667,12 +694,12 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
   # ------------------------------------------
   if(est_method %in% c("sieve", "homogenous")) {
 
-    BOOTest = list()
-    for(k in 1:Nboot) { BOOTest[[k]] = BOOT[[k]]$coeff$coeff_stacked }
+    #BOOTest = list()
+    #for(k in 1:Nboot) { BOOTest[[k]] = BOOT[[k]]$coeff$coeff_stacked }
     EST = do.call('rbind', BOOTest)
     meanEST = apply(EST, 2, mean);
     main_res_coeff = main_res$coeff$coeff_stacked #coefficients(main_res$estimate$est)
-    vcov = cov(EST)
+    vcov = cov(EST) # the main point is to obtain this vcov in order to do the delta method
     standarderror = sqrt(diag(vcov))
     COEFF = data.frame(estimate=main_res_coeff, std_error=standarderror, boot_mean_estimate=meanEST)
     # This will be used in the predict function after;
@@ -680,12 +707,12 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
 
     # Table of coefficients for MTR and MTE directly:
     # if est_method = sieve or homogenous, can also DIRECTLY export table of results
-    BOOTmtr0 = list(); BOOTmtr1 = list(); BOOTmte = list()
-    for(k in 1:Nboot) {
-      BOOTmtr0[[k]] = BOOT[[k]]$coeff$coeff_mtr0
-      BOOTmtr1[[k]] = BOOT[[k]]$coeff$coeff_mtr1
-      BOOTmte[[k]] = BOOT[[k]]$coeff$coeff_mte
-    }
+    #BOOTmtr0 = list(); BOOTmtr1 = list(); BOOTmte = list()
+    #for(k in 1:Nboot) {
+    #  BOOTmtr0[[k]] = BOOT[[k]]$coeff$coeff_mtr0
+    #  BOOTmtr1[[k]] = BOOT[[k]]$coeff$coeff_mtr1
+    #  BOOTmte[[k]] = BOOT[[k]]$coeff$coeff_mte
+    #}
     ESTmtr0 = do.call('rbind', BOOTmtr0)
     ESTmtr1 = do.call('rbind', BOOTmtr1)
     ESTmte = do.call('rbind', BOOTmte)
@@ -721,14 +748,14 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
     main_coeff1 = coefficients(main_res$estimate$est1); names(main_coeff1) = paste0("Treated_", names(main_coeff1))
     main_res_coeff = c(main_coeff0, main_coeff1)
 
-    BOOTest = list()
-    for(k in 1:Nboot) {
-      # est0:
-      coeff0 = coefficients(BOOT[[k]]$estimate$est0); names(coeff0) = paste0("Untreated_", names(coeff0))
-      coeff1 = coefficients(BOOT[[k]]$estimate$est1); names(coeff1) = paste0("Treated_", names(coeff1))
-      coeff = c(coeff0, coeff1)
-      BOOTest[[k]] = coeff
-    }
+    #BOOTest = list()
+    #for(k in 1:Nboot) {
+    #  # est0:
+    #  coeff0 = coefficients(BOOT[[k]]$estimate$est0); names(coeff0) = paste0("Untreated_", names(coeff0))
+    #  coeff1 = coefficients(BOOT[[k]]$estimate$est1); names(coeff1) = paste0("Treated_", names(coeff1))
+    #  coeff = c(coeff0, coeff1)
+    #  BOOTest[[k]] = coeff
+    #}
 
     EST = do.call('rbind', BOOTest)
     meanEST = apply(EST, 2, mean);
@@ -762,10 +789,14 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
   # ---------
   if(CI_method == "delta") {
     if(! est_method %in% c("sieve", "homogenous")) { stop("Delta method only possible with est_method = 'sieve' or 'homogenous'")}
+
+    # delta method uses the VCOV computed from the bootstrap above
+
     df = df.residual(main_res$estimate$est_kappa)
     t_value = qt(1-conf_level/2, df = df)
     #seq_u = seq(0, 1, by=0.001);
     pol_degree = pol_degree_sieve
+
 
     # Then simply return the main function results using this new vcov around the main estimates:
     PREDICT = mtr_predict_sieve(coeff=main_res_coeff,
@@ -785,8 +816,8 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
   # ---------
   if(CI_method == "curve") {
 
-    BOOTDAT = list()
-    for(k in 1:Nboot) { bootdat = BOOT[[k]]$data$RES; bootdat$boot_id = k; BOOTDAT[[k]] = bootdat }
+    #BOOTDAT = list()
+    #for(k in 1:Nboot) { bootdat = BOOT[[k]]$data$RES; bootdat$boot_id = k; BOOTDAT[[k]] = bootdat }
     bootdat = do.call('rbind', BOOTDAT)
 
     bootdt = data.table(bootdat)
@@ -885,9 +916,11 @@ semiiv_predict = function(semiiv, newdata, seq_v=NULL) {
 
   formula = semiiv$call$formula_orig
   formula_X_orig = semiiv$call$formula_X_orig
-  Xdat_orig = semiiv$data$Xdat_orig
+  data_orig = semiiv$data$data_orig
 
   name_all_X_orig = all.vars(formula_X_orig)
+  Xdat_orig = subset(data_orig, select=name_all_X_orig)
+
   newdata1 = subset(newdata, select=name_all_X_orig) # remove potential "id"
   # Transform into factors as in data:
   for(j in 1:ncol(Xdat_orig)) {
