@@ -3,7 +3,6 @@
 export(Kappa_fun)
 export(Kappa_homogenous_fun)
 export(construct_data)
-export(create_ref_indiv)
 export(kdu_transform_fun)
 export(ku_transform_homogenous_fun)
 export(lpoly_regress)

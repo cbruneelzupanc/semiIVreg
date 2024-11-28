@@ -12,7 +12,8 @@
 mtr_est_poly(d, data, seq_u,
                     bwd = NULL, bw_y = NULL, bw_method = "plug-in",
                     pol_degree1, pol_degree2,
-                    var_outcome, var_treatment, var_w0, var_w1, var_covariates)
+                    var_outcome, var_treatment, var_w0, var_w1, var_covariates,
+                    print_progress)
 
 mtr_fun_poly(ref_indiv, est0, est1, k0, k1)
 

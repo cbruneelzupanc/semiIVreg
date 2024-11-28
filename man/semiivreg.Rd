@@ -10,16 +10,18 @@ semiivreg(formula, data, propensity_formula=NULL, propensity_data = NULL,
                  ref_indiv =NULL, firststage_model = "probit",
                  est_method = "locpoly", # "locpoly", "sieve", or "homogenous".
                  se_type = "HC1",
-                 bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "plug-in",
+                 bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "rule-of-thumb",
                  pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
                  pol_degree_sieve = 5, conf_level = 0.05,
                  common_supp_trim=c(0,1), trimming_value=NULL, automatic_trim=FALSE,
-                 plotting=TRUE)
+                 plotting=TRUE, print_progress=FALSE)
 
 semiivreg_boot(formula, Nboot=500, data, propensity_formula=NULL, ref_indiv =NULL,
                firststage_model="probit", est_method = "locpoly", se_type="HC1",
-               pol_degree_transform = 5, common_supp_trim=c(0,1), trimming_value = NULL,
-               automatic_trim = FALSE, plotting=TRUE, conf_level = 0.05, CI_method = "delta")
+               bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "rule-of-thumb",
+               pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
+               common_supp_trim=c(0,1), trimming_value = NULL,
+               automatic_trim = FALSE, plotting=TRUE, conf_level = 0.05, CI_method = "curve")
 
 semiiv_predict(semiiv, newdata, seq_v=NULL)
 }
@@ -36,7 +38,7 @@ with est_method = "locpoly": cannot restrict covariates to have common effects (
 \item{propensity_data}{Data used to compute the 1st stage; ignore by default set to NULL and = data. Mainly useful for internal bootstrap function is the first stage formula is different from the default one.}
 
 \item{ref_indiv}{Specify the reference individual (in terms of covariates) at which we will evaluate the function. \cr
-by default takes the average value for the numerical covariates, and the reference level for factors. \cr}
+By default takes the average value for all the covariates (on the trimmed dataset) to compute the average estimate. Remark: for factors, the average is computed on the dummy variables to get the proper average effect. \cr}
 
 \item{firststage_model}{By default, the first stage is a probit model. Can specify another model (e.g., "logit").}
 
@@ -44,11 +46,14 @@ by default takes the average value for the numerical covariates, and the referen
 
 \item{se_type}{Type of standard errors if sieve/homogenous estimation. By default = "HC1". Can otherwise me any of the possibilities of vcovHC in the sandwich package. Also possible to have se_type="nonrobust" for the non-robust (lm default).}
 
-\item{bw0, bw1}{Bandwidth of the first residual regressions of Wd and X on Phat. Need to be specified in the order of the covariates as specified in the model. Be very careful with factors. Default NULL and computed using the specified bw_method.}
+\item{bw0, bw1}{Bandwidth of the first residual regressions of Wd and X on Phat. \cr
+Two possibilities: specify one value that is applied to all covariates, or specify a different bandwidth for the regression on each covariate. In the second case, need to be specified in the order of the covariates as specified in the model. Be very careful with factors. \cr
+Default NULL and computed using the specified bw_method.}
 
 \item{bw_y0, bw_y1}{Bandwidth of the second regression of Y (net of the effects of the covariates) on Phat. Default NULL and computed using the specified bw_method.}
 
-\item{bw_method}{Method to compute the bandwidth of the local polynomial regressions. Default is simple "rule-of-thumb" method. Alternatives include "cv" for cross-validation and "plug-in" for plug-in bw (Fan and Gijbels, 1996). Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. For replicability, set a seed before running semiivreg. Plug-in bandwidth is computed only with a degree that is odd.}
+\item{bw_method}{Method to compute the bandwidth of the local polynomial regressions. Default is simple "rule-of-thumb" method. Alternatives include "cv" for cross-validation and "plug-in" for plug-in bw (Fan and Gijbels, 1996). \cr
+Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. For replicability, set a seed before running semiivreg. Plug-in bandwidth is computed only with a degree that is odd.}
 
 \item{pol_degree_locpoly1}{Degree of the local polynomial regression of the covariates on Phat. Default is 1 as recommended by Fan and Gijbels (1996) because we want to estimate the regular function.}
 
@@ -69,7 +74,11 @@ Inserting a trimming_value generates automatic_trim = TRUE automatically.}
 
 \item{plotting}{TRUE if wants to plot at the end of the function, FALSE otherwise.}
 
+\item{print_progress}{TRUE if wants to print the progress of the function, FALSE otherwise (default=FALSE).}
+
 \item{Nboot}{Number of bootstrap samples.}
+
+\item{block_boot_var}{Variable on which to base the block bootstrap. By default, = NULL for standard bootstrap.}
 
 \item{CI_method}{"delta" for delta method, "curve" for bootstrap the MTE curves directly. With est_method = "locpoly", only "curve" method is possible.}
 

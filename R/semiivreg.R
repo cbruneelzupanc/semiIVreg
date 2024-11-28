@@ -16,14 +16,17 @@
 #' @param propensity_formula Formula for the 1st stage. If nothing specified, just runs a probit of d ~ semi-iv0 + semi-iv1 + covariates (removing the redundant variables).
 #' @param propensity_data Data used to compute the 1st stage; ignore by default set to NULL and = data. Mainly useful for internal bootstrap function is the first stage formula is different from the default one.
 #' @param ref_indiv Specify the reference individual (in terms of covariates) at which we will evaluate the function. \cr
-#' by default takes the average value for the numerical covariates, and the reference level for factors. \cr
+#' By default takes the average value for all the covariates (on the trimmed dataset) to compute the average estimate. Remark: for factors, the average is computed on the dummy variables to get the proper average effect. \cr
 #  Can also specify a data.frame with several reference individuals. The MTR and MTE will be computed for all of them. But the plot only for the first one.
 #' @param firststage_model By default, the first stage is a probit model. Can specify another model (e.g., "logit").
 #' @param est_method Estimation method: default is "locpoly" for Robinson (1988) double residual regression for partially linear model. Other options include "sieve" to specify flexibly the control function as a polynomial with pol_degree_sieve, and "homogenous" which is a sieve where we also impose homogenous treatment effect.
 #' @param se_type Type of standard errors if sieve/homogenous estimation. By default = "HC1". Can otherwise me any of the possibilities of vcovHC in the sandwich package. Also possible to have se_type="nonrobust" for the non-robust (lm default).
-#' @param bw0,bw1 Bandwidth of the first residual regressions of Wd and X on Phat. Need to be specified in the order of the covariates as specified in the model. Be very careful with factors. Default NULL and computed using the specified bw_method.
+#' @param bw0,bw1 Bandwidth of the first residual regressions of Wd and X on Phat. \cr
+#' Two possibilities: specify one value that is applied to all covariates, or specify a different bandwidth for the regression on each covariate. In the second case, need to be specified in the order of the covariates as specified in the model. Be very careful with factors. \cr
+#' Default NULL and computed using the specified bw_method.
 #' @param bw_y0,bw_y1 Bandwidth of the second regression of Y (net of the effects of the covariates) on Phat. Default NULL and computed using the specified bw_method.
-#' @param bw_method Method to compute the bandwidth of the local polynomial regressions. Default is simple "rule-of-thumb" method. Alternatives include "cv" for cross-validation and "plug-in" for plug-in bw (Fan and Gijbels, 1996). Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. For replicability, set a seed before running semiivreg. Plug-in bandwidth is computed only with a degree that is odd.
+#' @param bw_method Method to compute the bandwidth of the local polynomial regressions. Default is simple "rule-of-thumb" method. Alternatives include "cv" for cross-validation and "plug-in" for plug-in bw (Fan and Gijbels, 1996). \cr
+#' Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. For replicability, set a seed before running semiivreg. Plug-in bandwidth is computed only with a degree that is odd.
 #' @param pol_degree_locpoly1 Degree of the local polynomial regression of the covariates on Phat. Default is 1 as recommended by Fan and Gijbels (1996) because we want to estimate the regular function.
 #' @param pol_degree_locpoly2 Degree of the local polynomial regression of Y (net of the effects of the covariates) on Phat. Default is 2 as recommended by Fan and Gijbels (1996) because we want to estimate the derivative function.
 #' @param pol_degree_sieve Degree of the polynomial transformation for the control function.
@@ -35,7 +38,7 @@
 #' Inserting a trimming_value generates automatic_trim = TRUE automatically.
 #' @param automatic_trim If TRUE, the estimation of the second stage is done on the common_support only.
 #' @param plotting TRUE if wants to plot at the end of the function, FALSE otherwise.
-#'
+#' @param print_progress TRUE if wants to print the progress of the function, FALSE otherwise (default=FALSE).
 #'
 #'
 #'
@@ -111,11 +114,11 @@
 #'                  ref_indiv =NULL, firststage_model = "probit",
 #'                  est_method = "locpoly", # "locpoly", "sieve", or "homogenous".
 #'                  se_type = "HC1",
-#'                  bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "plug-in",
+#'                  bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "rule-of-thumb",
 #'                  pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
 #'                  pol_degree_sieve = 5, conf_level = 0.05,
 #'                  common_supp_trim=c(0,1), trimming_value=NULL, automatic_trim=FALSE,
-#'                  plotting=TRUE)
+#'                  plotting=TRUE, print_progress=FALSE)
 
 
 #' @examples
@@ -144,7 +147,7 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
                      pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
                      pol_degree_sieve = 5, conf_level = 0.05,
                      common_supp_trim=c(0,1), trimming_value=NULL, automatic_trim=FALSE,
-                     plotting=TRUE) {
+                     plotting=TRUE, print_progress = FALSE) {
 
 
   # 0. Construction of the variables/objects to be used
@@ -157,10 +160,10 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
   data = transform_factor(formula, data) # the variables which are specified as "factor(x)" are transformed into factors # done in order to ensure ordering with ref indiv
   data_orig = data;
 
-  # (ii) Create reference individual if missing
-  if(is.null(ref_indiv)) { ref_indiv_orig = create_ref_indiv(formula, data) } else { ref_indiv_orig = ref_indiv }
+  # Create reference individual if missing -> outdated
+  # if(is.null(ref_indiv)) { ref_indiv_orig = create_ref_indiv(formula, data) } else { ref_indiv_orig = ref_indiv }
 
-  # (iii) Construct transformed data
+  # (ii) Construct transformed data
   # Transform factors into dummies for example
   res = construct_data(formula, data_orig)
   Xdat = res$data;
@@ -176,22 +179,33 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
   data = cbind(datayd, Xdat)
 
 
-  # (iv) Transformed reference individual
-  name_all_X_orig = all.vars(formula_X_orig)
-  Xdat_orig = subset(data_orig, select=name_all_X_orig)
-  ref_indiv_orig = subset(ref_indiv_orig, select=name_all_X_orig) # remove potential "id"
-  # Transform into factors as in data:
-  for(j in 1:ncol(Xdat_orig)) {
-    if(is.factor(Xdat_orig[,j])) {
-      ref_indiv_orig[,j] = factor(as.character(ref_indiv_orig[,j]), levels=levels(Xdat_orig[,j]))
+  # (iii) Transformed reference individual
+  if(!is.null(ref_indiv)) { # If specific ref_indiv has been specified:
+
+    ref_indiv_orig = ref_indiv # save the original version
+    name_all_X_orig = all.vars(formula_X_orig)
+    Xdat_orig = subset(data_orig, select=name_all_X_orig)
+    ref_indiv_orig = subset(ref_indiv_orig, select=name_all_X_orig) # remove potential "id"
+    # Transform into factors as in data:
+    for(j in 1:ncol(Xdat_orig)) {
+      if(is.factor(Xdat_orig[,j])) {
+        ref_indiv_orig[,j] = factor(as.character(ref_indiv_orig[,j]), levels=levels(Xdat_orig[,j]))
+      }
     }
+    ref = rbind(ref_indiv_orig, Xdat_orig) # inflate the data just to have all the levels of the factors;
+    res_ref = construct_data(formula, data=ref)
+    ref_indiv = res_ref$data[1:nrow(ref_indiv_orig),]
+    ref_indiv$id = 1:nrow(ref_indiv)
+
   }
-  ref = rbind(ref_indiv_orig, Xdat_orig) # inflate the data just to have all the levels of the factors;
-  res_ref = construct_data(formula, data=ref)
-  ref_indiv = res_ref$data[1:nrow(ref_indiv_orig),]
-  ref_indiv$id = 1:nrow(ref_indiv)
+  # if no ref_indiv specified: compute the 'mean' effect in the sample.
+  # Requires to compute the 'average' indiv.
+  # But this is done AFTER eventual trimming of the first stage.
+
+  # Remark: even for 'factors' just compute the mean, because it will give the mean effect in the sample.
 
   Xdat$id = NA #
+
 
 
   # (v) Ensures that the treatment variable is binary 0, 1
@@ -213,6 +227,7 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
   # 1. First stage: Propensity score estimation
   # --------------
 
+  if(print_progress) { cat(sprintf("Estimating first stage... \r")) }
 
   if(is.null(propensity_formula)) { # by default, simple only include w0 and w1, additively
     # Formula:
@@ -296,12 +311,25 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
   # for the first value take the first above (so that mimic the seq_u choice)
 
 
+  # (ii-c) Compute the 'average individual' (if not specified)
+  if(is.null(ref_indiv)) { # If no specific ref_indiv -> Compute effects "at the mean"
+    Xdat11 = Xdat[,which(colnames(Xdat) != "Phat")]
+    ref_indiv = as.data.frame(t(colMeans(Xdat11)))  # no need for "na.rm=TRUE" because already na.omit on data at the beginning.
+    ref_indiv$id = 1
+    rm(Xdat11); #gc()
+  }
+
+
+
+  if(print_progress) {  cat(sprintf("First stage estimated.       \n")) }
 
 
 
   # 2. Second Stage:
   # ----------------
   # Several estimation methods here. By default do Robinson (1988) double residual regression for partially linear model.
+
+  if(print_progress) {  cat(sprintf("2nd stage: Estimating MTR and MTE... \n")) }
 
   # Method 1: Local Polynomial Regressions
   # ---------
@@ -315,11 +343,13 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
     res0 = mtr_est_poly(d=0, data, seq_u,
                         bwd = bw0, bw_y = bw_y0, bw_method = bw_method,
                         pol_degree1 = pol_degree_locpoly1, pol_degree2 = pol_degree_locpoly2,
-                        var_outcome=var_outcome, var_treatment=var_treatment, var_w0=var_w0, var_w1=var_w1, var_covariates=var_covariates)
+                        var_outcome=var_outcome, var_treatment=var_treatment, var_w0=var_w0, var_w1=var_w1, var_covariates=var_covariates,
+                        print_progress = print_progress)
     res1 = mtr_est_poly(d=1, data, seq_u,
                         bwd = bw1, bw_y = bw_y1, bw_method = bw_method,
                         pol_degree1 = pol_degree_locpoly1, pol_degree2 = pol_degree_locpoly2,
-                        var_outcome=var_outcome, var_treatment=var_treatment, var_w0=var_w0, var_w1=var_w1, var_covariates=var_covariates)
+                        var_outcome=var_outcome, var_treatment=var_treatment, var_w0=var_w0, var_w1=var_w1, var_covariates=var_covariates,
+                        print_progress = print_progress)
 
 
     est0 = res0$estd; est1 = res1$estd;
@@ -467,6 +497,8 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
 
 
 
+  if(print_progress) { cat(sprintf("Estimation complete.                                             \n")) }
+
 
 
 
@@ -570,13 +602,17 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
 #' @rdname semiivreg
 #' @usage semiivreg_boot(formula, Nboot=500, data, propensity_formula=NULL, ref_indiv =NULL,
 #'                firststage_model="probit", est_method = "locpoly", se_type="HC1",
-#'                pol_degree_transform = 5, common_supp_trim=c(0,1), trimming_value = NULL,
-#'                automatic_trim = FALSE, plotting=TRUE, conf_level = 0.05, CI_method = "delta")
+#'                bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "rule-of-thumb",
+#'                pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
+#'                common_supp_trim=c(0,1), trimming_value = NULL,
+#'                automatic_trim = FALSE, plotting=TRUE, conf_level = 0.05, CI_method = "curve")
 #' @param Nboot Number of bootstrap samples.
+#' @param block_boot_var Variable on which to base the block bootstrap. By default, = NULL for standard bootstrap.
 #' @param CI_method "delta" for delta method, "curve" for bootstrap the MTE curves directly. With est_method = "locpoly", only "curve" method is possible.
 #'
 #' @export
 semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, propensity_data=NULL,
+                          block_boot_var = NULL,
                           ref_indiv =NULL, firststage_model = "probit",
                           est_method = "locpoly", # "locpoly", "sieve", or "homogenous".
                           se_type="HC1",
@@ -584,7 +620,9 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
                           pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
                           pol_degree_sieve = 5, conf_level = 0.05,
                           common_supp_trim=c(0,1), trimming_value=NULL, automatic_trim=FALSE,
-                          plotting=TRUE, CI_method = "curve") {
+                          CI_method = "curve",
+                          plotting=TRUE,
+                          print_progress = TRUE) {
 
 
 
@@ -601,7 +639,7 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
                        pol_degree_sieve = pol_degree_sieve, conf_level = conf_level,
                        common_supp_trim = common_supp_trim, trimming_value = trimming_value, automatic_trim = automatic_trim, plotting=FALSE)
 
-  # Extract ref_indiv (if not specified)
+  # Extract ref_indiv (if not specified at the beginning, will always be the average indiv in the main (trimmed) sample)
   ref_indiv = main_res$data$ref_indiv
 
   # Updated formula
@@ -647,10 +685,36 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
 
     #set.seed(1234*k) # just set seed outside
 
-    # Bootstrap sample
-    bootstrap_indices <- sample(1:nrow(data), size = nrow(data), replace = TRUE)
-    bootstrap_sample <- data[bootstrap_indices, ]
-    bootstrap_propensity_sample = propensity_data[bootstrap_indices, ]
+
+    if(is.null(block_boot_var)) {
+
+      # (i) Standard Bootstrap
+      bootstrap_indices <- sample(1:nrow(data), size = nrow(data), replace = TRUE)
+      bootstrap_sample <- data[bootstrap_indices, ]
+      bootstrap_propensity_sample = propensity_data[bootstrap_indices, ]
+      # data and propensity_data are ordered exactly the same, does not cause problems
+
+    } else {
+
+      # (ii) Block Bootstrap
+      # Based on block_boot_var:
+      main_dat = propensity_data;
+      unique_block_var = unique(main_dat[[block_boot_var]])
+      N_block = length(unique_block_var)
+
+      BOOTSTRAP_INDICES = list()
+      for(b in 1:N_block) {
+        lines_block = which(main_dat[[block_boot_var]] == unique_block_var[b])
+        size_block = length(lines_block)
+        bootstrap_indices_b <- sample(1:size_block, size = size_block, replace = TRUE)
+        bootstrap_indices_lines_b = lines_block[bootstrap_indices_b]
+        BOOTSTRAP_INDICES[[b]] = bootstrap_indices_lines_b
+      }
+      bootstrap_indices = unlist(BOOTSTRAP_INDICES)
+
+      bootstrap_sample <- data[bootstrap_indices, ]
+      bootstrap_propensity_sample = propensity_data[bootstrap_indices, ]
+    }
 
     # semi-iv estimation
     boot_res = invisible(semiivreg(formula=transform_formula, data=bootstrap_sample,
@@ -660,7 +724,8 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
                                    est_method = est_method, se_type=se_type, bw0 = bw0, bw1 = bw1, bw_y0 = bw_y0, bw_y1 = bw_y1, bw_method = bw_method,
                                    pol_degree_locpoly1 = pol_degree_locpoly1, pol_degree_locpoly2 = pol_degree_locpoly2,
                                    pol_degree_sieve = pol_degree_sieve, conf_level = conf_level,
-                                   common_supp_trim = common_supp_trim_boot, trimming_value=NULL, automatic_trim=FALSE, plotting=FALSE))
+                                   common_supp_trim = common_supp_trim_boot, trimming_value=NULL, automatic_trim=FALSE, plotting=FALSE,
+                                   print_progress = FALSE)) # never print the progress here
     #BOOT[[k]] = boot_res
 
     # Storing the N_boot simulation would take too much memory if big datasets

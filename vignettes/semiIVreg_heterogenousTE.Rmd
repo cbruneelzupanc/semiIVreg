@@ -101,19 +101,33 @@ To get proper standard errors of the MTE/MTR and effects of the semi-IVs with th
 
 **Bandwidth Specification.**   
 
-By default, with `est_method="locpoly"`, if no bandwidth is provided, the bandwidth are computed using the `bw_method`. The default `bw_method` is a simple `plug-in` rule of thumb estimator for pace. *Other methods (e.g., cross validation) to be implemented later.* To extract the bandwidth after the estimation, run `semiiv$bw`. 
+By default, with `est_method="locpoly"`, if no bandwidth is provided, the bandwidth are computed using the `bw_method`. The default `bw_method` is a simple `rule-of-thumb` rule of thumb estimator from the `locpol` package, which implements @fangijbels2003 rule of thumb for bandwidth selection (function `thumbBw()`). 
+Using `bw_method="cv"` computes the cross-validation bandwidth from the function `regCVBwSelC()` of the `locpol` package (but takes longer, especially if many covariates). To extract the bandwidth after the estimation, run `semiiv$bw`. 
+Can also specify `bw_method = 'plug-in'` from @fangijbels2003, implemented via `pluginBw()` from the `locpol` package (the degree of the local polynomial should be an odd number for this to work).
 
-One can also pre-specify some of the bandwidth directly, as shown below. The parameters `bwd` are the bandwidth for the first residual regression of $Y_d$ and $W_d$ (and $X$) on $\widehat{P}$, that estimates respectively $E[Y_d|P]$, $E[W_d|P]$ and $E[X|P]$, in order to get the effects of the semi-IVs on their potential outcomes. For $W_d$ and $X$, the order of the variable depends on the order specified in the original `formula`. Be sure to match the variables in the correct order (be careful with `factor` for example). One way to check is to first run without specifying the bandwidth and then checking the order of the variables in `semiiv$estimate$est0` and `semiiv$estimate$est1`.   
+One can also pre-specify some of the bandwidth directly, as shown below. The parameters `bwd` are the bandwidth for the first residual regression of $Y_d$ and $W_d$ (and $X$) on $\widehat{P}$, that estimates respectively $E[Y_d|P]$, $E[W_d|P]$ and $E[X|P]$, in order to get the effects of the semi-IVs on their potential outcomes. For $W_d$ and $X$, the order of the variable depends on the order specified in the original `formula`. Be sure to match the variables in the correct order (be careful with `factor` for example). One way to check is to first run without specifying the bandwidth and then checking the order of the variables in `semiiv$estimate$est0` and `semiiv$estimate$est1`.  
+If one specifies only one value in bw0 and bw1, it will be applied to all the covariates. 
 
-`bw_y0` and `bw_y1` are the bandwidth for the second part. They are much more important and governs the smoothness of the MTE and MTR function. 
+`bw_y0` and `bw_y1` are the bandwidth for the second part. They are important since they govern the smoothness of the MTE and MTR function. 
 
-
-For example, let us increase smoothing by increasing the bandwidth.
-
+Let us check the bandwidth from the previous computation (default was rule-of-thumb method). 
 ```{r smooth, fig.height=3, fig.width=7, fig.align='center'}
 semiiv$bw
+```
+
+Re-estimate the bandwidth using cross-validation (`print_progress=TRUE` is a reporting option to see the progress of the function). 
+
+```{r smooth2, fig.height=3, fig.width=7, fig.align='center'}
 semiiv = semiivreg(y~d|w0|w1, data, ref_indiv = data.frame(w0=0, w1=0),
-                   bw_method = "plug-in", bw_y0 = 0.20, bw_y1 = 0.20)
+                   bw_method = "cv", print_progress=TRUE)
+semiiv$bw
+```
+
+Now, illustrate how we can directly specify the bandwidth (which adjusts the smoothness of the estimation). Remark: the `bw_method` does not matter if we specify all the bandwidth. 
+
+```{r smooth3, fig.height=3, fig.width=7, fig.align='center'}
+semiiv = semiivreg(y~d|w0|w1, data, ref_indiv = data.frame(w0=0, w1=0),
+                   bw0=0.05, bw1=0.05, bw_y0 = 0.2, bw_y1 = 0.2)
 ```
 
 
@@ -286,7 +300,8 @@ grid.arrange(mtr_plot, mte_plot, ncol=2)
 
 
 
-**Post-estimation prediction.**
+**Post-estimation prediction.**  
+
 Imagine after estimating one wants to estimate the model for several individuals. One way is to directly specify several ref_indiv when running the initial regression. But if it's already estimated, one can simply use the `semiiv_predict` function. It also allows to predict only at a subset of specific values of $V$.  
 
 ```{r mte_predict, fig.height=3, fig.width=7, fig.align='center'}

@@ -9,12 +9,14 @@
 #' @usage mtr_est_poly(d, data, seq_u,
 #'                     bwd = NULL, bw_y = NULL, bw_method = "plug-in",
 #'                     pol_degree1, pol_degree2,
-#'                     var_outcome, var_treatment, var_w0, var_w1, var_covariates)
+#'                     var_outcome, var_treatment, var_w0, var_w1, var_covariates,
+#'                     print_progress)
 #' @export
 mtr_est_poly = function(d, data, seq_u,
                         bwd = NULL, bw_y = NULL, bw_method = "plug-in",
                         pol_degree1, pol_degree2,
-                        var_outcome, var_treatment, var_w0, var_w1, var_covariates) {
+                        var_outcome, var_treatment, var_w0, var_w1, var_covariates,
+                        print_progress=FALSE) {
 
   # All regressions done on subsample D=d
   datad = data[which(data[[var_treatment]] == d),]
@@ -30,6 +32,13 @@ mtr_est_poly = function(d, data, seq_u,
   residd = datd;
 
   BWD=c()
+
+  # if specify only one value in bwd, apply it to ALL the variables (remark: if only one covariate, does not change anything)
+  if(length(bwd) == 1) { bwd = rep(bwd, ncol(datd)) }
+
+
+  if(print_progress) { cat(sprintf("D= %d, Robinson 1st residual regression of X on P...", d), "              \n") }
+
   for(j in 1:ncol(datd)) {
     #if(is.null(bwd)) { bwj = NULL } else { bwj = bwd[j] }
     bwj = bwd[j] # if is NULL will always put null
@@ -40,13 +49,20 @@ mtr_est_poly = function(d, data, seq_u,
     pred = approx(x=reg$x, y=reg$y, xout=Phatd)$y
     resid = datd[,j] - pred
     BWD[j] = resj$bw; residd[,j] = resid
+
+    if(print_progress & bw_method == "cv" & is.null(bwd)) { cat(sprintf("Progress: %d/%d", j, ncol(datd)), "                             \r") }
   }
 
   formuladx = as.formula(paste0(var_outcome, "~ -1 + ."))
   estd = lm(formuladx, data=residd)
 
+
+
   # Step 2. Estimate Kappa_d(u) and then k_d(u)
   # -------
+
+  if(print_progress) { cat(sprintf("\nD= %d, Robinson 2nd stage: regression of Y (net of covariates) on P...", d), "              \n") }
+
   # (i) Extract Yd net of the effect of the covariates
   ypredd = predict(estd, newdata=as.data.frame(Xd))
   ynetd = datd[[var_outcome]] - ypredd;

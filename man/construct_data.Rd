@@ -2,13 +2,10 @@
 % Please edit documentation in R/sub_data_fun.R
 \name{construct_data}
 \alias{construct_data}
-\alias{create_ref_indiv}
 \alias{transform_factor}
 \title{Data construction functions}
 \usage{
 construct_data(formula, data)
-
-create_ref_indiv(formula, data)
 
 transform_factor(formula, data)
 }
