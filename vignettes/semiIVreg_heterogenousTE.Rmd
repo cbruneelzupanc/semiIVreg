@@ -308,7 +308,7 @@ Imagine after estimating one wants to estimate the model for several individuals
 newdata = data.frame(w0=seq(-1, 1, by=0.5), w1=0) # Predict the outcome
 
 pred = semiiv_predict(semiiv1, newdata=newdata)
-head(pred$RES) # the predicted values; -> can then be used to redo plots for example. 
+head(pred$est) # the predicted values; -> can then be used to redo plots for example. 
 pred$deltaX # provides the shift in effect of X and Wd -> may be the only thing we care about, know that shifts the curve
 
 ```

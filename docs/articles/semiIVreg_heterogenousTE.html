@@ -503,15 +503,28 @@ predict only at a subset of specific values of
 <code class="sourceCode R"><span><span class="va">newdata</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>w0<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, by<span class="op">=</span><span class="fl">0.5</span><span class="op">)</span>, w1<span class="op">=</span><span class="fl">0</span><span class="op">)</span> <span class="co"># Predict the outcome</span></span>
 <span></span>
 <span><span class="va">pred</span> <span class="op">=</span> <span class="fu"><a href="../reference/semiivreg.html">semiiv_predict</a></span><span class="op">(</span><span class="va">semiiv1</span>, newdata<span class="op">=</span><span class="va">newdata</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pred</span><span class="op">$</span><span class="va">RES</span><span class="op">)</span> <span class="co"># the predicted values; -&gt; can then be used to redo plots for example. </span></span>
-<span><span class="co">#&gt; NULL</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pred</span><span class="op">$</span><span class="va">est</span><span class="op">)</span> <span class="co"># the predicted values; -&gt; can then be used to redo plots for example. </span></span>
+<span><span class="co">#&gt;     w0 w1 id  Phat     mtr0     mtr1      mte       k0       k1   delta0X</span></span>
+<span><span class="co">#&gt; 1   -1  0  1 0.100       NA       NA       NA       NA       NA -0.796251</span></span>
+<span><span class="co">#&gt; 1.1 -1  0  1 0.101 1.920819 3.864864 1.944045 2.717070 3.864864 -0.796251</span></span>
+<span><span class="co">#&gt; 1.2 -1  0  1 0.102 1.921639 3.859092 1.937453 2.717890 3.859092 -0.796251</span></span>
+<span><span class="co">#&gt; 1.3 -1  0  1 0.103 1.922464 3.853684 1.931220 2.718715 3.853684 -0.796251</span></span>
+<span><span class="co">#&gt; 1.4 -1  0  1 0.104 1.923289 3.848410 1.925120 2.719540 3.848410 -0.796251</span></span>
+<span><span class="co">#&gt; 1.5 -1  0  1 0.105 1.924108 3.843222 1.919114 2.720359 3.843222 -0.796251</span></span>
+<span><span class="co">#&gt;     delta1X  se_delta0X se_delta1X</span></span>
+<span><span class="co">#&gt; 1         0 0.005683472          0</span></span>
+<span><span class="co">#&gt; 1.1       0 0.005683472          0</span></span>
+<span><span class="co">#&gt; 1.2       0 0.005683472          0</span></span>
+<span><span class="co">#&gt; 1.3       0 0.005683472          0</span></span>
+<span><span class="co">#&gt; 1.4       0 0.005683472          0</span></span>
+<span><span class="co">#&gt; 1.5       0 0.005683472          0</span></span>
 <span><span class="va">pred</span><span class="op">$</span><span class="va">deltaX</span> <span class="co"># provides the shift in effect of X and Wd -&gt; may be the only thing we care about, know that shifts the curve</span></span>
 <span><span class="co">#&gt;     w0 w1 id    delta0X delta1X  se_delta0X se_delta1X</span></span>
-<span><span class="co">#&gt; 1 -1.0  0  1 -0.7962510       0 0.005702196          0</span></span>
-<span><span class="co">#&gt; 2 -0.5  0  2 -0.3981255       0 0.002851098          0</span></span>
+<span><span class="co">#&gt; 1 -1.0  0  1 -0.7962510       0 0.005683472          0</span></span>
+<span><span class="co">#&gt; 2 -0.5  0  2 -0.3981255       0 0.002841736          0</span></span>
 <span><span class="co">#&gt; 3  0.0  0  3  0.0000000       0 0.000000000          0</span></span>
-<span><span class="co">#&gt; 4  0.5  0  4  0.3981255       0 0.002851098          0</span></span>
-<span><span class="co">#&gt; 5  1.0  0  5  0.7962510       0 0.005702196          0</span></span></code></pre></div>
+<span><span class="co">#&gt; 4  0.5  0  4  0.3981255       0 0.002841736          0</span></span>
+<span><span class="co">#&gt; 5  1.0  0  5  0.7962510       0 0.005683472          0</span></span></code></pre></div>
 </div>
 <div class="section level2 unnumbered">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

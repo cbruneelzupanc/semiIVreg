@@ -15,7 +15,7 @@ mtr_est_poly(d, data, seq_u,
                     var_outcome, var_treatment, var_w0, var_w1, var_covariates,
                     print_progress)
 
-mtr_fun_poly(ref_indiv, est0, est1, k0, k1)
+mtr_fun_poly(ref_indiv, eval_v, est0, est1, k0, k1, se_type)
 
 lpoly_regress(x, y, bw=NULL, bw_method="plug-in", degree, drv)
 

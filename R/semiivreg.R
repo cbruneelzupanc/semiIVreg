@@ -365,7 +365,7 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
 
     eval_v = k0$v # same for k1.
 
-    PREDICT = mtr_fun_poly(ref_indiv=ref_indiv, eval_v=eval_v, est0=est0, est1=est1, k0=k0, k1=k1)
+    PREDICT = mtr_fun_poly(ref_indiv=ref_indiv, eval_v=eval_v, est0=est0, est1=est1, k0=k0, k1=k1, se_type=se_type)
     RES = PREDICT$est
     deltaX = PREDICT$deltaX
     kv = PREDICT$kv
@@ -1049,7 +1049,7 @@ semiiv_predict = function(semiiv, newdata, seq_v=NULL) {
     # Support check:
     # Already done within the function (returns error if outside)
 
-    PREDICT = mtr_fun_poly(ref_indiv=ref_indiv, eval_v=seq_u, est0=est0, est1=est1, k0=k0, k1=k1)
+    PREDICT = mtr_fun_poly(ref_indiv=ref_indiv, eval_v=seq_u, est0=est0, est1=est1, k0=k0, k1=k1, se_type=se_type)
   }
 
 

@@ -99,9 +99,9 @@ mtr_est_poly = function(d, data, seq_u,
 
 
 #' @rdname mtr_fun
-#' @usage mtr_fun_poly(ref_indiv, est0, est1, k0, k1)
+#' @usage mtr_fun_poly(ref_indiv, eval_v, est0, est1, k0, k1, se_type)
 #' @export
-mtr_fun_poly = function(ref_indiv, eval_v, est0, est1, k0, k1) {
+mtr_fun_poly = function(ref_indiv, eval_v, est0, est1, k0, k1, se_type) {
 
   # Main prediction: predict mtr, mte
 
@@ -109,18 +109,68 @@ mtr_fun_poly = function(ref_indiv, eval_v, est0, est1, k0, k1) {
   REF = ref_indiv[rep(seq_len(nrow(ref_indiv)), each = length(eval_v)), ]
   REF$Phat = rep(eval_v, times=nrow(ref_indiv))
 
-  # Effect of covariates
-  delta0x = predict(est0, newdata=REF)
-  delta1x = predict(est1, newdata=REF)
+  # (i) Effect of covariates
 
-  X0_pred = predict(est0, newdata=REF, se.fit=TRUE)
-  X1_pred = predict(est1, newdata=REF, se.fit=TRUE)
-  delta0x = X0_pred$fit
-  delta1x = X1_pred$fit
-  se_delta0x = X0_pred$se.fit
-  se_delta1x = X1_pred$se.fit
+  if(se_type == "nonrobust") {
+    X0_pred = predict(est0, newdata=REF, se.fit=TRUE)
+    X1_pred = predict(est1, newdata=REF, se.fit=TRUE)
+    delta0x = X0_pred$fit
+    delta1x = X1_pred$fit
+    se_delta0x = X0_pred$se.fit
+    se_delta1x = X1_pred$se.fit
+    # For the standard errors: cannot use predict default if do not use nonrobust.
 
-  # Also repeat ku:
+  } else {
+    # If specific standard errors (e.g., se_type = "HC1"), cannot use predict: need to do it manually
+
+    # Extract coefficients and compute sandwich covariance matrix
+    coeff0 = coefficients(est0); coeff1 = coefficients(est1)
+    if(se_type == "nonrobust") {
+      vcov0 = vcov(est0); vcov1 = vcov(est1)
+    } else {
+      vcov0 = vcovHC(est0, type = se_type) # robust standard errors;
+      vcov1 = vcovHC(est1, type = se_type)
+    }
+    if(length(which(is.na(coeff0))) > 0 | length(which(is.na(coeff1))) > 0) { warning("Some coefficients are NA. May be impossible to evaluate for some reference individual. ") }
+
+    # Additional correction: if robust standard errors, no row/column for NA coeff. Add them back;
+    # -> this should never happen with locpoly (because would bug before probably), but we never know.
+    ncoeff0 = length(coeff0)
+    index_nonNA0 = which(!is.na(coeff0))
+    if(se_type != "nonrobust") {
+      vcov_base0 = vcov0;
+      vcov0 = matrix(NA, nrow=ncoeff0, ncol=ncoeff0)
+      vcov0[index_nonNA0, index_nonNA0] = vcov_base0
+    }
+    ncoeff1 = length(coeff1)
+    index_nonNA1 = which(!is.na(coeff1))
+    if(se_type != "nonrobust") {
+      vcov_base1 = vcov1;
+      vcov1 = matrix(NA, nrow=ncoeff1, ncol=ncoeff1)
+      vcov1[index_nonNA1, index_nonNA1] = vcov_base1
+    }
+
+    # D=0:
+    formula0y = paste0(deparse(formula(est0)), collapse="")
+    formula0 = as.formula(gsub(".*~", "~", formula0y)) # remove Y
+    mat0 = model.matrix(formula0, data=REF)
+
+    delta0x = as.vector(mat0 %*% coeff0)
+    se_delta0x = sqrt(diag(mat0 %*% vcov0 %*% t(mat0)))
+
+    # D=1:
+    formula1y = paste0(deparse(formula(est1)), collapse="")
+    formula1 = as.formula(gsub(".*~", "~", formula1y)) # remove Y
+    mat1 = model.matrix(formula1, data=REF)
+
+    delta1x = as.vector(mat1 %*% coeff1)
+    se_delta1x = sqrt(diag(mat1 %*% vcov1 %*% t(mat1)))
+
+  }
+
+
+  # (ii) k(v):
+  # Also repeat kv:
   range_v = c(min(k0$v), max(k0$v))
   if(length(which(eval_v > range_v[2] | eval_v < range_v[1])) > 0) {
     stop("Evaluation value for V is out of the estimated range.")
@@ -134,7 +184,7 @@ mtr_fun_poly = function(ref_indiv, eval_v, est0, est1, k0, k1) {
   K0 = rep(k0_est, times=nrow(ref_indiv))
   K1 = rep(k1_est, times=nrow(ref_indiv))
 
-  # MTRd:
+  # (iii) MTRd and MTE
   mtr0 = delta0x + K0
   mtr1 = delta1x + K1
   mte = mtr1 - mtr0
@@ -148,12 +198,27 @@ mtr_fun_poly = function(ref_indiv, eval_v, est0, est1, k0, k1) {
   RES$se_delta0X = se_delta0x; RES$se_delta1X = se_delta1x
 
 
-  # Also return the effect of the covariates (but only one prediction by observation)
+  # (iv) Also return the effect of the covariates (but only one prediction by observation)
+  # remark: redundant to recompute, but quick..
   deltaX = ref_indiv;
-  delta0X_pred = predict(est0, newdata=ref_indiv, se.fit=TRUE)
-  delta1X_pred = predict(est1, newdata=ref_indiv, se.fit=TRUE)
-  deltaX$delta0X = delta0X_pred$fit; deltaX$delta1X = delta1X_pred$fit;
-  deltaX$se_delta0X = delta0X_pred$se.fit; deltaX$se_delta1X = delta1X_pred$se.fit;
+  if(se_type == "nonrobust") {
+    delta0X_pred = predict(est0, newdata=ref_indiv, se.fit=TRUE)
+    delta1X_pred = predict(est1, newdata=ref_indiv, se.fit=TRUE)
+    deltaX$delta0X = delta0X_pred$fit; deltaX$delta1X = delta1X_pred$fit;
+    deltaX$se_delta0X = delta0X_pred$se.fit; deltaX$se_delta1X = delta1X_pred$se.fit;
+
+  } else {
+    mat0r = model.matrix(formula0, data=deltaX)
+    delta0X = mat0r %*% coeff0
+    se_delta0X = sqrt(diag(mat0r %*% vcov0 %*% t(mat0r)))
+
+    mat1r = model.matrix(formula1, data=deltaX)
+    delta1X = as.vector(mat1r %*% coeff1)
+    se_delta1X = sqrt(diag(mat1r %*% vcov1 %*% t(mat1r)))
+
+    deltaX$delta0X = delta0X; deltaX$delta1X = delta1X
+    deltaX$se_delta0X = se_delta0X; deltaX$se_delta1X = se_delta1X
+  }
 
 
   res_list = list(RES, deltaX, kv); names(res_list) = c("est", "deltaX", "kv")
