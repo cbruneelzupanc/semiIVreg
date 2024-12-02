@@ -623,6 +623,7 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
 #' @param Nboot Number of bootstrap samples.
 #' @param block_boot_var Variable on which to base the block bootstrap. By default, = NULL for standard bootstrap.
 #' @param CI_method "delta" for delta method, "curve" for bootstrap the MTE curves directly. With est_method = "locpoly", only "curve" method is possible.
+#' @param print_progress_main Print progress of the main estimation or not.
 #'
 #' @export
 semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, propensity_data=NULL,
@@ -637,7 +638,7 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
                           CI_method = "curve",
                           weight_var = NULL,
                           plotting=TRUE,
-                          print_progress = TRUE) {
+                          print_progress = TRUE, print_progress_main = TRUE) {
 
 
 
@@ -645,7 +646,7 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
   # -------------------------------
   # to extract main estimate and eventually the support:
 
-  cat(sprintf("Bandwidth and MTR/MTE estimation on main sample... \r"))
+  cat(sprintf("Bandwidth and MTR/MTE estimation on main sample... \n"))
 
   main_res = semiivreg(formula=formula, data=data, propensity_formula=propensity_formula,
                        ref_indiv = ref_indiv, firststage_model = firststage_model,
@@ -654,7 +655,7 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
                        pol_degree_sieve = pol_degree_sieve, conf_level = conf_level,
                        common_supp_trim = common_supp_trim, trimming_value = trimming_value, automatic_trim = automatic_trim,
                        weight_var = weight_var,
-                       plotting=FALSE)
+                       plotting=FALSE, print_progress = print_progress_main)
 
   # Extract ref_indiv (if not specified at the beginning, will always be the average indiv in the main (trimmed) sample)
   ref_indiv = main_res$data$ref_indiv
@@ -685,7 +686,7 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
   var_treatment = main_res$call$var_treatment; var_cov_2nd = main_res$call$var_cov_2nd
 
 
-  cat(sprintf("Bandwidth and MTR/MTE estimation on main sample: Done. \n"))
+  cat(sprintf("\n Bandwidth and MTR/MTE estimation on main sample: Done. \n"))
 
 
 

@@ -86,6 +86,8 @@ Remark: recommended NOT to use weights for locpoly estimation because drasticall
 
 \item{CI_method}{"delta" for delta method, "curve" for bootstrap the MTE curves directly. With est_method = "locpoly", only "curve" method is possible.}
 
+\item{print_progress_main}{Print progress of the main estimation or not.}
+
 \item{semiiv}{Object returns from a semiivreg estimation.}
 
 \item{newdata}{New data for which to predict the MTE and MTR.}
