@@ -4,6 +4,7 @@
 \alias{mtr_est_poly}
 \alias{mtr_fun_poly}
 \alias{lpoly_regress}
+\alias{weighted_locpoly}
 \alias{mtr_coeff}
 \alias{mtr_est}
 \alias{mtr_predict_sieve}
@@ -17,7 +18,9 @@ mtr_est_poly(d, data, seq_u,
 
 mtr_fun_poly(ref_indiv, eval_v, est0, est1, k0, k1, se_type)
 
-lpoly_regress(x, y, bw=NULL, bw_method="plug-in", degree, drv)
+lpoly_regress(x, y, bw=NULL, bw_method="plug-in", degree, drv, weights)
+
+weighted_locpoly(x, y, weights, bandwidth, drv, degree, gridsize=401)
 
 mtr_coeff(coeff, vcov, var_cov_2nd, est_method="sieve")
 
@@ -41,6 +44,10 @@ mtr_predict_sieve(coeff, vcov, ref_indiv, var_treatment, var_cov_2nd, pol_degree
 \item{degree}{Degree of the polynomial: recommended to set to drv + 1}
 
 \item{drv}{Derivative order of the function to be estimated.}
+
+\item{weights}{Vector of weights}
+
+\item{bandwidth}{Pre-specified bandwidth}
 
 \item{coeff}{Vector of (stacked) coefficients for mtr0, mtr1.}
 

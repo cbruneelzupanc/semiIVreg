@@ -26,7 +26,8 @@
 #' Default NULL and computed using the specified bw_method.
 #' @param bw_y0,bw_y1 Bandwidth of the second regression of Y (net of the effects of the covariates) on Phat. Default NULL and computed using the specified bw_method.
 #' @param bw_method Method to compute the bandwidth of the local polynomial regressions. Default is simple "rule-of-thumb" method. Alternatives include "cv" for cross-validation and "plug-in" for plug-in bw (Fan and Gijbels, 1996). \cr
-#' Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. For replicability, set a seed before running semiivreg. Plug-in bandwidth is computed only with a degree that is odd.
+#' Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. Then rescaled for the full sample using Silverman (1986) rule: bw_full = bw_sub * (N_full/n_sub)^(-1/5). \cr
+#' For replicability, set a seed before running semiivreg (because of the random subsample). Plug-in bandwidth is computed only with a degree that is odd.
 #' @param pol_degree_locpoly1 Degree of the local polynomial regression of the covariates on Phat. Default is 1 as recommended by Fan and Gijbels (1996) because we want to estimate the regular function.
 #' @param pol_degree_locpoly2 Degree of the local polynomial regression of Y (net of the effects of the covariates) on Phat. Default is 2 as recommended by Fan and Gijbels (1996) because we want to estimate the derivative function.
 #' @param pol_degree_sieve Degree of the polynomial transformation for the control function.
@@ -37,6 +38,8 @@
 #' Can also be a single value, in which case symmetric trimming up and down. \cr
 #' Inserting a trimming_value generates automatic_trim = TRUE automatically.
 #' @param automatic_trim If TRUE, the estimation of the second stage is done on the common_support only.
+#' @param weight_var A variable of weights to be applied to the observations. Default is NULL, apply equal weights to all observations. \cr
+#' Remark: recommended NOT to use weights for locpoly estimation because drastically increases computation time to do a weighted local polynomial regression.
 #' @param plotting TRUE if wants to plot at the end of the function, FALSE otherwise.
 #' @param print_progress TRUE if wants to print the progress of the function, FALSE otherwise (default=FALSE).
 #'
@@ -147,6 +150,7 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
                      pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
                      pol_degree_sieve = 5, conf_level = 0.05,
                      common_supp_trim=c(0,1), trimming_value=NULL, automatic_trim=FALSE,
+                     weight_var = NULL,
                      plotting=TRUE, print_progress = FALSE) {
 
 
@@ -155,10 +159,15 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
   # (i) Convert to data.frame + na.omit
   data = as.data.frame(data) # maybe problem with data loaded from Stata
   vars = all.vars(formula)
+  if(!is.null(weight_var)) {
+    data$WEIGHTS = data[[weight_var]]
+  } else { data$WEIGHTS = rep(1, nrow(data)) }
+  vars = c(vars, "WEIGHTS")
   data = subset(data, select=vars);
   data = na.omit(data)
   data = transform_factor(formula, data) # the variables which are specified as "factor(x)" are transformed into factors # done in order to ensure ordering with ref indiv
   data_orig = data;
+
 
   # Create reference individual if missing -> outdated
   # if(is.null(ref_indiv)) { ref_indiv_orig = create_ref_indiv(formula, data) } else { ref_indiv_orig = ref_indiv }
@@ -222,6 +231,10 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
 
 
 
+  # (vi) re-add the weights
+  data$WEIGHTS = data_orig$WEIGHTS
+  Xdat$WEIGHTS = data_orig$WEIGHTS
+
 
 
   # 1. First stage: Propensity score estimation
@@ -239,10 +252,10 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
 
     # (i) Estimation:
     if(firststage_model == "probit") {
-      propensity = glm(propensity_formula, family=binomial(link="probit"), data=data)
+      propensity = glm(propensity_formula, family=binomial(link="probit"), data=data, weights = WEIGHTS)
     }
     if(firststage_model == "logit") {
-      propensity = glm(propensity_formula, family=binomial(link="logit"), data=data)
+      propensity = glm(propensity_formula, family=binomial(link="logit"), data=data, weights = WEIGHTS)
     }
     data$Phat = predict.glm(propensity, newdata=data, type="response")
     #Phat = propensity$fitted.values # No because possibly missing values will make everything wrong;
@@ -253,10 +266,10 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
     # /!\ crucial that propensity_data is ordered same way as data;
 
     if(firststage_model == "probit") { # if propensity formula is well provided, can run it directly without any modif to the original data
-      propensity = glm(propensity_formula, family=binomial(link="probit"), data=propensity_data)
+      propensity = glm(propensity_formula, family=binomial(link="probit"), data=propensity_data, weights=WEIGHTS)
     }
     if(firststage_model == "logit") {
-      propensity = glm(propensity_formula, family=binomial(link="logit"), data=propensity_data)
+      propensity = glm(propensity_formula, family=binomial(link="logit"), data=propensity_data, weights=WEIGHTS)
     }
     data$Phat = predict.glm(propensity, newdata=propensity_data, type="response") # add it to DATA -> should have the same ordering as data_orig
     Xdat$Phat = data$Phat
@@ -314,7 +327,8 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
   # (ii-c) Compute the 'average individual' (if not specified)
   if(is.null(ref_indiv)) { # If no specific ref_indiv -> Compute effects "at the mean"
     Xdat11 = Xdat[,which(colnames(Xdat) != "Phat")]
-    ref_indiv = as.data.frame(t(colMeans(Xdat11)))  # no need for "na.rm=TRUE" because already na.omit on data at the beginning.
+    ref_indiv = as.data.frame(t(colSums(Xdat11 * Xdat11$WEIGHTS) / sum(Xdat11$WEIGHTS))) # weighted.mean
+    #ref_indiv = as.data.frame(t(colMeans(Xdat11)))  # no need for "na.rm=TRUE" because already na.omit on data at the beginning.
     ref_indiv$id = 1
     rm(Xdat11); #gc()
   }
@@ -418,7 +432,7 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
     }
 
     # Estimation
-    est = lm(formula_2nd_stage, data)
+    est = lm(formula_2nd_stage, data, weights = WEIGHTS)
     est_kappa = est;
 
 
@@ -605,7 +619,7 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
 #'                bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "rule-of-thumb",
 #'                pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
 #'                common_supp_trim=c(0,1), trimming_value = NULL,
-#'                automatic_trim = FALSE, plotting=TRUE, conf_level = 0.05, CI_method = "curve")
+#'                automatic_trim = FALSE, plotting=TRUE, conf_level = 0.05, CI_method = "curve", weight_var)
 #' @param Nboot Number of bootstrap samples.
 #' @param block_boot_var Variable on which to base the block bootstrap. By default, = NULL for standard bootstrap.
 #' @param CI_method "delta" for delta method, "curve" for bootstrap the MTE curves directly. With est_method = "locpoly", only "curve" method is possible.
@@ -621,6 +635,7 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
                           pol_degree_sieve = 5, conf_level = 0.05,
                           common_supp_trim=c(0,1), trimming_value=NULL, automatic_trim=FALSE,
                           CI_method = "curve",
+                          weight_var = NULL,
                           plotting=TRUE,
                           print_progress = TRUE) {
 
@@ -637,7 +652,9 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
                        est_method = est_method, se_type=se_type, bw0 = bw0, bw1 = bw1, bw_y0 = bw_y0, bw_y1 = bw_y1, bw_method = bw_method,
                        pol_degree_locpoly1 = pol_degree_locpoly1, pol_degree_locpoly2 = pol_degree_locpoly2,
                        pol_degree_sieve = pol_degree_sieve, conf_level = conf_level,
-                       common_supp_trim = common_supp_trim, trimming_value = trimming_value, automatic_trim = automatic_trim, plotting=FALSE)
+                       common_supp_trim = common_supp_trim, trimming_value = trimming_value, automatic_trim = automatic_trim,
+                       weight_var = weight_var,
+                       plotting=FALSE)
 
   # Extract ref_indiv (if not specified at the beginning, will always be the average indiv in the main (trimmed) sample)
   ref_indiv = main_res$data$ref_indiv
@@ -689,7 +706,7 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
     if(is.null(block_boot_var)) {
 
       # (i) Standard Bootstrap
-      bootstrap_indices <- sample(1:nrow(data), size = nrow(data), replace = TRUE)
+      bootstrap_indices <- sample(1:nrow(data), size = nrow(data), replace = TRUE, prob=data$WEIGHTS)
       bootstrap_sample <- data[bootstrap_indices, ]
       bootstrap_propensity_sample = propensity_data[bootstrap_indices, ]
       # data and propensity_data are ordered exactly the same, does not cause problems
@@ -705,8 +722,9 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
       BOOTSTRAP_INDICES = list()
       for(b in 1:N_block) {
         lines_block = which(main_dat[[block_boot_var]] == unique_block_var[b])
+        weights_block = main_dat$WEIGHTS[lines_block]
         size_block = length(lines_block)
-        bootstrap_indices_b <- sample(1:size_block, size = size_block, replace = TRUE)
+        bootstrap_indices_b <- sample(1:size_block, size = size_block, replace = TRUE, prob=weights_block)
         bootstrap_indices_lines_b = lines_block[bootstrap_indices_b]
         BOOTSTRAP_INDICES[[b]] = bootstrap_indices_lines_b
       }
@@ -716,6 +734,12 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
       bootstrap_propensity_sample = propensity_data[bootstrap_indices, ]
     }
 
+
+    bootstrap_sample$WEIGHTS = 1;
+    bootstrap_propensity_sample$WEIGHTS = 1; # Reset the weights because already drawn with the weights for the bootstrap
+    # So don't double weight!
+
+
     # semi-iv estimation
     boot_res = invisible(semiivreg(formula=transform_formula, data=bootstrap_sample,
                                    propensity_data = bootstrap_propensity_sample,
@@ -724,7 +748,9 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
                                    est_method = est_method, se_type=se_type, bw0 = bw0, bw1 = bw1, bw_y0 = bw_y0, bw_y1 = bw_y1, bw_method = bw_method,
                                    pol_degree_locpoly1 = pol_degree_locpoly1, pol_degree_locpoly2 = pol_degree_locpoly2,
                                    pol_degree_sieve = pol_degree_sieve, conf_level = conf_level,
-                                   common_supp_trim = common_supp_trim_boot, trimming_value=NULL, automatic_trim=FALSE, plotting=FALSE,
+                                   common_supp_trim = common_supp_trim_boot, trimming_value=NULL, automatic_trim=FALSE,
+                                   weight_var = NULL, # always NULL! Because the weights are placed INTO the bootstrap draw probabilities;
+                                   plotting=FALSE,
                                    print_progress = FALSE)) # never print the progress here
     #BOOT[[k]] = boot_res
 

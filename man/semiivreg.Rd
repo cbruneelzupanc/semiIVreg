@@ -21,7 +21,7 @@ semiivreg_boot(formula, Nboot=500, data, propensity_formula=NULL, ref_indiv =NUL
                bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "rule-of-thumb",
                pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
                common_supp_trim=c(0,1), trimming_value = NULL,
-               automatic_trim = FALSE, plotting=TRUE, conf_level = 0.05, CI_method = "curve")
+               automatic_trim = FALSE, plotting=TRUE, conf_level = 0.05, CI_method = "curve", weight_var)
 
 semiiv_predict(semiiv, newdata, seq_v=NULL)
 }
@@ -53,7 +53,8 @@ Default NULL and computed using the specified bw_method.}
 \item{bw_y0, bw_y1}{Bandwidth of the second regression of Y (net of the effects of the covariates) on Phat. Default NULL and computed using the specified bw_method.}
 
 \item{bw_method}{Method to compute the bandwidth of the local polynomial regressions. Default is simple "rule-of-thumb" method. Alternatives include "cv" for cross-validation and "plug-in" for plug-in bw (Fan and Gijbels, 1996). \cr
-Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. For replicability, set a seed before running semiivreg. Plug-in bandwidth is computed only with a degree that is odd.}
+Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. Then rescaled for the full sample using Silverman (1986) rule: bw_full = bw_sub * (N_full/n_sub)^(-1/5). \cr
+For replicability, set a seed before running semiivreg (because of the random subsample). Plug-in bandwidth is computed only with a degree that is odd.}
 
 \item{pol_degree_locpoly1}{Degree of the local polynomial regression of the covariates on Phat. Default is 1 as recommended by Fan and Gijbels (1996) because we want to estimate the regular function.}
 
@@ -71,6 +72,9 @@ Can also be a single value, in which case symmetric trimming up and down. \cr
 Inserting a trimming_value generates automatic_trim = TRUE automatically.}
 
 \item{automatic_trim}{If TRUE, the estimation of the second stage is done on the common_support only.}
+
+\item{weight_var}{A variable of weights to be applied to the observations. Default is NULL, apply equal weights to all observations. \cr
+Remark: recommended NOT to use weights for locpoly estimation because drastically increases computation time to do a weighted local polynomial regression.}
 
 \item{plotting}{TRUE if wants to plot at the end of the function, FALSE otherwise.}
 

@@ -73,7 +73,7 @@ Use <code>semiivreg_boot</code> to obtain 'correct' bootstrapped confidence inte
 <span>               bw0 <span class="op">=</span> <span class="cn">NULL</span>, bw1 <span class="op">=</span> <span class="cn">NULL</span>, bw_y0 <span class="op">=</span> <span class="cn">NULL</span>, bw_y1 <span class="op">=</span> <span class="cn">NULL</span>, bw_method <span class="op">=</span> <span class="st">"rule-of-thumb"</span>,</span>
 <span>               pol_degree_locpoly1 <span class="op">=</span> <span class="fl">1</span>, pol_degree_locpoly2 <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>               common_supp_trim<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span><span class="op">)</span>, trimming_value <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>               automatic_trim <span class="op">=</span> <span class="cn">FALSE</span>, plotting<span class="op">=</span><span class="cn">TRUE</span>, conf_level <span class="op">=</span> <span class="fl">0.05</span>, CI_method <span class="op">=</span> <span class="st">"curve"</span><span class="op">)</span></span>
+<span>               automatic_trim <span class="op">=</span> <span class="cn">FALSE</span>, plotting<span class="op">=</span><span class="cn">TRUE</span>, conf_level <span class="op">=</span> <span class="fl">0.05</span>, CI_method <span class="op">=</span> <span class="st">"curve"</span>, <span class="va">weight_var</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">semiiv_predict</span><span class="op">(</span><span class="va">semiiv</span>, <span class="va">newdata</span>, seq_v<span class="op">=</span><span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -130,7 +130,8 @@ Default NULL and computed using the specified bw_method.</p></dd>
 
 <dt id="arg-bw-method">bw_method<a class="anchor" aria-label="anchor" href="#arg-bw-method"></a></dt>
 <dd><p>Method to compute the bandwidth of the local polynomial regressions. Default is simple "rule-of-thumb" method. Alternatives include "cv" for cross-validation and "plug-in" for plug-in bw (Fan and Gijbels, 1996). <br>
-Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. For replicability, set a seed before running semiivreg. Plug-in bandwidth is computed only with a degree that is odd.</p></dd>
+Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. Then rescaled for the full sample using Silverman (1986) rule: bw_full = bw_sub * (N_full/n_sub)^(-1/5). <br>
+For replicability, set a seed before running semiivreg (because of the random subsample). Plug-in bandwidth is computed only with a degree that is odd.</p></dd>
 
 
 <dt id="arg-pol-degree-locpoly-">pol_degree_locpoly1<a class="anchor" aria-label="anchor" href="#arg-pol-degree-locpoly-"></a></dt>
@@ -162,6 +163,11 @@ Inserting a trimming_value generates automatic_trim = TRUE automatically.</p></d
 
 <dt id="arg-automatic-trim">automatic_trim<a class="anchor" aria-label="anchor" href="#arg-automatic-trim"></a></dt>
 <dd><p>If TRUE, the estimation of the second stage is done on the common_support only.</p></dd>
+
+
+<dt id="arg-weight-var">weight_var<a class="anchor" aria-label="anchor" href="#arg-weight-var"></a></dt>
+<dd><p>A variable of weights to be applied to the observations. Default is NULL, apply equal weights to all observations. <br>
+Remark: recommended NOT to use weights for locpoly estimation because drastically increases computation time to do a weighted local polynomial regression.</p></dd>
 
 
 <dt id="arg-plotting">plotting<a class="anchor" aria-label="anchor" href="#arg-plotting"></a></dt>

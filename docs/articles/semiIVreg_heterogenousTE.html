@@ -162,7 +162,7 @@ potential outcomes. To see these:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">semiiv</span><span class="op">$</span><span class="va">estimate</span><span class="op">$</span><span class="va">est0</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Call:</span></span>
-<span><span class="co">#&gt; lm(formula = formuladx, data = residd)</span></span>
+<span><span class="co">#&gt; lm(formula = formuladx, data = residd, weights = weightsd)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Residuals:</span></span>
 <span><span class="co">#&gt;     Min      1Q  Median      3Q     Max </span></span>
@@ -180,7 +180,7 @@ potential outcomes. To see these:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">semiiv</span><span class="op">$</span><span class="va">estimate</span><span class="op">$</span><span class="va">est1</span><span class="op">)</span>;</span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Call:</span></span>
-<span><span class="co">#&gt; lm(formula = formuladx, data = residd)</span></span>
+<span><span class="co">#&gt; lm(formula = formuladx, data = residd, weights = weightsd)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Residuals:</span></span>
 <span><span class="co">#&gt;     Min      1Q  Median      3Q     Max </span></span>
@@ -290,16 +290,16 @@ progress of the function).</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">semiiv</span><span class="op">$</span><span class="va">bw</span></span>
 <span><span class="co">#&gt; $bw0</span></span>
-<span><span class="co">#&gt; [1] 0.46864965 0.08635881</span></span>
+<span><span class="co">#&gt; [1] 0.67982540 0.06263428</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw1</span></span>
-<span><span class="co">#&gt; [1] 0.12615761 0.04202802</span></span>
+<span><span class="co">#&gt; [1] 0.09137169 0.03042599</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw_y0</span></span>
-<span><span class="co">#&gt; [1] 0.4752831</span></span>
+<span><span class="co">#&gt; [1] 0.6894218</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw_y1</span></span>
-<span><span class="co">#&gt; [1] 0.1192076</span></span>
+<span><span class="co">#&gt; [1] 0.08634011</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw_method</span></span>
 <span><span class="co">#&gt; [1] "cv"</span></span></code></pre></div>

@@ -29,6 +29,7 @@ mtr_est_poly = function(d, data, seq_u,
   Xd = model.matrix(formulad, data=datad)
   datd = cbind(subset(datad, select=var_outcome), Xd)
   Phatd = datad$Phat; yd = datd[[var_outcome]]
+  weightsd = datad$WEIGHTS
   residd = datd;
 
   BWD=c()
@@ -43,7 +44,7 @@ mtr_est_poly = function(d, data, seq_u,
     #if(is.null(bwd)) { bwj = NULL } else { bwj = bwd[j] }
     bwj = bwd[j] # if is NULL will always put null
     if(length(unique(datd[,j])) == 1) { stop(paste0("No variation in variable ", colnames(datd)[j], " in the subsample d = ", d, " of the trimmed subsample.")) }
-    resj = lpoly_regress(x=Phatd, y=datd[,j], bw=bwj, bw_method=bw_method, degree=pol_degree1, drv=0)
+    resj = lpoly_regress(x=Phatd, y=datd[,j], bw=bwj, bw_method=bw_method, degree=pol_degree1, drv=0, weights=weightsd)
     # recommands degree = derivative order + 1; cf Fan and Gijbels (1996), footnote 19 of Carneiro et al 2011
     reg = resj$reg
     pred = approx(x=reg$x, y=reg$y, xout=Phatd)$y
@@ -54,7 +55,7 @@ mtr_est_poly = function(d, data, seq_u,
   }
 
   formuladx = as.formula(paste0(var_outcome, "~ -1 + ."))
-  estd = lm(formuladx, data=residd)
+  estd = lm(formuladx, data=residd, weights=weightsd)
 
 
 
@@ -68,10 +69,11 @@ mtr_est_poly = function(d, data, seq_u,
   ynetd = datd[[var_outcome]] - ypredd;
 
   # (ii) Estimate Kappa_d(u) with local polynomial regression
-  est_Kappad = lpoly_regress(x=Phatd, y=ynetd, bw=bw_y, bw_method=bw_method, degree=pol_degree2, drv=0)
+  est_Kappad = lpoly_regress(x=Phatd, y=ynetd, bw=bw_y, bw_method=bw_method, degree=pol_degree2, drv=0, weights=weightsd)
   # pol_degree2 because in the end I want to get the derivatives too.
+  # This regression is mostly ran to extract the bw in fact!
   bw_y = est_Kappad$bw # if pre-specified will return the same value
-  est_dKappad = lpoly_regress(x=Phatd, y=ynetd, bw = bw_y, degree=pol_degree2, drv=1) # same bw, no need to specify the method then
+  est_dKappad = lpoly_regress(x=Phatd, y=ynetd, bw = bw_y, degree=pol_degree2, drv=1, weights=weightsd) # same bw, no need to specify the method then
   # should be the same bandwidth in both, so don't recompute it
 
   # Estimation on the set of specified u:
@@ -96,6 +98,10 @@ mtr_est_poly = function(d, data, seq_u,
   return(res_list)
 
 }
+
+
+
+
 
 
 #' @rdname mtr_fun
@@ -234,16 +240,17 @@ mtr_fun_poly = function(ref_indiv, eval_v, est0, est1, k0, k1, se_type) {
 #' @param bw_method Method to compute the bandwidth (if bandwdith is NULL)
 #' @param degree Degree of the polynomial: recommended to set to drv + 1
 #' @param drv Derivative order of the function to be estimated.
-#' @usage lpoly_regress(x, y, bw=NULL, bw_method="plug-in", degree, drv)
+#' @param weights Weights for the local polynomial regression
+#' @usage lpoly_regress(x, y, bw=NULL, bw_method="plug-in", degree, drv, weights)
 #' @export
-lpoly_regress = function(x, y, bw=NULL, bw_method = "rule-of-thumb", degree, drv) {
+lpoly_regress = function(x, y, bw=NULL, bw_method = "rule-of-thumb", degree, drv, weights) {
   # To be adjusted if wants to change
   if(is.null(bw)) {
     if(bw_method == "rule-of-thumb") {
-      bw = thumbBw(x, y, deg=degree, kernel=gaussK, weig = rep(1, length(y))) # might yield weird results when degree = 2
+      bw = thumbBw(x, y, deg=degree, kernel=gaussK, weig = weights) # might yield weird results when degree = 2
       #if(is.nan(bw)) { stop("Error no variation in variable in this subsample.") }
       if(bw > max(x) - min(x)) {
-        bw = thumbBw(x, y, deg=degree-1, kernel=gaussK, weig = rep(1, length(y))) # reduce the degree
+        bw = thumbBw(x, y, deg=degree-1, kernel=gaussK, weig = weights) # reduce the degree
         if(bw > max(x) - min(x)) { # if still greater:
           warning("Rule-of-Thumb bw too large... Setting to (max(x)-min(x))/100 arbitrarily")
           bw = (max(x) - min(x))/100
@@ -253,31 +260,49 @@ lpoly_regress = function(x, y, bw=NULL, bw_method = "rule-of-thumb", degree, drv
     if(bw_method == "plug-in") {
       # Gets long if too many observations... By default compute on subsample
       sub_id = sample(1:length(x), min(4999, length(x))) # 5000 corresponds to .maxEvalPts in locpol
-      suby = y[sub_id]; subx = x[sub_id]
+      suby = y[sub_id]; subx = x[sub_id]; subweights = weights[sub_id]
       # requires degree to be odd number (not even)
       if(degree %% 2 == 0) {
         warning("Degree should be an odd number for plug-in bandwidth selection: reduced by 1 for bw computation.")
         degree = degree - 1
       }
-      bw <- pluginBw(subx, suby, deg=degree, kernel=gaussK, weig = rep(1, length(suby)))
+      sub_bw <- pluginBw(subx, suby, deg=degree, kernel=gaussK, weig = subweights)
+      # Rescale bandwidth: Silverman (1986) rule: bw_full = bw_sub * (N_full/n_sub)^(-1/5)
+      # Quite arbitrary rule but saves a lot of time..
+      bw = sub_bw*(length(x)/length(subx))^(-1/5)
+
     }
     if(bw_method == "cv") {
       # Gets long if too many observations... By default compute on subsample
       sub_id = sample(1:length(x), min(4999, length(x))) # 5000 corresponds to .maxEvalPts in locpol
-      suby = y[sub_id]; subx = x[sub_id]
-      range = range(subx); upper =  (range[2] - range[1])/2
+      suby = y[sub_id]; subx = x[sub_id]; subweights = weights[sub_id]
+      range = range(subx); upper =  (range[2] - range[1]) #/2
       lower = (range[2] - range[1])/1000
-      interval = c(lower, (range[2] - range[1])/2)
-      bw = regCVBwSelC(x=subx, y=suby, deg=degree, kernel=gaussK,weig=rep(1,length(suby)),
+      interval = c(lower, upper)
+      sub_bw = regCVBwSelC(x=subx, y=suby, deg=degree, kernel=gaussK,weig=subweights,
                        interval = interval)
       # bw very sensitive to interval choice;
+
+      # Rescale bandwidth: Silverman (1986) rule: bw_full = bw_sub * (N_full/n_sub)^(-1/5)
+      # Quite arbitrary rule but saves a lot of time..
+      bw = sub_bw*(length(x)/length(subx))^(-1/5)
     }
     ## # Remark: if want to allow for higher maxevalpts:
     ## unlockBinding(".maxEvalPts", asNamespace("locpol"))
     ## assign(".maxEvalPts", length(x) + 10, envir = asNamespace("locpol")) # Overwrite the value
     ## lockBinding(".maxEvalPts", asNamespace("locpol")) # Lock the binding again to avoid unintended modifications
   }
-  reg = locpoly(x=x, y=y, drv=drv, bandwidth=bw, degree=degree)
+
+  # (Weighted) Local Polynomial Regression:
+  # If same weight for all observations, run the locpoly from KernSmooth library (goes faster):
+  weights_diff = weights - 1;
+  if(max(abs(weights_diff)) < 0.0001) { # check if all weights = 1. Set this value in case of numerical rounding errors;
+    reg = locpoly(x=x, y=y, drv=drv, bandwidth=bw, degree=degree) #, kernel="normal")
+  } else {
+    # Otherwise, run custom weighted_locpoly (takes longer)
+    reg = weighted_locpoly(x=x, y=y, weights=weights, drv=drv, bandwidth=bw, degree=degree)
+  }
+
   res = list(reg, bw); names(res) = c("reg", "bw")
   return(res)
 }
@@ -286,7 +311,68 @@ lpoly_regress = function(x, y, bw=NULL, bw_method = "rule-of-thumb", degree, drv
 
 
 
+#' @rdname mtr_fun
+#' @param x Vector of x values
+#' @param y Vector of y values
+#' @param weights Vector of weights
+#' @param bandwidth Pre-specified bandwidth
+#' @param degree Degree of the polynomial: recommended to set to drv + 1
+#' @param drv Derivative order of the function to be estimated.
+#' @usage weighted_locpoly(x, y, weights, bandwidth, drv, degree, gridsize=401)
+#' @export
+weighted_locpoly <- function(x, y, weights, bandwidth, drv = 0, degree = 2, gridsize=401) {
+  # Grid for evaluation
+  eval_points <- seq(min(x), max(x), length.out = gridsize)
 
+  # Initialize results
+  fitted_values <- numeric(length(eval_points))
+
+  for (j in seq_along(eval_points)) {
+    # Center point for local regression
+    x0 <- eval_points[j]
+
+    # Compute kernel weights
+    kernel_weights <- dnorm((x - x0) / bandwidth) / bandwidth
+
+    # Combine observation weights and kernel weights
+    combined_weights <- weights * kernel_weights
+
+    # Create the design matrix for local polynomial
+    X <- outer(x - x0, 0:degree, `^`)
+
+
+    # Apply weights directly to the design matrix and response
+    WX <- sqrt(combined_weights) * X
+    Wy <- sqrt(combined_weights) * y
+
+    # Weighted least squares solution
+    XtX <- crossprod(WX)  # Equivalent to t(WX) %*% WX
+    Xty <- crossprod(WX, Wy)  # Equivalent to t(WX) %*% Wy
+    beta <- solve(XtX, Xty)  # Solve for coefficients
+
+    # Store the derivative or value at x0
+    fitted_values[j] <- if (drv == 0) {
+      beta[1]  # Intercept corresponds to the function value
+    } else {
+      factorial(drv) * beta[drv + 1]  # Derivative term # factorial is the same as gamma(x+1)
+    }
+
+    ## # Weighted least squares solution
+    ## W <- diag(combined_weights)  # Weight matrix -> diagonalizing takes too long
+    ## XtW <- t(X) %*% W
+    ## beta <- solve(XtW %*% X, XtW %*% y)
+    ##
+    ## # Store the derivative or value at x0
+    ## fitted_values[j] <- if (drv == 0) {
+    ##   beta[1]  # Intercept corresponds to the function value
+    ## } else {
+    ##   factorial(drv) * beta[drv + 1]  # Derivative term
+    ## }
+  }
+
+  # Return results
+  list(x = eval_points, y = fitted_values)
+}
 
 
 
