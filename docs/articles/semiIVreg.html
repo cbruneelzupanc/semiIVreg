@@ -70,7 +70,7 @@
                         <h4 data-toc-skip class="author"><a href="https://www.cbruneel.com/" class="external-link">Christophe Bruneel-Zupanc</a></h4>
             
             <h4 data-toc-skip class="date">last modified:
-2024-12-02</h4>
+2024-12-13</h4>
       
 
       <div class="d-none name"><code>semiIVreg.Rmd</code></div>
@@ -569,13 +569,18 @@ confidence intervals. <br><br></p>
 <p>This illustrates what the <code><a href="../reference/semiivreg.html">semiivreg()</a></code>command reports for
 a semi-IV regression. By default, it reports the common support plot of
 the propensity score and the estimated marginal treatment effects (MTE).
-The <code>est_method = "locpoly"</code> by default.</p>
+By default, the <code>est_method = "locpoly"</code> for <span class="citation">Robinson (1988)</span> double residual regression using
+local polynomial regressions.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://www.cbruneel.com/" class="external-link">semiIVreg</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">roydata</span><span class="op">)</span> <span class="co"># load the data from a simulated Roy model</span></span>
 <span></span>
 <span><span class="co"># semi-IV regression</span></span>
-<span><span class="va">semiiv</span> <span class="op">=</span> <span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">|</span><span class="va">w1</span>, data<span class="op">=</span><span class="va">roydata</span><span class="op">)</span> </span></code></pre></div>
+<span><span class="va">semiiv</span> <span class="op">=</span> <span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">|</span><span class="va">w1</span>, data<span class="op">=</span><span class="va">roydata</span><span class="op">)</span> </span>
+<span><span class="co">#&gt; Caution: the standard errors around the plot are not correct (too small). </span></span>
+<span><span class="co">#&gt; These are standard errors around k1(v), k0(v) and k1(v) - k0(v). </span></span>
+<span><span class="co">#&gt; They do not take the propensity score estimation, nor the Robinson 1st stage estimation of the effect of the covariates. </span></span>
+<span><span class="co">#&gt; For proper standard errors, run the bootstrap in semiivreg_boot().</span></span></code></pre></div>
 <p><img src="semiIVreg_files/figure-html/mte-1.png" width="672" style="display: block; margin: auto;"></p>
 <p>One can also easily extract a plot for the marginal treatment
 responses (MTR):</p>

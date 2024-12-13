@@ -304,7 +304,7 @@ Use `semiivreg_boot` to obtain 'correct' bootstrapped confidence intervals. <br>
 ## Illustration with simulated Roy model
 
 This illustrates what the `semiivreg()`command reports for a semi-IV regression. 
-By default, it reports the common support plot of the propensity score and the estimated marginal treatment effects (MTE). The `est_method = "locpoly"` by default. 
+By default, it reports the common support plot of the propensity score and the estimated marginal treatment effects (MTE). By default, the `est_method = "locpoly"` for @robinson1988root double residual regression using local polynomial regressions. 
 
 ```{r mte, fig.height=3, fig.width=7, fig.align='center'} 
 library(semiIVreg)

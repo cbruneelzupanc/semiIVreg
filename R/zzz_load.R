@@ -6,9 +6,10 @@
   library(MASS)
   library(stats)
   library(KernSmooth)
-  library(locpol)
+  #library(locpol)
   library(sandwich)
   library(lmtest)
+  library(nprobust)
 }
 
 .onAttach <- function(libname, pkgname) {
@@ -19,9 +20,10 @@
   library(MASS)
   library(stats)
   library(KernSmooth)
-  library(locpol)
+  #library(locpol)
   library(sandwich)
   library(lmtest)
+  library(nprobust)
 }
 
 

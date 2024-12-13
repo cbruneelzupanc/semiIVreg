@@ -21,15 +21,24 @@
 #' @param firststage_model By default, the first stage is a probit model. Can specify another model (e.g., "logit").
 #' @param est_method Estimation method: default is "locpoly" for Robinson (1988) double residual regression for partially linear model. Other options include "sieve" to specify flexibly the control function as a polynomial with pol_degree_sieve, and "homogenous" which is a sieve where we also impose homogenous treatment effect.
 #' @param se_type Type of standard errors if sieve/homogenous estimation. By default = "HC1". Can otherwise me any of the possibilities of vcovHC in the sandwich package. Also possible to have se_type="nonrobust" for the non-robust (lm default).
-#' @param bw0,bw1 Bandwidth of the first residual regressions of Wd and X on Phat. \cr
-#' Two possibilities: specify one value that is applied to all covariates, or specify a different bandwidth for the regression on each covariate. In the second case, need to be specified in the order of the covariates as specified in the model. Be very careful with factors. \cr
-#' Default NULL and computed using the specified bw_method.
+#' @param bw0,bw1 Bandwidth of the first residual regressions of (Y, Wd and X) on Phat. \cr
+#' Two possibilities: specify one value that is applied to all covariates (and Y), or specify a different bandwidth for the regression on each covariate. In the second case, need to be specified in the order of the covariates as specified in the model. Be very careful with factors. \cr
+#' Default NULL and computed using the specified bw_method. Ideally, if one factor covariate, apply the same bandwidth to all of the dummies created from the factor.
 #' @param bw_y0,bw_y1 Bandwidth of the second regression of Y (net of the effects of the covariates) on Phat. Default NULL and computed using the specified bw_method.
-#' @param bw_method Method to compute the bandwidth of the local polynomial regressions. Default is simple "rule-of-thumb" method. Alternatives include "cv" for cross-validation and "plug-in" for plug-in bw (Fan and Gijbels, 1996). \cr
-#' Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. Then rescaled for the full sample using Silverman (1986) rule: bw_full = bw_sub * (N_full/n_sub)^(-1/5). \cr
-#' For replicability, set a seed before running semiivreg (because of the random subsample). Plug-in bandwidth is computed only with a degree that is odd.
+#' @param bw_method Method to compute the bandwidth of the local polynomial regressions (of the first-order derivative).
+#' Default option is 1/5, which arbitrarily sets bw0, bw1, bw_y0 and bw_y1 to 1/5th of the support (rounded to the 3th digit). Can place any fraction < 1. \cr
+#' Recommended alternatives include (global constant) bandwidth computations from nprobust package (Calonico, Cattaneo and Farrell, 2019)
+#' (i) "mse-dpi": direct plug-in MSE optimal bandwidth from Fan and Gijbels (1996).
+#' (ii) "mse-rot": rule-of-thumb implementation of the MSE-optimal bandwidth.
+#' These two methods take long with large sample: use bw_subsamp_size to speed up the computation.
+#' @param bw_subsamp_size Size of the subsample to use for the bandwidth selection. Default is 10,000. Use `bw_subsamp_size = NULL` to use the full sample (may take time). Otherwise, recommend to set a number around 20,000 at most for reasonable computation time (exponentially increasing with sample size). \cr
+#' `bw_subsamp_size` introduces some randomness into the bandwidth selection procedure: recommended to set a seed before running semiivreg for reproducibility.
 #' @param pol_degree_locpoly1 Degree of the local polynomial regression of the covariates on Phat. Default is 1 as recommended by Fan and Gijbels (1996) because we want to estimate the regular function.
 #' @param pol_degree_locpoly2 Degree of the local polynomial regression of Y (net of the effects of the covariates) on Phat. Default is 2 as recommended by Fan and Gijbels (1996) because we want to estimate the derivative function.
+#' @param kernel Kernel to use for the local polynomial regressions. Default is "gaussian" but can be "epanechnikov". Takes longer with Epanechnikov (cannot use fast locpoly implementation from KernSmooth).
+#' @param `fast_robinson1` Default is TRUE to speed things up in a first stage (if many covariates in particular). If TRUE, will use the locpoly function from Kernsmooth library to speed up the computation of the Robinson double residual first stage. This is only possible if no external weights are used. Fast Locpoly will enforce a gaussian kernel.
+#' @param `fast_robinson2` Default is FALSE. If TRUE, will use the locpoly function from Kernsmooth library to speed up the computation of the Robinson double residual second stage. This is only possible if no external weights are used. Fast Locpoly will enforce a gaussian kernel.
+#' Default is FALSE for the second stage because fast_locpoly returns no standard errors and the gain in time is not so important for the second stage.
 #' @param pol_degree_sieve Degree of the polynomial transformation for the control function.
 #' @param conf_level Confidence level for the confidence intervals.
 #' @param common_supp_trim Vector of two values indicating the set of propensity scores at which we will evaluate the function. \cr
@@ -39,7 +48,7 @@
 #' Inserting a trimming_value generates automatic_trim = TRUE automatically.
 #' @param automatic_trim If TRUE, the estimation of the second stage is done on the common_support only.
 #' @param weight_var A variable of weights to be applied to the observations. Default is NULL, apply equal weights to all observations. \cr
-#' Remark: recommended NOT to use weights for locpoly estimation because drastically increases computation time to do a weighted local polynomial regression.
+#' Implemented completely for `est_method = "sieve"` for now. For `locpoly`, the weights are not used when computing the "optimal bandwidth".
 #' @param plotting TRUE if wants to plot at the end of the function, FALSE otherwise.
 #' @param print_progress TRUE if wants to print the progress of the function, FALSE otherwise (default=FALSE).
 #'
@@ -75,7 +84,7 @@
 #' `bw_y0` and `bw_y1` are the bandwidths of the second regression of Y (net of the effects of the covariates) on Phat. These are the one that matters for the smoothness of the MTE and MTR estimates.
 #' }
 #'
-#' \item{`$plot`}{Returns separately the following plot objects: `supp` (support), `mtr`, `mte`.}
+#' \item{`$plot`}{Returns separately the following plot objects: `supp` (support), `mtr`, `mte` and `mte2`. `mte` reports the estimation from "local IV" approach, with standard errors from the Robinson 2nd stage. `mte2` reports the MTE estimated as the difference between the MTR (without standard errors).}
 #' \item{`$supp`}{Returns the common support of the propensity score `Phat` between the two treatment group.}
 #' \item{`$call`}{Returns the call of the function and the covariates and semi-IVs used.}
 #' }
@@ -106,8 +115,9 @@
 #' For double residual estimation of partially Linear models, see
 #' Robinson, P. M. (1988). Root-N-consistent semiparametric regression. Econometrica: Journal of the Econometric Society, 931-954. \cr
 #'
-#' For local polynomial regressions choice of degree:
+#' For local polynomial regressions choice of degree & Bandwidth computation
 #' Fan, J., & Gijbels, I. (1996). Local polynomial modelling and its applications.
+#' Calonico, S., Cattaneo, M. D., & Farrell, M. H. (2019). nprobust: Nonparametric Kernel-Based Estimation and Robust Bias-Corrected Inference. Journal of Statistical Software, 91(8), 1–33. https://doi.org/10.18637/jss.v091.i08
 #'
 
 #'@author
@@ -117,7 +127,8 @@
 #'                  ref_indiv =NULL, firststage_model = "probit",
 #'                  est_method = "locpoly", # "locpoly", "sieve", or "homogenous".
 #'                  se_type = "HC1",
-#'                  bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "rule-of-thumb",
+#'                  bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = 1/5,
+#'                  kernel="gaussian",
 #'                  pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
 #'                  pol_degree_sieve = 5, conf_level = 0.05,
 #'                  common_supp_trim=c(0,1), trimming_value=NULL, automatic_trim=FALSE,
@@ -145,10 +156,15 @@
 semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = NULL,
                      ref_indiv =NULL, firststage_model = "probit",
                      est_method = "locpoly", # "locpoly", "sieve", or "homogenous".
-                     se_type = "HC1",
-                     bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "rule-of-thumb",
+                     # Local polynomial parameters:
+                     bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = 1/5,
+                     kernel="gaussian", bw_subsamp_size = 10000, #NULL,
                      pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
-                     pol_degree_sieve = 5, conf_level = 0.05,
+                     fast_robinson1 = TRUE, fast_robinson2 = FALSE,
+                     # Sieve parameters:
+                     pol_degree_sieve = 5,
+                     se_type = "HC1", conf_level = 0.05,
+                     # Trim:
                      common_supp_trim=c(0,1), trimming_value=NULL, automatic_trim=FALSE,
                      weight_var = NULL,
                      plotting=TRUE, print_progress = FALSE) {
@@ -351,41 +367,36 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
     #if(var_covariates != "") { print("-- Common covariates treated as having generally different effect on D=0 and D=1") }
     # with Robinson, we don't allow the covariates to have the same effect on both D=0 and D=1
 
-
     # locpoly-1) Estimate covariates effects and kd(v)
+    # ----------
+    res = mtr_est_poly(data=data, seq_u=seq_u,
+                       bw0 = bw0, bw1=bw1, bw_y0 = bw_y0, bw_y1=bw_y1, bw_method = bw_method, kernel=kernel,
+                       bw_subsamp_size = bw_subsamp_size,
+                       fast_robinson1 = fast_robinson1, fast_robinson2 = fast_robinson2,
+                       se_type=se_type,
+                       pol_degree1=pol_degree_locpoly1, pol_degree2=pol_degree_locpoly2,
+                       var_outcome=var_outcome, var_treatment=var_treatment, var_w0=var_w0, var_w1=var_w1, var_covariates=var_covariates,
+                       print_progress = print_progress)
 
-    res0 = mtr_est_poly(d=0, data, seq_u,
-                        bwd = bw0, bw_y = bw_y0, bw_method = bw_method,
-                        pol_degree1 = pol_degree_locpoly1, pol_degree2 = pol_degree_locpoly2,
-                        var_outcome=var_outcome, var_treatment=var_treatment, var_w0=var_w0, var_w1=var_w1, var_covariates=var_covariates,
-                        print_progress = print_progress)
-    res1 = mtr_est_poly(d=1, data, seq_u,
-                        bwd = bw1, bw_y = bw_y1, bw_method = bw_method,
-                        pol_degree1 = pol_degree_locpoly1, pol_degree2 = pol_degree_locpoly2,
-                        var_outcome=var_outcome, var_treatment=var_treatment, var_w0=var_w0, var_w1=var_w1, var_covariates=var_covariates,
-                        print_progress = print_progress)
+    est0 = res$est0; est1 = res$est1;
+    kv = res$kv;
 
-
-    est0 = res0$estd; est1 = res1$estd;
-    k0 = res0$kv; k1 = res1$kv;
-    #kv = merge(k0, k1, by="v") # useless, recreated after
-
-    # Other output to save
-    bw0 = res0$bwd; bw_y0 = res0$bw_y;
-    bw1 = res1$bwd; bw_y1 = res1$bw_y;
+    # Save bw as output as well:
+    bw0 = res$bw0; bw1 = res$bw1;
+    bw_y0 = res$bw_y0; bw_y1 = res$bw_y1; bw_mte = res$bw_mte;
 
 
-    # locpoly-2) Estimate MTR0, MTR1 and MTE from this for the reference individual
+    # locpoly-2) Compute MTR0, MTR1 and MTE from this for the reference individual
+    # ----------
+    eval_v = kv$v # same for k1.
 
-    eval_v = k0$v # same for k1.
-
-    PREDICT = mtr_fun_poly(ref_indiv=ref_indiv, eval_v=eval_v, est0=est0, est1=est1, k0=k0, k1=k1, se_type=se_type)
+    PREDICT = mtr_fun_poly(ref_indiv=ref_indiv, eval_v=eval_v, est0=est0, est1=est1, kv=kv, se_type=se_type, conf_level)
     RES = PREDICT$est
     deltaX = PREDICT$deltaX
     kv = PREDICT$kv
 
     # Graphical Parameter:
-    conf_band = FALSE # No confidence band with this method
+    conf_band = TRUE #
     var_cov_2nd = NULL
   }
 
@@ -529,10 +540,24 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
   mtr_plot = mtr_plot_fun(dat_plot, common_supp_round_mte, conf_band)
 
   # MTE curves
-  mte_plot = mte_plot_fun(dat_plot, common_supp_round_mte, conf_band)
+  if(est_method == "locpoly") { conf_band1 = FALSE } else { conf_band1 = TRUE}
+  mte_plot = mte_plot_fun(dat_plot, common_supp_round_mte, conf_band=conf_band1) # main curve, without standard errors - mte from diff between mtr1 - mtr0
+
+  if(est_method == "locpoly") { # Return a second MTE plot from the difference between MTR1 and MTR0.
+    dat_plot2 = dat_plot;
+    dat_plot2$mte = dat_plot2$mte2; conf_band2 = TRUE
+    dat_plot2$mte_lwr = dat_plot2$mte2_lwr; dat_plot2$mte_upr = dat_plot2$mte2_upr
+    mte_plot2 = mte_plot_fun(dat_plot2, common_supp_round_mte, conf_band2)
+  } else { mte_plot2 = NULL }
 
   # By default: plot the supp_plot and the mte_plot:
-  if(plotting == TRUE) { grid.arrange(supp_plot, mte_plot, ncol=2) }
+  if(plotting == TRUE) {
+    if(est_method == "locpoly") {
+      grid.arrange(supp_plot, mte_plot2, ncol=2)
+    } else {
+      grid.arrange(supp_plot, mte_plot, ncol=2)
+    }
+  }
 
 
   # Also estimate the average MTE for the ref individual (= homogenous TE if homogenous)
@@ -546,16 +571,15 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
   # -----------------
 
   output_data = list(RES, deltaX, data_not_trimmed, ref_indiv, Xdat, data_orig); names(output_data) = c("RES", "deltaX", "data", "ref_indiv", "Xdat", "data_orig")
-  output_plot = list(supp_plot, mtr_plot, mte_plot); names(output_plot) = c("supp", "mtr", "mte")
+  output_plot = list(supp_plot, mtr_plot, mte_plot, mte_plot2); names(output_plot) = c("supp", "mtr", "mte", "mte2")
   output_supp = common_supp
   output_call = list(new_formula, formula, var_treatment, var_outcome, var_w0, var_w1, var_covariates,
                      var_cov_2nd, formula_X_orig, se_type, est_method, pol_degree_sieve,
-                     pol_degree_locpoly1, pol_degree_locpoly2, conf_level);
+                     pol_degree_locpoly1, pol_degree_locpoly2, kernel, fast_robinson1, fast_robinson2, bw_subsamp_size, conf_level);
   names(output_call) = c("formula", "formula_orig", "var_treatment", "var_outcome", "var_w0", "var_w1",
                          "var_covariates", "var_cov_2nd", "formula_X_orig", "se_type", "est_method",
                          "pol_degree_sieve", "pol_degree_locpoly1", "pol_degree_locpoly2",
-                         "conf_level")
-
+                         "kernel", "fast_robinson1", "fast_robinson2", "bw_subsamp_size", "conf_level")
 
   if(est_method %in% c("sieve", "homogenous")) {
     output_estimate = list(est_mtr0, est_mtr1, est_mte, kv, propensity, avg_MTE, table_stacked, est_kappa);
@@ -576,8 +600,8 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
     names(output_estimate) = c("est0", "est1", "kv", "propensity", "avg_MTE")
     # don't call it mtr0 and mtr1 because it's not the entire function. It's only the covariates effect
 
-    output_bw = list(bw0, bw1, bw_y0, bw_y1, bw_method)
-    names(output_bw) = c("bw0", "bw1", "bw_y0", "bw_y1", "bw_method")
+    output_bw = list(bw0, bw1, bw_y0, bw_y1, bw_mte, bw_method)
+    names(output_bw) = c("bw0", "bw1", "bw_y0", "bw_y1", "bw_mte", "bw_method")
 
     output_coeff = NA; output_vcov = NA;
   }
@@ -586,6 +610,12 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
                 output_bw, output_plot, output_supp, output_call);
   names(output) = c("data", "estimate", "coeff", "vcov",
                     "bw", "plot", "supp", "call")
+
+  if(est_method == "locpoly") {
+    if (identical(parent.frame(), globalenv())) {
+      message("Caution: the standard errors around the plot are not correct (too small). \nThese are standard errors around k1(v), k0(v) and k1(v) - k0(v). \nThey do not take the propensity score estimation, nor the Robinson 1st stage estimation of the effect of the covariates. \nFor proper standard errors, run the bootstrap in semiivreg_boot().")
+    }
+  }
 
   return(output)
 }
@@ -623,6 +653,8 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
 #' @param Nboot Number of bootstrap samples.
 #' @param block_boot_var Variable on which to base the block bootstrap. By default, = NULL for standard bootstrap.
 #' @param CI_method "delta" for delta method, "curve" for bootstrap the MTE curves directly. With est_method = "locpoly", only "curve" method is possible.
+#' @param fast_robinson2 If TRUE, use locpoly from KernSmooth during the bootstrap. Default is TRUE to speed things up (because do not need to compute standard errors in bootstrap)
+#' Set to FALSE if want to use epanechnikov kernel, or if want to use weights.
 #' @param print_progress_main Print progress of the main estimation or not.
 #'
 #' @export
@@ -631,15 +663,16 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
                           ref_indiv =NULL, firststage_model = "probit",
                           est_method = "locpoly", # "locpoly", "sieve", or "homogenous".
                           se_type="HC1",
-                          bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "rule-of-thumb",
+                          bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = 1/5,
+                          kernel="gaussian", bw_subsamp_size = 10000, #NULL,
                           pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
+                          fast_robinson1 = TRUE, fast_robinson2 = TRUE,
                           pol_degree_sieve = 5, conf_level = 0.05,
                           common_supp_trim=c(0,1), trimming_value=NULL, automatic_trim=FALSE,
                           CI_method = "curve",
                           weight_var = NULL,
                           plotting=TRUE,
                           print_progress = TRUE, print_progress_main = TRUE) {
-
 
 
   # 1. semiivreg on the full sample
@@ -651,7 +684,9 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
   main_res = semiivreg(formula=formula, data=data, propensity_formula=propensity_formula,
                        ref_indiv = ref_indiv, firststage_model = firststage_model,
                        est_method = est_method, se_type=se_type, bw0 = bw0, bw1 = bw1, bw_y0 = bw_y0, bw_y1 = bw_y1, bw_method = bw_method,
+                       kernel=kernel, bw_subsamp_size = bw_subsamp_size,
                        pol_degree_locpoly1 = pol_degree_locpoly1, pol_degree_locpoly2 = pol_degree_locpoly2,
+                       fast_robinson1 = fast_robinson1, fast_robinson2 = fast_robinson2,
                        pol_degree_sieve = pol_degree_sieve, conf_level = conf_level,
                        common_supp_trim = common_supp_trim, trimming_value = trimming_value, automatic_trim = automatic_trim,
                        weight_var = weight_var,
@@ -686,7 +721,7 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
   var_treatment = main_res$call$var_treatment; var_cov_2nd = main_res$call$var_cov_2nd
 
 
-  cat(sprintf("\n Bandwidth and MTR/MTE estimation on main sample: Done. \n"))
+  cat(sprintf("\nBandwidth and MTR/MTE estimation on main sample: Done. \n"))
 
 
 
@@ -747,6 +782,9 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
                                    propensity_formula=propensity_formula,
                                    ref_indiv = ref_indiv, firststage_model = firststage_model,
                                    est_method = est_method, se_type=se_type, bw0 = bw0, bw1 = bw1, bw_y0 = bw_y0, bw_y1 = bw_y1, bw_method = bw_method,
+                                   kernel=kernel,
+                                   bw_subsamp_size = bw_subsamp_size, # irrelevant anyway because computed bw already;
+                                   fast_robinson1 = fast_robinson1, fast_robinson2 = fast_robinson2,
                                    pol_degree_locpoly1 = pol_degree_locpoly1, pol_degree_locpoly2 = pol_degree_locpoly2,
                                    pol_degree_sieve = pol_degree_sieve, conf_level = conf_level,
                                    common_supp_trim = common_supp_trim_boot, trimming_value=NULL, automatic_trim=FALSE,
@@ -935,9 +973,11 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
 
     # merge with main estimates for the middle point:
     mdat = main_res$data$RES;
-    if(est_method %in% c("sieve", "homogenous")) {
-      mdat = mdat[, which(!colnames(mdat) %in% c("mtr0_lwr", "mtr0_upr", "mtr0_se", "mtr1_lwr", "mtr1_upr", "mtr1_se", "mte_lwr", "mte_upr", "mte_se"))]
-    }
+    ## if(est_method %in% c("sieve", "homogenous")) {
+    ##   mdat = mdat[, which(!colnames(mdat) %in% c("mtr0_lwr", "mtr0_upr", "mtr0_se", "mtr1_lwr", "mtr1_upr", "mtr1_se", "mte_lwr", "mte_upr", "mte_se"))]
+    ## }
+    mdat = mdat[, which(!colnames(mdat) %in% c("mtr0_lwr", "mtr0_upr", "mtr0_se", "mtr1_lwr", "mtr1_upr", "mtr1_se", "mte_lwr", "mte_upr", "mte_se"))]
+
 
     # # Keep analytic confidence intervals (to compare how far from bootstrap one they are) -> not possible with locpoly
     # mdat$mte_lwr_analytic = mdat$mte_lwr; mdat$mte_upr_analytic = mdat$mte_upr;
@@ -1066,17 +1106,16 @@ semiiv_predict = function(semiiv, newdata, seq_v=NULL) {
   # 2.(ii) Local Polynomial
 
   if(est_method == "locpoly") {
+    conf_level = semiiv$call$conf_level
 
     est0 = semiiv$estimate$est0
     est1 = semiiv$estimate$est1
     kv = semiiv$estimate$kv
-    k0 = subset(kv, select=c("v", "k0"))
-    k1 = subset(kv, select=c("v", "k1"))
 
     # Support check:
     # Already done within the function (returns error if outside)
 
-    PREDICT = mtr_fun_poly(ref_indiv=ref_indiv, eval_v=seq_u, est0=est0, est1=est1, k0=k0, k1=k1, se_type=se_type)
+    PREDICT = mtr_fun_poly(ref_indiv=ref_indiv, eval_v=seq_u, est0=est0, est1=est1, kv=kv, se_type=se_type, conf_level=conf_level)
   }
 
 
@@ -1090,7 +1129,5 @@ semiiv_predict = function(semiiv, newdata, seq_v=NULL) {
   return(output)
 
 }
-
-
 
 NULL

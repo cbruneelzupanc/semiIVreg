@@ -6,96 +6,197 @@
 #'
 #'
 #' @rdname mtr_fun
-#' @usage mtr_est_poly(d, data, seq_u,
-#'                     bwd = NULL, bw_y = NULL, bw_method = "plug-in",
-#'                     pol_degree1, pol_degree2,
-#'                     var_outcome, var_treatment, var_w0, var_w1, var_covariates,
-#'                     print_progress)
+#' @param `fast_robinson1` Default is TRUE to speed things up in a first stage (if many covariates in particular). If TRUE, will use the locpoly function from Kernsmooth library to speed up the computation of the Robinson double residual first stage. This is only possible if no external weights are used. Fast Locpoly will enforce a gaussian kernel.
+#' @param `fast_robinson2` Default is FALSE. If TRUE, will use the locpoly function from Kernsmooth library to speed up the computation of the Robinson double residual second stage. This is only possible if no external weights are used. Fast Locpoly will enforce a gaussian kernel.
+#' Default is FALSE for the second stage because fast_locpoly returns no standard errors and the gain in time is not so important for the second stage.
+#' @usage mtr_est_poly(data, seq_u,
+#'                     bw0 = NULL, bw1=NULL, bw_y0 = NULL, bw_y1=NULL, bw_method = 1/5, kernel,
+#'                     bw_subsamp_size = NULL, fast_locpoly = FALSE,
+#'                     fast_robinson1 = TRUE, fast_robinson2 = FALSE,
+#'                     pol_degree1, pol_degree2, var_outcome, var_treatment, var_w0, var_w1, var_covariates, print_progress)
 #' @export
-mtr_est_poly = function(d, data, seq_u,
-                        bwd = NULL, bw_y = NULL, bw_method = "plug-in",
+mtr_est_poly = function(data, seq_u,
+                        bw0 = NULL, bw1=NULL, bw_y0 = NULL, bw_y1=NULL, bw_method = 1/5, kernel,
+                        bw_subsamp_size = NULL,
+                        fast_robinson1 = TRUE, fast_robinson2 = FALSE,
+                        se_type,
                         pol_degree1, pol_degree2,
                         var_outcome, var_treatment, var_w0, var_w1, var_covariates,
                         print_progress=FALSE) {
 
-  # All regressions done on subsample D=d
-  datad = data[which(data[[var_treatment]] == d),]
-  if(d==0) { var_w = var_w0 } else { var_w = var_w1}
-  var_covd = c(var_w, var_covariates); var_covd = unique(var_covd[which(var_covd != "")])
-  formulad = as.formula(paste0("~ -1 + ", paste0(var_covd, collapse="+")))
+  # -------------------------------------------
+  # Double Residual Regression (Robinson, 1988)
+  # -------------------------------------------
 
-  # Step 1. Double residual regression (Robinson, 1988)
-  # -------
-  Xd = model.matrix(formulad, data=datad)
-  datd = cbind(subset(datad, select=var_outcome), Xd)
-  Phatd = datad$Phat; yd = datd[[var_outcome]]
-  weightsd = datad$WEIGHTS
-  residd = datd;
+  supp = range(data$Phat)
 
-  BWD=c()
+  # 1st Stage. Local polynomial regressions of (Y, Wd, X) on P.
+  # ----------
+  for(d in c(0, 1)) {
 
-  # if specify only one value in bwd, apply it to ALL the variables (remark: if only one covariate, does not change anything)
-  if(length(bwd) == 1) { bwd = rep(bwd, ncol(datd)) }
+    # All regressions done on subsample D=d
+    datad = data[which(data[[var_treatment]] == d),]
+    if(d==0) { var_w = var_w0; bwd = bw0; } else { var_w = var_w1; bwd = bw1; }
+    var_covd = c(var_w, var_covariates); var_covd = unique(var_covd[which(var_covd != "")])
+    formulad = as.formula(paste0("~ -1 + ", paste0(var_covd, collapse="+")))
 
+    Xd = model.matrix(formulad, data=datad)
+    datd = cbind(subset(datad, select=var_outcome), Xd)
+    Phatd = datad$Phat; yd = datd[[var_outcome]]
+    weightsd = datad$WEIGHTS
+    residd = datd;
 
-  if(print_progress) { cat(sprintf("D= %d, Robinson 1st residual regression of X on P...", d), "              \n") }
+    BWD=c()
 
-  for(j in 1:ncol(datd)) {
-    #if(is.null(bwd)) { bwj = NULL } else { bwj = bwd[j] }
-    bwj = bwd[j] # if is NULL will always put null
-    if(length(unique(datd[,j])) == 1) { stop(paste0("No variation in variable ", colnames(datd)[j], " in the subsample d = ", d, " of the trimmed subsample.")) }
-    resj = lpoly_regress(x=Phatd, y=datd[,j], bw=bwj, bw_method=bw_method, degree=pol_degree1, drv=0, weights=weightsd)
-    # recommands degree = derivative order + 1; cf Fan and Gijbels (1996), footnote 19 of Carneiro et al 2011
-    reg = resj$reg
-    pred = approx(x=reg$x, y=reg$y, xout=Phatd)$y
-    resid = datd[,j] - pred
-    BWD[j] = resj$bw; residd[,j] = resid
+    # if specify only one value in bwd, apply it to ALL the variables (remark: if only one covariate, does not change anything)
+    if(length(bwd) == 1) { bwd = rep(bwd, ncol(datd)) }
 
-    if(print_progress & bw_method == "cv" & is.null(bwd)) { cat(sprintf("Progress: %d/%d", j, ncol(datd)), "                             \r") }
+    if(print_progress) { cat(sprintf("D= %d, Robinson 1st residual regression of X on P...", d), "              \n") }
+    for(j in 1:ncol(datd)) {
+
+      # (i) Bandwidth Selection.
+      bwj = bwd[j] # if is NULL will always put null
+      if(is.null(bwj)) {
+        bwj = lbw_select(x=Phatd, y=datd[,j], kernel=kernel, degree=pol_degree1, drv=0, bw_method = bw_method, bw_subsamp_size=bw_subsamp_size, supp=supp)$bw # drv = 0 because want to estimate the main function;
+      }
+
+      # (ii) Local Polynomial Regression
+      if(length(unique(datd[,j])) == 1) { stop(paste0("No variation in variable ", colnames(datd)[j], " in the subsample d = ", d, " of the trimmed subsample.")) }
+
+      resj = lpoly(x=Phatd, y=datd[,j], bandwidth=bwj, degree = pol_degree1, drv = 0,
+                   kernel = kernel, se_type=se_type, weights=weightsd, fast_locpoly=fast_robinson1)
+      # recommands degree = derivative order + 1; cf Fan and Gijbels (1996), footnote 19 of Carneiro et al 2011
+
+      pred = approx(x=resj$x, y=resj$y, xout=Phatd)$y
+      resid = datd[,j] - pred
+      BWD[j] = bwj; residd[,j] = resid
+
+      if(print_progress & bw_method %in% c("mse-dpi", "mse_rot") & is.null(bwd)) { cat(sprintf("Progress: %d/%d", j, ncol(datd)), "                             \r") }
+    }
+
+    formuladx = as.formula(paste0(var_outcome, "~ -1 + ."))
+    estd = lm(formuladx, data=residd, weights=weightsd)
+
+    # Save:
+    if(d==0) { est0 = estd; X0 = Xd; BW0 = BWD; dat0 = datd; Phat0 = Phatd; weights0 = weightsd; }
+    if(d==1) { est1 = estd; X1 = Xd; BW1 = BWD; dat1 = datd; Phat1 = Phatd; weights1 = weightsd; }
   }
 
-  formuladx = as.formula(paste0(var_outcome, "~ -1 + ."))
-  estd = lm(formuladx, data=residd, weights=weightsd)
+
+  # 2nd Stage. Estimate kd(v).
+  # ----------
+
+  # 1. Bandwidth Selection
+  # Can either do two separate bandwidth selection for k0(v) and k1(v)
+  # Or can do a bandwidth selection for the MTE(v) directly, i.e., k1(v) - k0(v).
+  # Prefer the second option as it also has the advantage of applying the same bandwidth to both k0 and k1, that is optimal for the MTE.
+
+  if(print_progress) { cat(sprintf("Robinson 2nd stage: Bandwidth Selection...                           \r")) }
+
+  # To do the MTE approach, need to predict for every observation:
+  yfit0 = predict(est0, newdata=data); yfit1 = predict(est1, newdata=data)
+  weightsall = data$WEIGHTS
+  xall = data$Phat
+  yfit = data[[var_outcome]] - yfit0*(1-xall) - yfit1*xall
+
+
+  bw_mte = bw_y0 # arbitrarily set it to bw_y0 -> gets updated if any missing bw
+  if(is.null(bw_y0) | is.null(bw_y1)) { # Only if not pre-specified
+    bw_y = lbw_select(x=xall, y=yfit, kernel=kernel, degree=pol_degree2, drv=1, # drv=1 because bw for the derivative of the fit.
+                      bw_method = bw_method, bw_subsamp_size=bw_subsamp_size, supp=supp)$bw
+    bw_mte = bw_y;
+  }
+  if(is.null(bw_y0)) { bw_y0 = bw_y }
+  if(is.null(bw_y1)) { bw_y1 = bw_y }
 
 
 
-  # Step 2. Estimate Kappa_d(u) and then k_d(u)
-  # -------
 
-  if(print_progress) { cat(sprintf("\nD= %d, Robinson 2nd stage: regression of Y (net of covariates) on P...", d), "              \n") }
+  # 2. Robinson 2nd stage Local Polynomial Regression
+  if(print_progress) { cat(sprintf("Robinson 2nd stage: Estimation of k0(v) and k1(v)... \n")) }
 
   # (i) Extract Yd net of the effect of the covariates
-  ypredd = predict(estd, newdata=as.data.frame(Xd))
-  ynetd = datd[[var_outcome]] - ypredd;
+  # D=0:
+  ypred0 = predict(est0, newdata=as.data.frame(X0))
+  ynet0 = dat0[[var_outcome]] - ypred0
+  x0 = Phat0;
+  y0 = -ynet0*(1-x0) # this is the object we derive in order to obtain k0(v).
 
-  # (ii) Estimate Kappa_d(u) with local polynomial regression
-  est_Kappad = lpoly_regress(x=Phatd, y=ynetd, bw=bw_y, bw_method=bw_method, degree=pol_degree2, drv=0, weights=weightsd)
-  # pol_degree2 because in the end I want to get the derivatives too.
-  # This regression is mostly ran to extract the bw in fact!
-  bw_y = est_Kappad$bw # if pre-specified will return the same value
-  est_dKappad = lpoly_regress(x=Phatd, y=ynetd, bw = bw_y, degree=pol_degree2, drv=1, weights=weightsd) # same bw, no need to specify the method then
-  # should be the same bandwidth in both, so don't recompute it
+  # D=1:
+  ypred1 = predict(est1, newdata=as.data.frame(X1))
+  ynet1 = dat1[[var_outcome]] - ypred1
+  x1 = Phat1;
+  y1 = ynet1*x1 # this is the object we derive in order to obtain k1(v).
 
-  # Estimation on the set of specified u:
-  Kappad = approx(x=est_Kappad$reg$x, y=est_Kappad$reg$y, xout=seq_u)$y
-  dKappad = approx(x=est_dKappad$reg$x, y=est_dKappad$reg$y, xout=seq_u)$y
 
-  # (iii) Estimate kd(u):
-  # See Andresen 2018, Table 2 for the formula; Can also derive manually;
-  if(d==0) {
-    ku = Kappad - (1-seq_u)*dKappad
+  # (ii) Local Polynomial regressions
+  # D=0:
+  k0_est = lpoly(x=x0, y=y0, bandwidth=bw_y0, degree = pol_degree2, drv = 1,
+               kernel = kernel, se_type=se_type, weights=weights0, fast_locpoly=fast_robinson2)
+  k0 = approx(x=k0_est$x, y=k0_est$y, xout=seq_u)$y
+  if(length(which(!is.na(k0_est$se))) == 0) { # will be NA only if fast_robinson2==TRUE
+    k0_se = rep(NA, length(seq_u))
+  } else {
+    k0_se = approx(x=k0_est$x, y=k0_est$se, xout=seq_u)$y
   }
-  if(d==1) {
-    ku = Kappad + seq_u*dKappad
+
+
+
+  # D=1:
+  k1_est = lpoly(x=x1, y=y1, bandwidth=bw_y1, degree = pol_degree2, drv = 1,
+                 kernel = kernel, se_type=se_type, weights=weights1, fast_locpoly=fast_robinson2)
+  k1 = approx(x=k1_est$x, y=k1_est$y, xout=seq_u)$y
+  if(length(which(!is.na(k1_est$se))) == 0) { # will be NA only if fast_robinson2==TRUE
+    k1_se = rep(NA, length(seq_u))
+  } else {
+    k1_se = approx(x=k1_est$x, y=k1_est$se, xout=seq_u)$y
   }
 
+
+  # MTE:
+  # MTE is = k1(v) - k0(v)
+  # But if also wants standard errors around it, need to run a third lpoly regression - not exactly numerically equivalent though...
+  deltak_est = lpoly(x=xall, y=yfit, bandwidth=bw_mte, degree = pol_degree2, drv = 1,
+                 kernel = kernel, se_type=se_type, weights=weightsall, fast_locpoly=fast_robinson2)
+  deltak = approx(x=deltak_est$x, y=deltak_est$y, xout=seq_u)$y
+
+  if(length(which(!is.na(deltak_est$se))) == 0) {
+    deltak_se = rep(NA, length(seq_u))
+  } else {
+    deltak_se = approx(x=deltak_est$x, y=deltak_est$se, xout=seq_u)$y
+  }
+
+
+
+  # (iii) Save:
   kv=data.frame(v=seq_u); # to return the function kd(v)
-  kv[[paste0("k", d)]] = ku
+  kv$k0 = k0; kv$k1 = k1
+  kv$k0_se = k0_se; kv$k1_se = k1_se
+  kv$deltak = deltak; kv$deltak_se = deltak_se
 
-
-  res_list = list(Kappad, dKappad, kv, estd, BWD, bw_y)
-  names(res_list) = c("Kappad", "dKappad", "kv", "estd", "bwd", "bw_y")
+  res_list = list(kv=kv, est0=est0, est1=est1,
+                  bw0=BW0, bw1=BW1, bw_y0=bw_y0, bw_y1=bw_y1, bw_mte = bw_mte)
   return(res_list)
+
+  #### Alternative computation (but longer + requires two locpolynomial per D + unknown optimal bw for these).
+  ### (ii) Estimate Kappa_d(u) with local polynomial regression
+  ##est_Kappad = lpoly_regress(x=Phatd, y=ynetd, bw=bw_y, bw_method=bw_method, degree=pol_degree2, drv=0, weights=weightsd)
+  ### pol_degree2 because in the end I want to get the derivatives too.
+  ### This regression is mostly ran to extract the bw in fact!
+  ##bw_y = est_Kappad$bw # if pre-specified will return the same value
+  ##est_dKappad = lpoly_regress(x=Phatd, y=ynetd, bw = bw_y, degree=pol_degree2, drv=1, weights=weightsd) # same bw, no need to specify the method then
+  ### should be the same bandwidth in both, so don't recompute it
+  ### Estimation on the set of specified u:
+  ##Kappad = approx(x=est_Kappad$reg$x, y=est_Kappad$reg$y, xout=seq_u)$y
+  ##dKappad = approx(x=est_dKappad$reg$x, y=est_dKappad$reg$y, xout=seq_u)$y
+  ### (iii) Estimate kd(u):
+  ### See Andresen 2018, Table 2 for the formula; Can also derive manually;
+  ##if(d==0) {
+  ##  ku = Kappad - (1-seq_u)*dKappad
+  ##}
+  ##if(d==1) {
+  ##  ku = Kappad + seq_u*dKappad
+  ##}
 
 }
 
@@ -105,9 +206,9 @@ mtr_est_poly = function(d, data, seq_u,
 
 
 #' @rdname mtr_fun
-#' @usage mtr_fun_poly(ref_indiv, eval_v, est0, est1, k0, k1, se_type)
+#' @usage mtr_fun_poly(ref_indiv, eval_v, est0, est1, kv, se_type, conf_level)
 #' @export
-mtr_fun_poly = function(ref_indiv, eval_v, est0, est1, k0, k1, se_type) {
+mtr_fun_poly = function(ref_indiv, eval_v, est0, est1, kv, se_type, conf_level) {
 
   # Main prediction: predict mtr, mte
 
@@ -177,34 +278,76 @@ mtr_fun_poly = function(ref_indiv, eval_v, est0, est1, k0, k1, se_type) {
 
   # (ii) k(v):
   # Also repeat kv:
-  range_v = c(min(k0$v), max(k0$v))
+  range_v = range(kv$v)
   if(length(which(eval_v > range_v[2] | eval_v < range_v[1])) > 0) {
     stop("Evaluation value for V is out of the estimated range.")
   }
 
-  k0_est = approx(x=k0$v, y=k0$k0, xout=eval_v)$y
-  k1_est = approx(x=k1$v, y=k1$k1, xout=eval_v)$y
-  kv = data.frame(v=eval_v, k0=k0_est, k1=k1_est)
+  kv_input = kv;
+
+  # Reconstruct kv but on the new evaluation sample:
+  k0 = approx(x=kv_input$v, y=kv_input$k0, xout=eval_v)$y
+  k1 = approx(x=kv_input$v, y=kv_input$k1, xout=eval_v)$y
+  deltak = approx(x=kv_input$v, y=kv_input$deltak, xout=eval_v)$y
+
+  # S.E. (only if available, i.e., if fast_robinson2 == FALSE)
+  if(length(which(!is.na(kv_input$k0_se))) == 0) {
+    k0_se = rep(NA, length(eval_v));
+    k1_se = rep(NA, length(eval_v));
+    deltak_se = rep(NA, length(eval_v));
+  } else {
+    k0_se = approx(x=kv_input$v, y=kv_input$k0_se, xout=eval_v)$y
+    k1_se = approx(x=kv_input$v, y=kv_input$k1_se, xout=eval_v)$y
+    deltak_se = approx(x=kv_input$v, y=kv_input$deltak_se, xout=eval_v)$y
+  }
+
+  kv = data.frame(v=eval_v, k0, k1, k0_se, k1_se, deltak, deltak_se)
+
 
   # repeat it to fit the REF data;
-  K0 = rep(k0_est, times=nrow(ref_indiv))
-  K1 = rep(k1_est, times=nrow(ref_indiv))
+  K0 = rep(k0, times=nrow(ref_indiv))
+  K1 = rep(k1, times=nrow(ref_indiv))
+  K0_SE = rep(k0_se, times=nrow(ref_indiv))
+  K1_SE = rep(k1_se, times=nrow(ref_indiv))
+  DELTAK = rep(deltak, times=nrow(ref_indiv))
+  DELTAK_SE = rep(deltak_se, times=nrow(ref_indiv))
 
   # (iii) MTRd and MTE
   mtr0 = delta0x + K0
   mtr1 = delta1x + K1
-  mte = mtr1 - mtr0
+  mte = mtr1 - mtr0 # measure of mte for direct comparison, not estimated "directly".
+
+  # MTE from direct estimation: - to have standard errors around it...
+  mte2 = delta1x - delta0x + DELTAK # Second measure of mte, not directly the same, but that's the one we use for s.e.
+
+
+  # (iv) Confidence intervals - Not taking into account errors around delta_d X
+  df0 = df.residual(est0); t_value0 = qt(1-conf_level/2, df=df0)
+  df1 = df.residual(est1); t_value1 = qt(1-conf_level/2, df=df1)
+  t_value_mte = qt(1-conf_level/2, df=df0+df1)
+
+  mtr0_lwr = mtr0 - t_value0*K0_SE
+  mtr0_upr = mtr0 + t_value0*K0_SE
+  mtr1_lwr = mtr1 - t_value1*K1_SE
+  mtr1_upr = mtr1 + t_value1*K1_SE
+  mte2_lwr = mte2 - t_value_mte*DELTAK_SE
+  mte2_upr = mte2 + t_value_mte*DELTAK_SE
+
 
   # Save
   RES = REF;
   RES$mtr0 = mtr0; RES$mtr1 = mtr1
-  RES$mte = mte
-  RES$k0 = K0; RES$k1 = K1
+  RES$mte = mte; RES$mte2 = mte2;
+  RES$mtr0_lwr = mtr0_lwr; RES$mtr0_upr = mtr0_upr;
+  RES$mtr1_lwr = mtr1_lwr; RES$mtr1_upr = mtr1_upr;
+  RES$mte2_lwr = mte2_lwr; RES$mte2_upr = mte2_upr
+  RES$k0 = K0; RES$k1 = K1; RES$deltak = DELTAK;
   RES$delta0X = delta0x; RES$delta1X = delta1x
+  RES$se_k0 = K0_SE; RES$se_k1 = K1_SE; RES$se_deltak = DELTAK_SE
   RES$se_delta0X = se_delta0x; RES$se_delta1X = se_delta1x
 
 
-  # (iv) Also return the effect of the covariates (but only one prediction by observation)
+  # (v) Also return the effect of the covariates (but only one prediction by observation)
   # remark: redundant to recompute, but quick..
   deltaX = ref_indiv;
   if(se_type == "nonrobust") {
@@ -234,146 +377,232 @@ mtr_fun_poly = function(ref_indiv, eval_v, est0, est1, k0, k1, se_type) {
 
 
 #' @rdname mtr_fun
+#' @description
+#' Bandwidth selection for local polynomial regression. Different methods are available: "mse-dpi", "mse-rot" (from nprobust) or "arbitrary" (fixed bandwidth to a fraction of the support).
+#' Can provide bandwidth for the main function or for any of its derivative order.
+#' The bandwidth can be computed on a subsample of the data of size `bw_subsamp_size` to speed up the computation.
 #' @param x Vector of x values
 #' @param y Vector of y values
 #' @param bw Pre-specified bandwidth
 #' @param bw_method Method to compute the bandwidth (if bandwdith is NULL)
 #' @param degree Degree of the polynomial: recommended to set to drv + 1
 #' @param drv Derivative order of the function to be estimated.
-#' @param weights Weights for the local polynomial regression
-#' @usage lpoly_regress(x, y, bw=NULL, bw_method="plug-in", degree, drv, weights)
+#' @param supp Support of X in the complete data (not necessarily of the realized X in the current subsample), in order to compute the bandwidth if the rule is to take a fraction of the support. Ensure that same bandwidth on both samples D=0 and D=1. By default supp=NULL, in which case recompute the support of `x` directly.
+#' @param bw_subsamp_size Size of the subsample to compute the bandwidth. Default is NULL (no subsample). If larger than sample size, it is ignored.
+#' @usage lbw_select(x, y, kernel, degree, drv, bw_method = "arbitrary", bw_subsamp_size)
 #' @export
-lpoly_regress = function(x, y, bw=NULL, bw_method = "rule-of-thumb", degree, drv, weights) {
-  # To be adjusted if wants to change
-  if(is.null(bw)) {
-    if(bw_method == "rule-of-thumb") {
-      bw = thumbBw(x, y, deg=degree, kernel=gaussK, weig = weights) # might yield weird results when degree = 2
-      #if(is.nan(bw)) { stop("Error no variation in variable in this subsample.") }
-      if(bw > max(x) - min(x)) {
-        bw = thumbBw(x, y, deg=degree-1, kernel=gaussK, weig = weights) # reduce the degree
-        if(bw > max(x) - min(x)) { # if still greater:
-          warning("Rule-of-Thumb bw too large... Setting to (max(x)-min(x))/100 arbitrarily")
-          bw = (max(x) - min(x))/100
-        }
-      }
-    }
-    if(bw_method == "plug-in") {
-      # Gets long if too many observations... By default compute on subsample
-      sub_id = sample(1:length(x), min(4999, length(x))) # 5000 corresponds to .maxEvalPts in locpol
-      suby = y[sub_id]; subx = x[sub_id]; subweights = weights[sub_id]
-      # requires degree to be odd number (not even)
-      if(degree %% 2 == 0) {
-        warning("Degree should be an odd number for plug-in bandwidth selection: reduced by 1 for bw computation.")
-        degree = degree - 1
-      }
-      sub_bw <- pluginBw(subx, suby, deg=degree, kernel=gaussK, weig = subweights)
-      # Rescale bandwidth: Silverman (1986) rule: bw_full = bw_sub * (N_full/n_sub)^(-1/5)
-      # Quite arbitrary rule but saves a lot of time..
-      bw = sub_bw*(length(x)/length(subx))^(-1/5)
+lbw_select = function(x, y, kernel, degree, drv, bw_method = 1/5, bw_subsamp_size, supp=NULL) {
 
-    }
-    if(bw_method == "cv") {
-      # Gets long if too many observations... By default compute on subsample
-      sub_id = sample(1:length(x), min(4999, length(x))) # 5000 corresponds to .maxEvalPts in locpol
-      suby = y[sub_id]; subx = x[sub_id]; subweights = weights[sub_id]
-      range = range(subx); upper =  (range[2] - range[1]) #/2
-      lower = (range[2] - range[1])/1000
-      interval = c(lower, upper)
-      sub_bw = regCVBwSelC(x=subx, y=suby, deg=degree, kernel=gaussK,weig=subweights,
-                       interval = interval)
-      # bw very sensitive to interval choice;
+  # Rename kernel in nprobust formulation:
+  kernel1 = ifelse(kernel == "gaussian", "gau",
+                   ifelse(kernel == "epanechnikov", "epa", NA))
+  if(is.na(kernel1)) { stop("Kernel not recognized.") }
 
-      # Rescale bandwidth: Silverman (1986) rule: bw_full = bw_sub * (N_full/n_sub)^(-1/5)
-      # Quite arbitrary rule but saves a lot of time..
-      bw = sub_bw*(length(x)/length(subx))^(-1/5)
-    }
-    ## # Remark: if want to allow for higher maxevalpts:
-    ## unlockBinding(".maxEvalPts", asNamespace("locpol"))
-    ## assign(".maxEvalPts", length(x) + 10, envir = asNamespace("locpol")) # Overwrite the value
-    ## lockBinding(".maxEvalPts", asNamespace("locpol")) # Lock the binding again to avoid unintended modifications
+  # 1. Arbitrary rule: fraction of the support
+  if(is.numeric(bw_method)) {
+    if(is.null(supp)) { supp = range(x) }
+    bw = round(bw_method * (supp[2] - supp[1]), 3) # take a bandwidth equal to a fraction of the support
+    if(bw_method < 0 | bw_method > 1) { stop("Bandwidth fraction of the support (bw_method) must be between 0 and 1.") }
   }
 
-  # (Weighted) Local Polynomial Regression:
-  # If same weight for all observations, run the locpoly from KernSmooth library (goes faster):
-  weights_diff = weights - 1;
-  if(max(abs(weights_diff)) < 0.0001) { # check if all weights = 1. Set this value in case of numerical rounding errors;
-    reg = locpoly(x=x, y=y, drv=drv, bandwidth=bw, degree=degree) #, kernel="normal")
-  } else {
-    # Otherwise, run custom weighted_locpoly (takes longer)
-    reg = weighted_locpoly(x=x, y=y, weights=weights, drv=drv, bandwidth=bw, degree=degree)
+
+  # 2. Direct plug-in MSE:
+  if(bw_method == "mse-dpi") {
+    if(is.null(bw_subsamp_size)) {
+      bw_est = lpbwselect(y=y, x=x, eval = NULL, neval = 30, p = degree, deriv = drv, kernel = kernel1, bwselect = "imse-dpi")
+    } else {
+      sub_id = sample(1:length(x), min(bw_subsamp_size, length(x))) # if subsampsize > length(x), just take x;
+      suby = y[sub_id]; subx = x[sub_id]; #subweights = weights[sub_id]
+      bw_est = lpbwselect(y=suby, x=subx, eval = NULL, neval = 30, p = degree, deriv = drv, kernel = kernel1, bwselect = "imse-dpi")
+    }
+    bw = bw_est$bws[,2]
   }
 
-  res = list(reg, bw); names(res) = c("reg", "bw")
-  return(res)
+  # 3. Rule-of-thumb MSE:
+  if(bw_method == "mse-rot") {
+    if(is.null(bw_subsamp_size)) {
+      bw_est = lpbwselect(y=y, x=x, eval = NULL, neval = 30, p = degree, deriv = drv, kernel = kernel1, bwselect = "imse-rot")
+    } else {
+      sub_id = sample(1:length(x), min(bw_subsamp_size, length(x))) # if subsampsize > length(x), just take x;
+      suby = y[sub_id]; subx = x[sub_id]; #subweights = weights[sub_id]
+      bw_est = lpbwselect(y=suby, x=subx, eval = NULL, neval = 30, p = degree, deriv = drv, kernel = kernel1, bwselect = "imse-rot")
+    }
+    bw = bw_est$bws[,2]
+  }
+
+  return(list(bw=as.numeric(bw)))
 }
+
+
+## ## OBSOLETE, DON T USE THE locpol PACKAGE ANYMORE -- too many errors + only computes BW for the main function, not derivative -> not what we want.
+## if(bw_method == "rule-of-thumb") {
+##   bw = thumbBw(x, y, deg=degree, kernel=gaussK, weig = weights) # might yield weird results when degree = 2
+##   #if(is.nan(bw)) { stop("Error no variation in variable in this subsample.") }
+##   if(bw > max(x) - min(x)) {
+##     bw = thumbBw(x, y, deg=degree-1, kernel=gaussK, weig = weights) # reduce the degree
+##     if(bw > max(x) - min(x)) { # if still greater:
+##       warning("Rule-of-Thumb bw too large... Setting to (max(x)-min(x))/10 arbitrarily")
+##       bw = (max(x) - min(x))/10
+##     }
+##   }
+## }
+## if(bw_method == "plug-in") {
+##   # Gets long if too many observations... By default compute on subsample
+##   sub_id = sample(1:length(x), min(4999, length(x))) # 5000 corresponds to .maxEvalPts in locpol
+##   suby = y[sub_id]; subx = x[sub_id]; subweights = weights[sub_id]
+##   # requires degree to be odd number (not even)
+##   if(degree %% 2 == 0) {
+##     warning("Degree should be an odd number for plug-in bandwidth selection: reduced by 1 for bw computation.")
+##     degree = degree - 1
+##   }
+##   sub_bw <- pluginBw(subx, suby, deg=degree, kernel=gaussK, weig = subweights)
+##   # Rescale bandwidth: Silverman (1986) rule: bw_full = bw_sub * (N_full/n_sub)^(-1/5)
+##   # Quite arbitrary rule but saves a lot of time..
+##   bw = sub_bw*(length(x)/length(subx))^(-1/5)
+## }
+## if(bw_method == "cv") {
+##   # Gets long if too many observations... By default compute on subsample
+##   sub_id = sample(1:length(x), min(4999, length(x))) # 5000 corresponds to .maxEvalPts in locpol
+##   suby = y[sub_id]; subx = x[sub_id]; subweights = weights[sub_id]
+##   range = range(subx); upper =  (range[2] - range[1])/2
+##   lower = (range[2] - range[1])/1000
+##   interval = c(lower, upper)
+##   sub_bw = regCVBwSelC(x=subx, y=suby, deg=degree, kernel=gaussK,weig=subweights,
+##                    interval = interval)
+##   # bw very sensitive to interval choice;
+##   # Rescale bandwidth: Silverman (1986) rule: bw_full = bw_sub * (N_full/n_sub)^(-1/5)
+##   # Quite arbitrary rule but saves a lot of time..
+##   bw = sub_bw*(length(x)/length(subx))^(-1/5)
+## }
+## ## # Remark: if want to allow for higher maxevalpts:
+## ## unlockBinding(".maxEvalPts", asNamespace("locpol"))
+## ## assign(".maxEvalPts", length(x) + 10, envir = asNamespace("locpol")) # Overwrite the value
+## ## lockBinding(".maxEvalPts", asNamespace("locpol")) # Lock the binding again to avoid unintended modifications
+
+
+
+
+
+
 
 
 
 
 
 #' @rdname mtr_fun
+#' @description
+#' The `lpoly` function estimates a (weighted) local polynomial regression of a specified degree at given evaluation points.
+#' It supports derivative estimation and allows for heteroscedasticity-consistent standard errors. External weights (weights) are allowed.
 #' @param x Vector of x values
 #' @param y Vector of y values
-#' @param weights Vector of weights
 #' @param bandwidth Pre-specified bandwidth
 #' @param degree Degree of the polynomial: recommended to set to drv + 1
 #' @param drv Derivative order of the function to be estimated.
-#' @usage weighted_locpoly(x, y, weights, bandwidth, drv, degree, gridsize=401)
+#' @param se_type "HC1", "nonrobust" (for baseline homoscedastic), ...
+#' @param weights Vector of external weights (in addition to the kernel weights)
+#' @param x_eval Vector of evaluation points. If not pre-specified, use a grid (of gridsize). Default = NULL.
+#' @param gridsize Size of the grid of evenly spaced points for x. Default is 201. Only relevant if x_eval = NULL.
+#' @param fast_locpoly Default is FALSE. If `fast_locpoly` is TRUE, will use the locpoly function from Kernsmooth library to speed up the computation. This is only possible if no external weights are used. If the kernel is not set to Gaussian, the locpoly function will change it to Gaussian if fast_poly is TRUE.
+#' @usage wlocpol(x, y, bandwidth, degree = 2, drv = 1, kernel = "gaussian", weights=NULL, x_eval=NULL, gridsize=201, fast_locpoly=FALSE)
 #' @export
-weighted_locpoly <- function(x, y, weights, bandwidth, drv = 0, degree = 2, gridsize=401) {
-  # Grid for evaluation
-  eval_points <- seq(min(x), max(x), length.out = gridsize)
+lpoly <- function(x, y, bandwidth, degree = 2, drv = 1,
+                   kernel = "gaussian", se_type, weights=NULL, x_eval=NULL, gridsize=201, fast_locpoly=FALSE) {
 
-  # Initialize results
-  fitted_values <- numeric(length(eval_points))
+  # Evaluation grid
+  if(is.null(x_eval)) {
+    x_eval <- seq(min(x), max(x), length.out = gridsize)
+  }
+  # Kernel function
+  kernel_fn <- switch(kernel,
+                      gaussian = function(u) exp(-0.5 * u^2) / sqrt(2 * pi),
+                      epanechnikov = function(u) ifelse(abs(u) <= 1, 0.75 * (1 - u^2), 0),
+                      uniform = function(u) ifelse(abs(u) <= 1, 0.5, 0),
+                      stop("Unknown kernel"))
+  # Weights:
+  if(!is.null(weights)) { external_weights = weights } else { external_weights = rep(1, length(x)) }
 
-  for (j in seq_along(eval_points)) {
-    # Center point for local regression
-    x0 <- eval_points[j]
+  # 1. Fast version. Fast implementation in special case:
+  # If fast_locpoly (& no weights & kernel = "gaussian"), use locpoly function from Kernsmooth library (speeds things up)
+  weights_diff = external_weights - 1;
 
-    # Compute kernel weights
-    kernel_weights <- dnorm((x - x0) / bandwidth) / bandwidth
+  if(max(abs(weights_diff)) < 0.0001 & fast_locpoly) {
+    if(kernel != "gaussian") { warning("Fast locpolynomial regression specified -- Kernel Changed to Gaussian to estimate it.")} # no need to explicitly change it, no kernel specification in locpoly
+    reg = locpoly(x=x, y=y, drv=drv, bandwidth=bandwidth, degree=degree)
+    y1 = approx(x=reg$x, y=reg$y, xout=x_eval)$y
+    return(list(x=x_eval, y=y1, se = rep(NA, length(y1))))
+  }
+  if(max(abs(weights_diff)) > 0.0001 & fast_locpoly) {
+    warning("Fast locpolynomial regression impossible with external weights... Regular pace locpolynomial estimated instead.")
+  }
 
-    # Combine observation weights and kernel weights
-    combined_weights <- weights * kernel_weights
 
-    # Create the design matrix for local polynomial
-    X <- outer(x - x0, 0:degree, `^`)
+  # 2. General Version. - takes longer, but applies in all cases and returns standard errors.
+  # Initialize outputs
+  n_eval <- length(x_eval)
+  fit <- numeric(n_eval)  # Fitted values
+  se <- numeric(n_eval)   # Standard errors
 
+  # Loop over each evaluation point
+  for (i in seq_along(x_eval)) {
+    x0 <- x_eval[i]
 
-    # Apply weights directly to the design matrix and response
-    WX <- sqrt(combined_weights) * X
-    Wy <- sqrt(combined_weights) * y
+    # Compute weights based on the kernel and bandwidth
+    kernel_weights <- kernel_fn((x - x0) / bandwidth)
+    weights <- kernel_weights * external_weights
 
-    # Weighted least squares solution
-    XtX <- crossprod(WX)  # Equivalent to t(WX) %*% WX
-    Xty <- crossprod(WX, Wy)  # Equivalent to t(WX) %*% Wy
-    beta <- solve(XtX, Xty)  # Solve for coefficients
+    # Normalize weights
+    weights <- weights / sum(weights)
 
-    # Store the derivative or value at x0
-    fitted_values[j] <- if (drv == 0) {
-      beta[1]  # Intercept corresponds to the function value
-    } else {
-      factorial(drv) * beta[drv + 1]  # Derivative term # factorial is the same as gamma(x+1)
+    # Construct the design matrix
+    X <- outer(x - x0, 0:degree, `^`) #make_design_matrix(x, x0, degree)
+
+    # Weighted least squares
+    XtW <- t(X * weights)         # Apply weights directly to rows of X
+    XtWX <- XtW %*% X             # Weighted X'X
+    XtWy <- XtW %*% y             # Weighted X'y
+    beta <- solve(XtWX, XtWy)     # Coefficients
+
+    # Variance estimation
+    if(se_type == "nonrobust") {
+      residuals <- y - X %*% beta
+      sigma2 <- sum(weights * residuals^2) / (length(y) - (degree+1)) # length(y) = N # degree + 1 = number of coefficients to estimate with the intercept = degrees of freedom
+      cov_matrix <- sigma2 * solve(XtWX)
+    }
+    if(se_type == "HC1") {
+      residuals <- as.numeric(y - X %*% beta)  # Residuals
+      XtWX_inv <- solve(XtWX)                  # (X'WX)^-1
+      # Compute HC1 robust covariance matrix
+      n <- nrow(X)                               # Number of observations
+      k <- ncol(X)                               # Number of parameters
+      diag_adjust <- (weights^2) * (residuals^2) # w_i^2 * r_i^2
+      meat <- t(X) %*% (diag_adjust * X)         # Efficient computation of X' diag() X
+      cov_matrix <- XtWX_inv %*% meat %*% XtWX_inv * (n / (n - k)) # HC1 correction
     }
 
-    ## # Weighted least squares solution
-    ## W <- diag(combined_weights)  # Weight matrix -> diagonalizing takes too long
-    ## XtW <- t(X) %*% W
-    ## beta <- solve(XtW %*% X, XtW %*% y)
-    ##
-    ## # Store the derivative or value at x0
-    ## fitted_values[j] <- if (drv == 0) {
-    ##   beta[1]  # Intercept corresponds to the function value
+
+    ## # Weighted Least Squares
+    ## # via lm() directly - Quicker but takes a bit longer
+    ## wls = lm(y~X-1, weights=weights)
+    ## beta = coefficients(wls)
+    ## if(se_type == "nonrobust") {
+    ##   cov_matrix = vcov(wls)
     ## } else {
-    ##   factorial(drv) * beta[drv + 1]  # Derivative term
+    ##   cov_matrix = vcovHC(wls, type = se_type)
     ## }
+
+
+    # Extract coefficients of interest:
+    if(drv == 0) { fit[i] = beta[1]; se[i] = cov_matrix[1,1] } # Raw function
+    if(drv > 0) { # derivative:
+      fit[i] = factorial(drv) * beta[drv + 1];
+      se[i] = factorial(drv)*sqrt(cov_matrix[drv+1,drv+1])
+    }
+
   }
 
   # Return results
-  list(x = eval_points, y = fitted_values)
+  return(list(x=x_eval, y = fit, se = se))
 }
-
 
 
 

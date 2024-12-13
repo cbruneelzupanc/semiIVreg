@@ -10,7 +10,8 @@ semiivreg(formula, data, propensity_formula=NULL, propensity_data = NULL,
                  ref_indiv =NULL, firststage_model = "probit",
                  est_method = "locpoly", # "locpoly", "sieve", or "homogenous".
                  se_type = "HC1",
-                 bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = "rule-of-thumb",
+                 bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = 1/5,
+                 kernel="gaussian",
                  pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
                  pol_degree_sieve = 5, conf_level = 0.05,
                  common_supp_trim=c(0,1), trimming_value=NULL, automatic_trim=FALSE,
@@ -44,23 +45,34 @@ By default takes the average value for all the covariates (on the trimmed datase
 
 \item{est_method}{Estimation method: default is "locpoly" for Robinson (1988) double residual regression for partially linear model. Other options include "sieve" to specify flexibly the control function as a polynomial with pol_degree_sieve, and "homogenous" which is a sieve where we also impose homogenous treatment effect.}
 
-\item{se_type}{Type of standard errors if sieve/homogenous estimation. By default = "HC1". Can otherwise me any of the possibilities of vcovHC in the sandwich package. Also possible to have se_type="nonrobust" for the non-robust (lm default).}
-
-\item{bw0, bw1}{Bandwidth of the first residual regressions of Wd and X on Phat. \cr
-Two possibilities: specify one value that is applied to all covariates, or specify a different bandwidth for the regression on each covariate. In the second case, need to be specified in the order of the covariates as specified in the model. Be very careful with factors. \cr
-Default NULL and computed using the specified bw_method.}
+\item{bw0, bw1}{Bandwidth of the first residual regressions of (Y, Wd and X) on Phat. \cr
+Two possibilities: specify one value that is applied to all covariates (and Y), or specify a different bandwidth for the regression on each covariate. In the second case, need to be specified in the order of the covariates as specified in the model. Be very careful with factors. \cr
+Default NULL and computed using the specified bw_method. Ideally, if one factor covariate, apply the same bandwidth to all of the dummies created from the factor.}
 
 \item{bw_y0, bw_y1}{Bandwidth of the second regression of Y (net of the effects of the covariates) on Phat. Default NULL and computed using the specified bw_method.}
 
-\item{bw_method}{Method to compute the bandwidth of the local polynomial regressions. Default is simple "rule-of-thumb" method. Alternatives include "cv" for cross-validation and "plug-in" for plug-in bw (Fan and Gijbels, 1996). \cr
-Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. Then rescaled for the full sample using Silverman (1986) rule: bw_full = bw_sub * (N_full/n_sub)^(-1/5). \cr
-For replicability, set a seed before running semiivreg (because of the random subsample). Plug-in bandwidth is computed only with a degree that is odd.}
+\item{bw_method}{Method to compute the bandwidth of the local polynomial regressions (of the first-order derivative).
+Default option is 1/5, which arbitrarily sets bw0, bw1, bw_y0 and bw_y1 to 1/5th of the support (rounded to the 3th digit). Can place any fraction < 1. \cr
+Recommended alternatives include (global constant) bandwidth computations from nprobust package (Calonico, Cattaneo and Farrell, 2019)
+(i) "mse-dpi": direct plug-in MSE optimal bandwidth from Fan and Gijbels (1996).
+(ii) "mse-rot": rule-of-thumb implementation of the MSE-optimal bandwidth.
+These two methods take long with large sample: use bw_subsamp_size to speed up the computation.}
+
+\item{kernel}{Kernel to use for the local polynomial regressions. Default is "gaussian" but can be "epanechnikov". Takes longer with Epanechnikov (cannot use fast locpoly implementation from KernSmooth).}
+
+\item{bw_subsamp_size}{Size of the subsample to use for the bandwidth selection. Default is 10,000. Use \code{bw_subsamp_size = NULL} to use the full sample (may take time). Otherwise, recommend to set a number around 20,000 at most for reasonable computation time (exponentially increasing with sample size). \cr
+\code{bw_subsamp_size} introduces some randomness into the bandwidth selection procedure: recommended to set a seed before running semiivreg for reproducibility.}
 
 \item{pol_degree_locpoly1}{Degree of the local polynomial regression of the covariates on Phat. Default is 1 as recommended by Fan and Gijbels (1996) because we want to estimate the regular function.}
 
 \item{pol_degree_locpoly2}{Degree of the local polynomial regression of Y (net of the effects of the covariates) on Phat. Default is 2 as recommended by Fan and Gijbels (1996) because we want to estimate the derivative function.}
 
+\item{fast_robinson2}{If TRUE, use locpoly from KernSmooth during the bootstrap. Default is TRUE to speed things up (because do not need to compute standard errors in bootstrap)
+Set to FALSE if want to use epanechnikov kernel, or if want to use weights.}
+
 \item{pol_degree_sieve}{Degree of the polynomial transformation for the control function.}
+
+\item{se_type}{Type of standard errors if sieve/homogenous estimation. By default = "HC1". Can otherwise me any of the possibilities of vcovHC in the sandwich package. Also possible to have se_type="nonrobust" for the non-robust (lm default).}
 
 \item{conf_level}{Confidence level for the confidence intervals.}
 
@@ -74,7 +86,7 @@ Inserting a trimming_value generates automatic_trim = TRUE automatically.}
 \item{automatic_trim}{If TRUE, the estimation of the second stage is done on the common_support only.}
 
 \item{weight_var}{A variable of weights to be applied to the observations. Default is NULL, apply equal weights to all observations. \cr
-Remark: recommended NOT to use weights for locpoly estimation because drastically increases computation time to do a weighted local polynomial regression.}
+Implemented completely for \code{est_method = "sieve"} for now. For \code{locpoly}, the weights are not used when computing the "optimal bandwidth".}
 
 \item{plotting}{TRUE if wants to plot at the end of the function, FALSE otherwise.}
 
@@ -93,6 +105,11 @@ Remark: recommended NOT to use weights for locpoly estimation because drasticall
 \item{newdata}{New data for which to predict the MTE and MTR.}
 
 \item{seq_v}{Sequence of v at which to predict the MTE and MTR. By default: NULL fits the default interval of the original semiivreg (equally space grid of proba, with step size of 0.001 on the common support).}
+
+\item{`fast_robinson1`}{Default is TRUE to speed things up in a first stage (if many covariates in particular). If TRUE, will use the locpoly function from Kernsmooth library to speed up the computation of the Robinson double residual first stage. This is only possible if no external weights are used. Fast Locpoly will enforce a gaussian kernel.}
+
+\item{`fast_robinson2`}{Default is FALSE. If TRUE, will use the locpoly function from Kernsmooth library to speed up the computation of the Robinson double residual second stage. This is only possible if no external weights are used. Fast Locpoly will enforce a gaussian kernel.
+Default is FALSE for the second stage because fast_locpoly returns no standard errors and the gain in time is not so important for the second stage.}
 }
 \value{
 A list with the following elements:
@@ -122,7 +139,7 @@ Coming out of the double residual regression à la Robinson (1988), running a no
 \code{bw_y0} and \code{bw_y1} are the bandwidths of the second regression of Y (net of the effects of the covariates) on Phat. These are the one that matters for the smoothness of the MTE and MTR estimates.
 }
 
-\item{\verb{$plot}}{Returns separately the following plot objects: \code{supp} (support), \code{mtr}, \code{mte}.}
+\item{\verb{$plot}}{Returns separately the following plot objects: \code{supp} (support), \code{mtr}, \code{mte} and \code{mte2}. \code{mte} reports the estimation from "local IV" approach, with standard errors from the Robinson 2nd stage. \code{mte2} reports the MTE estimated as the difference between the MTR (without standard errors).}
 \item{\verb{$supp}}{Returns the common support of the propensity score \code{Phat} between the two treatment group.}
 \item{\verb{$call}}{Returns the call of the function and the covariates and semi-IVs used.}
 }
@@ -176,8 +193,9 @@ In particular, see Andresen, M. E. (2018). Exploring marginal treatment effects:
 For double residual estimation of partially Linear models, see
 Robinson, P. M. (1988). Root-N-consistent semiparametric regression. Econometrica: Journal of the Econometric Society, 931-954. \cr
 
-For local polynomial regressions choice of degree:
+For local polynomial regressions choice of degree & Bandwidth computation
 Fan, J., & Gijbels, I. (1996). Local polynomial modelling and its applications.
+Calonico, S., Cattaneo, M. D., & Farrell, M. H. (2019). nprobust: Nonparametric Kernel-Based Estimation and Robust Bias-Corrected Inference. Journal of Statistical Software, 91(8), 1–33. https://doi.org/10.18637/jss.v091.i08
 }
 \author{
 Christophe Bruneel-Zupanc, \url{cbruneel.com}

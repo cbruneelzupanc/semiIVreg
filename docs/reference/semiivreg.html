@@ -62,7 +62,8 @@ Use <code>semiivreg_boot</code> to obtain 'correct' bootstrapped confidence inte
 <span>                 ref_indiv <span class="op">=</span><span class="cn">NULL</span>, firststage_model <span class="op">=</span> <span class="st">"probit"</span>,</span>
 <span>                 est_method <span class="op">=</span> <span class="st">"locpoly"</span>, <span class="co"># "locpoly", "sieve", or "homogenous".</span></span>
 <span>                 se_type <span class="op">=</span> <span class="st">"HC1"</span>,</span>
-<span>                 bw0 <span class="op">=</span> <span class="cn">NULL</span>, bw1 <span class="op">=</span> <span class="cn">NULL</span>, bw_y0 <span class="op">=</span> <span class="cn">NULL</span>, bw_y1 <span class="op">=</span> <span class="cn">NULL</span>, bw_method <span class="op">=</span> <span class="st">"rule-of-thumb"</span>,</span>
+<span>                 bw0 <span class="op">=</span> <span class="cn">NULL</span>, bw1 <span class="op">=</span> <span class="cn">NULL</span>, bw_y0 <span class="op">=</span> <span class="cn">NULL</span>, bw_y1 <span class="op">=</span> <span class="cn">NULL</span>, bw_method <span class="op">=</span> <span class="fl">1</span><span class="op">/</span><span class="fl">5</span>,</span>
+<span>                 kernel<span class="op">=</span><span class="st">"gaussian"</span>,</span>
 <span>                 pol_degree_locpoly1 <span class="op">=</span> <span class="fl">1</span>, pol_degree_locpoly2 <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>                 pol_degree_sieve <span class="op">=</span> <span class="fl">5</span>, conf_level <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>                 common_supp_trim<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span><span class="op">)</span>, trimming_value<span class="op">=</span><span class="cn">NULL</span>, automatic_trim<span class="op">=</span><span class="cn">FALSE</span>,</span>
@@ -114,14 +115,10 @@ By default takes the average value for all the covariates (on the trimmed datase
 <dd><p>Estimation method: default is "locpoly" for Robinson (1988) double residual regression for partially linear model. Other options include "sieve" to specify flexibly the control function as a polynomial with pol_degree_sieve, and "homogenous" which is a sieve where we also impose homogenous treatment effect.</p></dd>
 
 
-<dt id="arg-se-type">se_type<a class="anchor" aria-label="anchor" href="#arg-se-type"></a></dt>
-<dd><p>Type of standard errors if sieve/homogenous estimation. By default = "HC1". Can otherwise me any of the possibilities of vcovHC in the sandwich package. Also possible to have se_type="nonrobust" for the non-robust (lm default).</p></dd>
-
-
 <dt id="arg-bw-bw-">bw0, bw1<a class="anchor" aria-label="anchor" href="#arg-bw-bw-"></a></dt>
-<dd><p>Bandwidth of the first residual regressions of Wd and X on Phat. <br>
-Two possibilities: specify one value that is applied to all covariates, or specify a different bandwidth for the regression on each covariate. In the second case, need to be specified in the order of the covariates as specified in the model. Be very careful with factors. <br>
-Default NULL and computed using the specified bw_method.</p></dd>
+<dd><p>Bandwidth of the first residual regressions of (Y, Wd and X) on Phat. <br>
+Two possibilities: specify one value that is applied to all covariates (and Y), or specify a different bandwidth for the regression on each covariate. In the second case, need to be specified in the order of the covariates as specified in the model. Be very careful with factors. <br>
+Default NULL and computed using the specified bw_method. Ideally, if one factor covariate, apply the same bandwidth to all of the dummies created from the factor.</p></dd>
 
 
 <dt id="arg-bw-y-bw-y-">bw_y0, bw_y1<a class="anchor" aria-label="anchor" href="#arg-bw-y-bw-y-"></a></dt>
@@ -129,9 +126,20 @@ Default NULL and computed using the specified bw_method.</p></dd>
 
 
 <dt id="arg-bw-method">bw_method<a class="anchor" aria-label="anchor" href="#arg-bw-method"></a></dt>
-<dd><p>Method to compute the bandwidth of the local polynomial regressions. Default is simple "rule-of-thumb" method. Alternatives include "cv" for cross-validation and "plug-in" for plug-in bw (Fan and Gijbels, 1996). <br>
-Note that the "cv" and "plug-in" are computed on a randomly drawn subsample of at most 5000 observations. Then rescaled for the full sample using Silverman (1986) rule: bw_full = bw_sub * (N_full/n_sub)^(-1/5). <br>
-For replicability, set a seed before running semiivreg (because of the random subsample). Plug-in bandwidth is computed only with a degree that is odd.</p></dd>
+<dd><p>Method to compute the bandwidth of the local polynomial regressions (of the first-order derivative).
+Default option is 1/5, which arbitrarily sets bw0, bw1, bw_y0 and bw_y1 to 1/5th of the support (rounded to the 3th digit). Can place any fraction &lt; 1. <br>
+Recommended alternatives include (global constant) bandwidth computations from nprobust package (Calonico, Cattaneo and Farrell, 2019)
+(i) "mse-dpi": direct plug-in MSE optimal bandwidth from Fan and Gijbels (1996).
+(ii) "mse-rot": rule-of-thumb implementation of the MSE-optimal bandwidth.
+These two methods take long with large sample: use bw_subsamp_size to speed up the computation.</p></dd>
+
+
+<dt id="arg-kernel">kernel<a class="anchor" aria-label="anchor" href="#arg-kernel"></a></dt>
+<dd><p>Kernel to use for the local polynomial regressions. Default is "gaussian" but can be "epanechnikov". Takes longer with Epanechnikov (cannot use fast locpoly implementation from KernSmooth).</p></dd>
+
+
+<dt id="arg-bw-subsamp-size">bw_subsamp_size<a class="anchor" aria-label="anchor" href="#arg-bw-subsamp-size"></a></dt>
+<dd><p>Size of the subsample to use for the bandwidth selection. Default is 10,000. Use <code>bw_subsamp_size = NULL</code> to use the full sample (may take time). Otherwise, recommend to set a number around 20,000 at most for reasonable computation time (exponentially increasing with sample size). <br><code>bw_subsamp_size</code> introduces some randomness into the bandwidth selection procedure: recommended to set a seed before running semiivreg for reproducibility.</p></dd>
 
 
 <dt id="arg-pol-degree-locpoly-">pol_degree_locpoly1<a class="anchor" aria-label="anchor" href="#arg-pol-degree-locpoly-"></a></dt>
@@ -142,8 +150,17 @@ For replicability, set a seed before running semiivreg (because of the random su
 <dd><p>Degree of the local polynomial regression of Y (net of the effects of the covariates) on Phat. Default is 2 as recommended by Fan and Gijbels (1996) because we want to estimate the derivative function.</p></dd>
 
 
+<dt id="arg-fast-robinson-">fast_robinson2<a class="anchor" aria-label="anchor" href="#arg-fast-robinson-"></a></dt>
+<dd><p>If TRUE, use locpoly from KernSmooth during the bootstrap. Default is TRUE to speed things up (because do not need to compute standard errors in bootstrap)
+Set to FALSE if want to use epanechnikov kernel, or if want to use weights.</p></dd>
+
+
 <dt id="arg-pol-degree-sieve">pol_degree_sieve<a class="anchor" aria-label="anchor" href="#arg-pol-degree-sieve"></a></dt>
 <dd><p>Degree of the polynomial transformation for the control function.</p></dd>
+
+
+<dt id="arg-se-type">se_type<a class="anchor" aria-label="anchor" href="#arg-se-type"></a></dt>
+<dd><p>Type of standard errors if sieve/homogenous estimation. By default = "HC1". Can otherwise me any of the possibilities of vcovHC in the sandwich package. Also possible to have se_type="nonrobust" for the non-robust (lm default).</p></dd>
 
 
 <dt id="arg-conf-level">conf_level<a class="anchor" aria-label="anchor" href="#arg-conf-level"></a></dt>
@@ -167,7 +184,7 @@ Inserting a trimming_value generates automatic_trim = TRUE automatically.</p></d
 
 <dt id="arg-weight-var">weight_var<a class="anchor" aria-label="anchor" href="#arg-weight-var"></a></dt>
 <dd><p>A variable of weights to be applied to the observations. Default is NULL, apply equal weights to all observations. <br>
-Remark: recommended NOT to use weights for locpoly estimation because drastically increases computation time to do a weighted local polynomial regression.</p></dd>
+Implemented completely for <code>est_method = "sieve"</code> for now. For <code>locpoly</code>, the weights are not used when computing the "optimal bandwidth".</p></dd>
 
 
 <dt id="arg-plotting">plotting<a class="anchor" aria-label="anchor" href="#arg-plotting"></a></dt>
@@ -204,6 +221,15 @@ Remark: recommended NOT to use weights for locpoly estimation because drasticall
 
 <dt id="arg-seq-v">seq_v<a class="anchor" aria-label="anchor" href="#arg-seq-v"></a></dt>
 <dd><p>Sequence of v at which to predict the MTE and MTR. By default: NULL fits the default interval of the original semiivreg (equally space grid of proba, with step size of 0.001 on the common support).</p></dd>
+
+
+<dt id="arg--fast-robinson-">`fast_robinson1`<a class="anchor" aria-label="anchor" href="#arg--fast-robinson-"></a></dt>
+<dd><p>Default is TRUE to speed things up in a first stage (if many covariates in particular). If TRUE, will use the locpoly function from Kernsmooth library to speed up the computation of the Robinson double residual first stage. This is only possible if no external weights are used. Fast Locpoly will enforce a gaussian kernel.</p></dd>
+
+
+<dt id="arg--fast-robinson-">`fast_robinson2`<a class="anchor" aria-label="anchor" href="#arg--fast-robinson-"></a></dt>
+<dd><p>Default is FALSE. If TRUE, will use the locpoly function from Kernsmooth library to speed up the computation of the Robinson double residual second stage. This is only possible if no external weights are used. Fast Locpoly will enforce a gaussian kernel.
+Default is FALSE for the second stage because fast_locpoly returns no standard errors and the gain in time is not so important for the second stage.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -257,7 +283,7 @@ Coming out of the double residual regression à la Robinson (1988), running a no
 
 
 <dt><code>$plot</code></dt>
-<dd><p>Returns separately the following plot objects: <code>supp</code> (support), <code>mtr</code>, <code>mte</code>.</p></dd>
+<dd><p>Returns separately the following plot objects: <code>supp</code> (support), <code>mtr</code>, <code>mte</code> and <code>mte2</code>. <code>mte</code> reports the estimation from "local IV" approach, with standard errors from the Robinson 2nd stage. <code>mte2</code> reports the MTE estimated as the difference between the MTR (without standard errors).</p></dd>
 
 <dt><code>$supp</code></dt>
 <dd><p>Returns the common support of the propensity score <code>Phat</code> between the two treatment group.</p></dd>
@@ -290,8 +316,9 @@ Carneiro, P., Heckman, J. J., &amp; Vytlacil, E. J. (2011). Estimating marginal 
 <p>In particular, see Andresen, M. E. (2018). Exploring marginal treatment effects: Flexible estimation using Stata. The Stata Journal, 18(1), 118-158.</p>
 <p>For double residual estimation of partially Linear models, see
 Robinson, P. M. (1988). Root-N-consistent semiparametric regression. Econometrica: Journal of the Econometric Society, 931-954. <br></p>
-<p>For local polynomial regressions choice of degree:
-Fan, J., &amp; Gijbels, I. (1996). Local polynomial modelling and its applications.</p>
+<p>For local polynomial regressions choice of degree &amp; Bandwidth computation
+Fan, J., &amp; Gijbels, I. (1996). Local polynomial modelling and its applications.
+Calonico, S., Cattaneo, M. D., &amp; Farrell, M. H. (2019). nprobust: Nonparametric Kernel-Based Estimation and Robust Bias-Corrected Inference. Journal of Statistical Software, 91(8), 1–33. https://doi.org/10.18637/jss.v091.i08</p>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>

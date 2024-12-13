@@ -82,8 +82,11 @@ reference:
         - roydata2
     - title: "Internal functions"
       contents:
+        - semiiv_predict
         - mtr_est_poly
         - mtr_fun_poly
+        - lbw_select
+        - lpoly
         - mtr_coeff
         - mtr_est
         - mtr_predict_sieve

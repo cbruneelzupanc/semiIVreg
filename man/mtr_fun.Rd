@@ -3,24 +3,24 @@
 \name{mtr_est_poly}
 \alias{mtr_est_poly}
 \alias{mtr_fun_poly}
-\alias{lpoly_regress}
-\alias{weighted_locpoly}
+\alias{lbw_select}
+\alias{lpoly}
 \alias{mtr_coeff}
 \alias{mtr_est}
 \alias{mtr_predict_sieve}
 \title{MTE and MTR sub-estimation functions}
 \usage{
-mtr_est_poly(d, data, seq_u,
-                    bwd = NULL, bw_y = NULL, bw_method = "plug-in",
-                    pol_degree1, pol_degree2,
-                    var_outcome, var_treatment, var_w0, var_w1, var_covariates,
-                    print_progress)
+mtr_est_poly(data, seq_u,
+                    bw0 = NULL, bw1=NULL, bw_y0 = NULL, bw_y1=NULL, bw_method = 1/5, kernel,
+                    bw_subsamp_size = NULL, fast_locpoly = FALSE,
+                    fast_robinson1 = TRUE, fast_robinson2 = FALSE,
+                    pol_degree1, pol_degree2, var_outcome, var_treatment, var_w0, var_w1, var_covariates, print_progress)
 
-mtr_fun_poly(ref_indiv, eval_v, est0, est1, k0, k1, se_type)
+mtr_fun_poly(ref_indiv, eval_v, est0, est1, kv, se_type, conf_level)
 
-lpoly_regress(x, y, bw=NULL, bw_method="plug-in", degree, drv, weights)
+lbw_select(x, y, kernel, degree, drv, bw_method = "arbitrary", bw_subsamp_size)
 
-weighted_locpoly(x, y, weights, bandwidth, drv, degree, gridsize=401)
+wlocpol(x, y, bandwidth, degree = 2, drv = 1, kernel = "gaussian", weights=NULL, x_eval=NULL, gridsize=201, fast_locpoly=FALSE)
 
 mtr_coeff(coeff, vcov, var_cov_2nd, est_method="sieve")
 
@@ -33,21 +33,31 @@ mtr_predict_sieve(coeff, vcov, ref_indiv, var_treatment, var_cov_2nd, pol_degree
 
 \item{bw_method}{Method to compute the bandwidth (if bandwdith is NULL)}
 
+\item{bw_subsamp_size}{Size of the subsample to compute the bandwidth. Default is NULL (no subsample). If larger than sample size, it is ignored.}
+
+\item{se_type}{"HC1", "nonrobust" (for baseline homoscedastic), ...}
+
 \item{ref_indiv}{Newdata (reference individuals) at which to compute the predictions.}
 
 \item{x}{Vector of x values}
 
 \item{y}{Vector of y values}
 
-\item{bw}{Pre-specified bandwidth}
-
 \item{degree}{Degree of the polynomial: recommended to set to drv + 1}
 
 \item{drv}{Derivative order of the function to be estimated.}
 
-\item{weights}{Vector of weights}
+\item{supp}{Support of X in the complete data (not necessarily of the realized X in the current subsample), in order to compute the bandwidth if the rule is to take a fraction of the support. Ensure that same bandwidth on both samples D=0 and D=1. By default supp=NULL, in which case recompute the support of \code{x} directly.}
 
 \item{bandwidth}{Pre-specified bandwidth}
+
+\item{weights}{Vector of external weights (in addition to the kernel weights)}
+
+\item{x_eval}{Vector of evaluation points. If not pre-specified, use a grid (of gridsize). Default = NULL.}
+
+\item{gridsize}{Size of the grid of evenly spaced points for x. Default is 201. Only relevant if x_eval = NULL.}
+
+\item{fast_locpoly}{Default is FALSE. If \code{fast_locpoly} is TRUE, will use the locpoly function from Kernsmooth library to speed up the computation. This is only possible if no external weights are used. If the kernel is not set to Gaussian, the locpoly function will change it to Gaussian if fast_poly is TRUE.}
 
 \item{coeff}{Vector of (stacked) coefficients for mtr0, mtr1.}
 
@@ -60,6 +70,13 @@ mtr_predict_sieve(coeff, vcov, ref_indiv, var_treatment, var_cov_2nd, pol_degree
 \item{df}{Degrees of freedom for the p-values.}
 
 \item{var_cov_2nd}{Names of the covariates and semi-IVs}
+
+\item{`fast_robinson1`}{Default is TRUE to speed things up in a first stage (if many covariates in particular). If TRUE, will use the locpoly function from Kernsmooth library to speed up the computation of the Robinson double residual first stage. This is only possible if no external weights are used. Fast Locpoly will enforce a gaussian kernel.}
+
+\item{`fast_robinson2`}{Default is FALSE. If TRUE, will use the locpoly function from Kernsmooth library to speed up the computation of the Robinson double residual second stage. This is only possible if no external weights are used. Fast Locpoly will enforce a gaussian kernel.
+Default is FALSE for the second stage because fast_locpoly returns no standard errors and the gain in time is not so important for the second stage.}
+
+\item{bw}{Pre-specified bandwidth}
 }
 \value{
 Returns the raw (stacked regression) coefficients and covariance matrix corresponding to mtr0, mtr1 and mte function.
@@ -72,4 +89,11 @@ Returns mtr0, mtr1, and mte estimates with confidence intervals for the specifie
 These functions allow to estimate the mte and mtr, and their confidence intervals, based on coefficients estimated from the main model in the main function.
 More details can be found in Bruneel-Zupanc (2024). \cr
 Different formulas must be applied depending on whether the treatment is homogenous or heterogenous.
+
+Bandwidth selection for local polynomial regression. Different methods are available: "mse-dpi", "mse-rot" (from nprobust) or "arbitrary" (fixed bandwidth to a fraction of the support).
+Can provide bandwidth for the main function or for any of its derivative order.
+The bandwidth can be computed on a subsample of the data of size \code{bw_subsamp_size} to speed up the computation.
+
+The \code{lpoly} function estimates a (weighted) local polynomial regression of a specified degree at given evaluation points.
+It supports derivative estimation and allows for heteroscedasticity-consistent standard errors. External weights (weights) are allowed.
 }
