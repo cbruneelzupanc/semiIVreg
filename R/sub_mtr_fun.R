@@ -61,7 +61,7 @@ mtr_est_poly = function(data, seq_u,
       }
 
       # (ii) Local Polynomial Regression
-      if(length(unique(datd[,j])) == 1) { stop(paste0("No variation in variable ", colnames(datd)[j], " in the subsample d = ", d, " of the trimmed subsample.")) }
+      #if(length(unique(datd[,j])) == 1) { warning(paste0("No variation in variable ", colnames(datd)[j], " in the subsample d = ", d, " of the trimmed subsample.")) }
 
       resj = lpoly(x=Phatd, y=datd[,j], bandwidth=bwj, degree = pol_degree1, drv = 0,
                    kernel = kernel, se_type=se_type, weights=weightsd, fast_locpoly=fast_robinson1)
@@ -227,48 +227,53 @@ mtr_fun_poly = function(ref_indiv, eval_v, est0, est1, kv, se_type, conf_level) 
     se_delta1x = X1_pred$se.fit
     # For the standard errors: cannot use predict default if do not use nonrobust.
 
+    # If some problem in the reference individuals, will have warnings of the form:
+    #1: In predict.lm(est0, newdata = REF, se.fit = TRUE) :
+    #  prediction from rank-deficient fit; attr(*, "non-estim") has doubtful cases
+
   } else {
     # If specific standard errors (e.g., se_type = "HC1"), cannot use predict: need to do it manually
 
-    # Extract coefficients and compute sandwich covariance matrix
     coeff0 = coefficients(est0); coeff1 = coefficients(est1)
-    if(se_type == "nonrobust") {
-      vcov0 = vcov(est0); vcov1 = vcov(est1)
-    } else {
-      vcov0 = vcovHC(est0, type = se_type) # robust standard errors;
-      vcov1 = vcovHC(est1, type = se_type)
-    }
-    if(length(which(is.na(coeff0))) > 0 | length(which(is.na(coeff1))) > 0) { warning("Some coefficients are NA. May be impossible to evaluate for some reference individual. ") }
+    vcov0 = vcovHC(est0, type = se_type) # robust standard errors;
+    vcov1 = vcovHC(est1, type = se_type)
 
-    # Additional correction: if robust standard errors, no row/column for NA coeff. Add them back;
-    # -> this should never happen with locpoly (because would bug before probably), but we never know.
-    ncoeff0 = length(coeff0)
-    index_nonNA0 = which(!is.na(coeff0))
-    if(se_type != "nonrobust") {
-      vcov_base0 = vcov0;
-      vcov0 = matrix(NA, nrow=ncoeff0, ncol=ncoeff0)
-      vcov0[index_nonNA0, index_nonNA0] = vcov_base0
-    }
-    ncoeff1 = length(coeff1)
-    index_nonNA1 = which(!is.na(coeff1))
-    if(se_type != "nonrobust") {
-      vcov_base1 = vcov1;
-      vcov1 = matrix(NA, nrow=ncoeff1, ncol=ncoeff1)
-      vcov1[index_nonNA1, index_nonNA1] = vcov_base1
-    }
+    # vcov does NOT include rows for NA coefficients
+    index_NA0 = which(is.na(coeff0)); index_NA1 = which(is.na(coeff1))
+    index_nonNA0 = which(!is.na(coeff0)); index_nonNA1 = which(!is.na(coeff1))
+    # if(length(index_NA0) > 0 | length(index_NA1) > 0) { warning("Some coefficients are NA. May be impossible to evaluate for some reference individual. ") }
+    # But the NA only causes problem if they are multiplied by something else than 0 in the ref_indiv.
+    #   In which case, the prediction is NA -> stop the function.
+    #   Otherwise: does not matter! It's missing because the trimming probably removed entirely one factor for example.
 
     # D=0:
     formula0y = paste0(deparse(formula(est0)), collapse="")
     formula0 = as.formula(gsub(".*~", "~", formula0y)) # remove Y
     mat0 = model.matrix(formula0, data=REF)
 
-    delta0x = as.vector(mat0 %*% coeff0)
-    se_delta0x = sqrt(diag(mat0 %*% vcov0 %*% t(mat0)))
-
     # D=1:
     formula1y = paste0(deparse(formula(est1)), collapse="")
     formula1 = as.formula(gsub(".*~", "~", formula1y)) # remove Y
     mat1 = model.matrix(formula1, data=REF)
+
+    # Check if no problem with NA: -> can occur if, for example, no D=1 for a given factor (even though some D=0 are present).
+    if(length(index_NA0) > 0) {
+      mat0_NA = mat0[, index_NA0]
+      if(length(which(mat0_NA != 0)) > 0) { warning("Predicton from rank-deficient fit; Missing coefficients to evaluate the effect at the reference individuals when D=0.") }
+    }
+    if(length(index_NA1) > 0) {
+      mat1_NA = mat1[, index_NA1]
+      if(length(which(mat1_NA != 0)) > 0) { warning("Predicton from rank-deficient fit; Missing coefficients to evaluate the effect at the reference individuals when D=1.") }
+    }
+
+    # If passes the NA test:
+    coeff0b = coeff0; coeff1b = coeff1; mat0b = mat0; mat1b = mat1; # save base
+    coeff0 = coeff0b[index_nonNA0]; coeff1 = coeff1b[index_nonNA1]
+    mat0 = matrix(mat0b[, index_nonNA0], nrow=nrow(mat0b)); # the "matrix" part is to ensure that it's still a matrix even if only one variable left.
+    mat1 = matrix(mat1b[, index_nonNA1], nrow=nrow(mat1b))
+
+    delta0x = as.vector(mat0 %*% coeff0)
+    se_delta0x = sqrt(diag(mat0 %*% vcov0 %*% t(mat0)))
 
     delta1x = as.vector(mat1 %*% coeff1)
     se_delta1x = sqrt(diag(mat1 %*% vcov1 %*% t(mat1)))
@@ -357,11 +362,13 @@ mtr_fun_poly = function(ref_indiv, eval_v, est0, est1, kv, se_type, conf_level) 
     deltaX$se_delta0X = delta0X_pred$se.fit; deltaX$se_delta1X = delta1X_pred$se.fit;
 
   } else {
-    mat0r = model.matrix(formula0, data=deltaX)
+    mat0rb = model.matrix(formula0, data=deltaX)
+    mat0r = matrix(mat0rb[, index_nonNA0], nrow=nrow(mat0rb))
     delta0X = mat0r %*% coeff0
     se_delta0X = sqrt(diag(mat0r %*% vcov0 %*% t(mat0r)))
 
-    mat1r = model.matrix(formula1, data=deltaX)
+    mat1rb = model.matrix(formula1, data=deltaX)
+    mat1r = matrix(mat1rb[, index_nonNA1], nrow=nrow(mat1rb))
     delta1X = as.vector(mat1r %*% coeff1)
     se_delta1X = sqrt(diag(mat1r %*% vcov1 %*% t(mat1r)))
 

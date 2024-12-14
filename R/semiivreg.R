@@ -396,7 +396,7 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
     kv = PREDICT$kv
 
     # Graphical Parameter:
-    conf_band = TRUE #
+    if(fast_robinson2 == TRUE) { conf_band = FALSE } else { conf_band = TRUE }
     var_cov_2nd = NULL
   }
 
@@ -543,7 +543,7 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
   if(est_method == "locpoly") { conf_band1 = FALSE } else { conf_band1 = TRUE}
   mte_plot = mte_plot_fun(dat_plot, common_supp_round_mte, conf_band=conf_band1) # main curve, without standard errors - mte from diff between mtr1 - mtr0
 
-  if(est_method == "locpoly") { # Return a second MTE plot from the difference between MTR1 and MTR0.
+  if(est_method == "locpoly" & fast_robinson2 == FALSE) { # Return a second MTE plot from the difference between MTR1 and MTR0.
     dat_plot2 = dat_plot;
     dat_plot2$mte = dat_plot2$mte2; conf_band2 = TRUE
     dat_plot2$mte_lwr = dat_plot2$mte2_lwr; dat_plot2$mte_upr = dat_plot2$mte2_upr
@@ -570,7 +570,7 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
   # 4. Return objects
   # -----------------
 
-  output_data = list(RES, deltaX, data_not_trimmed, ref_indiv, Xdat, data_orig); names(output_data) = c("RES", "deltaX", "data", "ref_indiv", "Xdat", "data_orig")
+  output_data = list(RES, deltaX, data_not_trimmed, ref_indiv, Xdat, data_orig, data); names(output_data) = c("RES", "deltaX", "data", "ref_indiv", "Xdat", "data_orig", "data_trimmed")
   output_plot = list(supp_plot, mtr_plot, mte_plot, mte_plot2); names(output_plot) = c("supp", "mtr", "mte", "mte2")
   output_supp = common_supp
   output_call = list(new_formula, formula, var_treatment, var_outcome, var_w0, var_w1, var_covariates,
@@ -655,6 +655,7 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
 #' @param CI_method "delta" for delta method, "curve" for bootstrap the MTE curves directly. With est_method = "locpoly", only "curve" method is possible.
 #' @param fast_robinson2 If TRUE, use locpoly from KernSmooth during the bootstrap. Default is TRUE to speed things up (because do not need to compute standard errors in bootstrap)
 #' Set to FALSE if want to use epanechnikov kernel, or if want to use weights.
+#' @param se_type Type of standard errors in main estimation and in each bootstrap replication. Can simplify by setting "nonrobust" which goes (slightly) faster.
 #' @param print_progress_main Print progress of the main estimation or not.
 #'
 #' @export
@@ -662,7 +663,7 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
                           block_boot_var = NULL,
                           ref_indiv =NULL, firststage_model = "probit",
                           est_method = "locpoly", # "locpoly", "sieve", or "homogenous".
-                          se_type="HC1",
+                          se_type="HC1", # "HC1",
                           bw0 = NULL, bw1 = NULL, bw_y0 = NULL, bw_y1 = NULL, bw_method = 1/5,
                           kernel="gaussian", bw_subsamp_size = 10000, #NULL,
                           pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
@@ -681,16 +682,34 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
 
   cat(sprintf("Bandwidth and MTR/MTE estimation on main sample... \n"))
 
-  main_res = semiivreg(formula=formula, data=data, propensity_formula=propensity_formula,
-                       ref_indiv = ref_indiv, firststage_model = firststage_model,
-                       est_method = est_method, se_type=se_type, bw0 = bw0, bw1 = bw1, bw_y0 = bw_y0, bw_y1 = bw_y1, bw_method = bw_method,
-                       kernel=kernel, bw_subsamp_size = bw_subsamp_size,
-                       pol_degree_locpoly1 = pol_degree_locpoly1, pol_degree_locpoly2 = pol_degree_locpoly2,
-                       fast_robinson1 = fast_robinson1, fast_robinson2 = fast_robinson2,
-                       pol_degree_sieve = pol_degree_sieve, conf_level = conf_level,
-                       common_supp_trim = common_supp_trim, trimming_value = trimming_value, automatic_trim = automatic_trim,
-                       weight_var = weight_var,
-                       plotting=FALSE, print_progress = print_progress_main)
+  captured_warnings <- character()  # To store captured warnings
+  main_res <- withCallingHandlers(
+    {semiivreg(formula=formula, data=data, propensity_formula=propensity_formula,
+                          ref_indiv = ref_indiv, firststage_model = firststage_model,
+                          est_method = est_method, se_type=se_type, bw0 = bw0, bw1 = bw1, bw_y0 = bw_y0, bw_y1 = bw_y1, bw_method = bw_method,
+                          kernel=kernel, bw_subsamp_size = bw_subsamp_size,
+                          pol_degree_locpoly1 = pol_degree_locpoly1, pol_degree_locpoly2 = pol_degree_locpoly2,
+                          fast_robinson1 = fast_robinson1, fast_robinson2 = fast_robinson2,
+                          pol_degree_sieve = pol_degree_sieve, conf_level = conf_level,
+                          common_supp_trim = common_supp_trim, trimming_value = trimming_value, automatic_trim = automatic_trim,
+                          weight_var = weight_var,
+                          plotting=FALSE, print_progress = print_progress_main)
+    },
+    warning = function(w) {
+      warning_message <- conditionMessage(w)
+      captured_warnings <<- c(captured_warnings, warning_message)
+    }
+  )
+
+  # If encounters error in the main regression, don't start with the bootstrap.
+  if(length(grep("deficient fit", captured_warnings)) > 0) {
+    # Stop the execution with a WARNING message, and still return an output (the main result), such that the user can still investigate what went wrong.
+    message = "ERROR, EXECUTION STOPPED.\nMain model has a deficient fit.\nInvestigate with res$estimate$est0 and res$estimate$est1 and the corresponding res$data$ref_indiv."
+    message(message)
+    return(main_res)
+  }
+
+
 
   # Extract ref_indiv (if not specified at the beginning, will always be the average indiv in the main (trimmed) sample)
   ref_indiv = main_res$data$ref_indiv
@@ -734,7 +753,9 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
   BOOTest = list()
   BOOTmtr0 = list(); BOOTmtr1 = list(); BOOTmte = list()
   BOOTDAT = list()
-  for(k in 1:Nboot) {
+
+  k = 1; k1 = 1; k1_error = c()
+  while(k <= Nboot) {
 
     #set.seed(1234*k) # just set seed outside
 
@@ -777,42 +798,78 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
 
 
     # semi-iv estimation
-    boot_res = invisible(semiivreg(formula=transform_formula, data=bootstrap_sample,
-                                   propensity_data = bootstrap_propensity_sample,
-                                   propensity_formula=propensity_formula,
-                                   ref_indiv = ref_indiv, firststage_model = firststage_model,
-                                   est_method = est_method, se_type=se_type, bw0 = bw0, bw1 = bw1, bw_y0 = bw_y0, bw_y1 = bw_y1, bw_method = bw_method,
-                                   kernel=kernel,
-                                   bw_subsamp_size = bw_subsamp_size, # irrelevant anyway because computed bw already;
-                                   fast_robinson1 = fast_robinson1, fast_robinson2 = fast_robinson2,
-                                   pol_degree_locpoly1 = pol_degree_locpoly1, pol_degree_locpoly2 = pol_degree_locpoly2,
-                                   pol_degree_sieve = pol_degree_sieve, conf_level = conf_level,
-                                   common_supp_trim = common_supp_trim_boot, trimming_value=NULL, automatic_trim=FALSE,
-                                   weight_var = NULL, # always NULL! Because the weights are placed INTO the bootstrap draw probabilities;
-                                   plotting=FALSE,
-                                   print_progress = FALSE)) # never print the progress here
+    captured_warnings_boot <- character()  # To store captured warnings
+    boot_res <- withCallingHandlers(
+      {invisible(semiivreg(formula=transform_formula, data=bootstrap_sample,
+                           propensity_data = bootstrap_propensity_sample,
+                           propensity_formula=propensity_formula,
+                           ref_indiv = ref_indiv, firststage_model = firststage_model,
+                           est_method = est_method, se_type=se_type, bw0 = bw0, bw1 = bw1, bw_y0 = bw_y0, bw_y1 = bw_y1, bw_method = bw_method,
+                           kernel=kernel,
+                           bw_subsamp_size = bw_subsamp_size, # irrelevant anyway because computed bw already;
+                           fast_robinson1 = fast_robinson1, fast_robinson2 = fast_robinson2,
+                           pol_degree_locpoly1 = pol_degree_locpoly1, pol_degree_locpoly2 = pol_degree_locpoly2,
+                           pol_degree_sieve = pol_degree_sieve, conf_level = conf_level,
+                           common_supp_trim = common_supp_trim_boot, trimming_value=NULL, automatic_trim=FALSE,
+                           weight_var = NULL, # always NULL! Because the weights are placed INTO the bootstrap draw probabilities;
+                           plotting=FALSE,
+                           print_progress = FALSE))
+      },
+      warning = function(w) {
+        warning_message <- conditionMessage(w)
+        captured_warnings_boot <<- c(captured_warnings_boot, warning_message)
+      }
+    )
     #BOOT[[k]] = boot_res
 
-    # Storing the N_boot simulation would take too much memory if big datasets
-    # Only extract the objects of interest:
-    if(est_method %in% c("sieve", "homogenous")) {
-      BOOTest[[k]] = boot_res$coeff$coeff_stacked
-      BOOTmtr0[[k]] = boot_res$coeff$coeff_mtr0
-      BOOTmtr1[[k]] = boot_res$coeff$coeff_mtr1
-      BOOTmte[[k]] = boot_res$coeff$coeff_mte
+
+    # If no error: store the results, update k. Otherwise, only update k1, check that not too many errors and go next.
+    if(length(grep("deficient fit", captured_warnings_boot)) == 0) {
+
+      # Storing the N_boot simulation would take too much memory if big datasets
+      # Only extract the objects of interest:
+      if(est_method %in% c("sieve", "homogenous")) {
+        BOOTest[[k]] = boot_res$coeff$coeff_stacked
+        BOOTmtr0[[k]] = boot_res$coeff$coeff_mtr0
+        BOOTmtr1[[k]] = boot_res$coeff$coeff_mtr1
+        BOOTmte[[k]] = boot_res$coeff$coeff_mte
+
+      }
+      if(est_method == "locpoly") {
+        coeff0 = coefficients(boot_res$estimate$est0); names(coeff0) = paste0("Untreated_", names(coeff0))
+        coeff1 = coefficients(boot_res$estimate$est1); names(coeff1) = paste0("Treated_", names(coeff1))
+        coeff = c(coeff0, coeff1)
+        BOOTest[[k]] = coeff
+      }
+
+      bootdat = boot_res$data$RES; bootdat$boot_id = k; BOOTDAT[[k]] = bootdat
+
+      if(k %% 10 == 0) { gc() } # clean memory regularly
+
+      cat(sprintf("Bootstrap Progress: %d/%d", k, Nboot), "\r")
+
+      # Update k:
+      k = k+1
+      k1_error[k1] = 0;
+
+    } else {
+      # If error: only update the error list and check if not too many errors.
+      k1_error[k1] = 1;
+
+      # IF too many errors (more than 5% of the number of bootstrap required), stop the bootstrap:
+      if(sum(k1_error) > Nboot/20) {
+        message = paste0("ERROR, EXECUTION STOPPED.\nToo many deficiency fit in the Bootstrap samples (", sum(k1_error), " after ", k1, " attempts).\nLikely occurs because not both D are present with some covariates values.\nReturns the main model to investigate problems with res$main$estimate$est0 and res$main$estimate$est1 and the corresponding res$main$data$ref_indiv.\nCheck which combination of covariates have few observations with D=1 (or D=0) using res$main$data$data_trimmed.")
+        message(message)
+        return(list(main=main_res,
+                    #BOOT=list(BOOTest=BOOTest, BOOTmte=BOOTmte, BOOTmtr0=BOOTmtr0, BOOTmtr1=BOOTmtr1),
+                    error=k1_error))
+      }
 
     }
-    if(est_method == "locpoly") {
-      coeff0 = coefficients(boot_res$estimate$est0); names(coeff0) = paste0("Untreated_", names(coeff0))
-      coeff1 = coefficients(boot_res$estimate$est1); names(coeff1) = paste0("Treated_", names(coeff1))
-      coeff = c(coeff0, coeff1)
-      BOOTest[[k]] = coeff
-    }
-
-    bootdat = boot_res$data$RES; bootdat$boot_id = k; BOOTDAT[[k]] = bootdat
 
     rm(boot_res)
-    if(k %% 10 == 0) { gc() } # clean memory regularly
+    # General update of k1:
+    k1 = k1+1
 
     #setTxtProgressBar(progressbar, k)
     cat(sprintf("Bootstrap Progress: %d/%d", k, Nboot), "\r")
@@ -1018,9 +1075,9 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
   output_plot = list(main_supp_plot, mtr_plot, mte_plot); names(output_plot) = c("supp", "mtr", "mte")
 
   output_estimate = list(RES, COEFF, vcov, MTR0, MTR1, MTE); names(output_estimate) = c("est", "coeff", "vcov", "mtr0", "mtr1", "mte")
+  output_boot_warnings = list(k1_error=k1_error) #
 
-
-  output = list(output_main, output_plot, output_estimate); names(output) = c("main", "plot", "estimate")
+  output = list(output_main, output_plot, output_estimate, output_boot_warnings); names(output) = c("main", "plot", "estimate", "boot_warnings")
   return(output)
 }
 

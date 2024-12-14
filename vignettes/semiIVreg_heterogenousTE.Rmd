@@ -121,7 +121,7 @@ If one specifies only one value in bw0 and bw1, it will be applied to all the co
 
 `bw_y0`, `bw_y1` are the bandwidth for the second residual regression, for $k_0(v)$ (MTR0) and$k_1(v)$ (MTR1) respectively. They are important since they govern the smoothness of the MTR, and thus of the MTE function. `bw_y0` also serves as the bw for the local-IV estimation of the MTE directly.  
 
-Let us check the bandwidth from the previous computation (default was rule-of-thumb method). 
+Let us check the bandwidth from the previous computation (default was 1/5th of the support rule). 
 ```{r smooth, fig.height=3, fig.width=7, fig.align='center'}
 semiiv$bw
 ```

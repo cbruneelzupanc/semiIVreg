@@ -72,7 +72,7 @@ Set to FALSE if want to use epanechnikov kernel, or if want to use weights.}
 
 \item{pol_degree_sieve}{Degree of the polynomial transformation for the control function.}
 
-\item{se_type}{Type of standard errors if sieve/homogenous estimation. By default = "HC1". Can otherwise me any of the possibilities of vcovHC in the sandwich package. Also possible to have se_type="nonrobust" for the non-robust (lm default).}
+\item{se_type}{Type of standard errors in main estimation and in each bootstrap replication. Can simplify by setting "nonrobust" which goes (slightly) faster.}
 
 \item{conf_level}{Confidence level for the confidence intervals.}
 
