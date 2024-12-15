@@ -872,7 +872,7 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
     k1 = k1+1
 
     #setTxtProgressBar(progressbar, k)
-    cat(sprintf("Bootstrap Progress: %d/%d", k, Nboot), "\r")
+    #cat(sprintf("Bootstrap Progress: %d/%d", k, Nboot), "\r")
   }
 
 
@@ -1001,18 +1001,25 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
 
   # Option 2: CI around the MTE curves directly
   # ---------
+
+  # In all methods: save BOOTDAT
+  #BOOTDAT = list()
+  #for(k in 1:Nboot) { bootdat = BOOT[[k]]$data$RES; bootdat$boot_id = k; BOOTDAT[[k]] = bootdat }
+  bootdat = do.call('rbind', BOOTDAT)
+
+  bootdt = data.table(bootdat)
+  bootdt = data.frame(bootdt)
+  bootdt = bootdt[, which(!colnames(bootdt) %in% c("mtr0_lwr", "mtr0_upr", "mtr0_se", "mtr1_lwr", "mtr1_upr", "mtr1_se", "mte_lwr", "mte_upr", "mte_se",
+                                                   "mte2_lwr", "mte2_upr",
+                                                   "se_delta0X", "se_delta1X"))]
+  bootdt = data.table(bootdt)
+  # Save bootdt as well (maybe remove the covariates since it's the reference individual?)
+  bootdt_save = subset(bootdt, select=c("boot_id", "id", "Phat", "mtr0", "mtr1", "mte", "k0", "k1", "delta0X", "delta1X"))
+
+
+  # Output of curve method
   if(CI_method == "curve") {
 
-    #BOOTDAT = list()
-    #for(k in 1:Nboot) { bootdat = BOOT[[k]]$data$RES; bootdat$boot_id = k; BOOTDAT[[k]] = bootdat }
-    bootdat = do.call('rbind', BOOTDAT)
-
-    bootdt = data.table(bootdat)
-    if(est_method %in% c("sieve", "homogenous")) {
-      bootdt = data.frame(bootdt)
-      bootdt = bootdt[, which(!colnames(bootdt) %in% c("mtr0_lwr", "mtr0_upr", "mtr0_se", "mtr1_lwr", "mtr1_upr", "mtr1_se", "mte_lwr", "mte_upr", "mte_se"))]
-      bootdt = data.table(bootdt)
-    }
 
     CI = bootdt[, .(
       mte_avg = mean(mte, na.rm=TRUE),
@@ -1023,7 +1030,13 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
       mtr0_upr = quantile(mtr0, 1-conf_level/2, na.rm=TRUE),
       mtr1_avg = mean(mtr1, na.rm=TRUE),
       mtr1_lwr = quantile(mtr1, conf_level/2, na.rm=TRUE),
-      mtr1_upr = quantile(mtr1, 1-conf_level/2, na.rm=TRUE)
+      mtr1_upr = quantile(mtr1, 1-conf_level/2, na.rm=TRUE),
+      se_delta0X = sd(delta0X, na.rm=TRUE),
+      se_delta1X = sd(delta1X, na.rm=TRUE),
+      delta0X_lwr = quantile(delta0X, conf_level/2, na.rm=TRUE),
+      delta0X_upr = quantile(delta0X, 1-conf_level/2, na.rm=TRUE),
+      delta1X_lwr = quantile(delta1X, conf_level/2, na.rm=TRUE),
+      delta1X_upr = quantile(delta1X, 1-conf_level/2, na.rm=TRUE)
     ), by = .(Phat, id)]
     # Missing values are normal -> because at the tails MTE and MTR will be missing for many obs
 
@@ -1033,7 +1046,8 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
     ## if(est_method %in% c("sieve", "homogenous")) {
     ##   mdat = mdat[, which(!colnames(mdat) %in% c("mtr0_lwr", "mtr0_upr", "mtr0_se", "mtr1_lwr", "mtr1_upr", "mtr1_se", "mte_lwr", "mte_upr", "mte_se"))]
     ## }
-    mdat = mdat[, which(!colnames(mdat) %in% c("mtr0_lwr", "mtr0_upr", "mtr0_se", "mtr1_lwr", "mtr1_upr", "mtr1_se", "mte_lwr", "mte_upr", "mte_se"))]
+    mdat = mdat[, which(!colnames(mdat) %in% c("mtr0_lwr", "mtr0_upr", "mtr0_se", "mtr1_lwr", "mtr1_upr", "mtr1_se", "mte_lwr", "mte_upr", "mte_se",
+                                               "se_delta0X", "se_delta1X"))]
 
 
     # # Keep analytic confidence intervals (to compare how far from bootstrap one they are) -> not possible with locpoly
@@ -1074,10 +1088,11 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
   output_main = main_res;
   output_plot = list(main_supp_plot, mtr_plot, mte_plot); names(output_plot) = c("supp", "mtr", "mte")
 
+  output_data = list(bootdata=bootdt_save)
   output_estimate = list(RES, COEFF, vcov, MTR0, MTR1, MTE); names(output_estimate) = c("est", "coeff", "vcov", "mtr0", "mtr1", "mte")
   output_boot_warnings = list(k1_error=k1_error) #
 
-  output = list(output_main, output_plot, output_estimate, output_boot_warnings); names(output) = c("main", "plot", "estimate", "boot_warnings")
+  output = list(output_main, output_plot, output_estimate, output_data, output_boot_warnings); names(output) = c("main", "plot", "estimate", "data", "boot_warnings")
   return(output)
 }
 
