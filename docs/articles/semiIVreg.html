@@ -43,6 +43,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-more">
 <li><a class="dropdown-item" href="../articles/semiIVreg_homogenousTE.html">Estimation with Homogenous Treatment Effect</a></li>
     <li><a class="dropdown-item" href="../articles/semiIVreg_heterogenousTE.html">Estimation with general Heterogenous Treatment Effect</a></li>
+    <li><a class="dropdown-item" href="../articles/simul_data.html">Roy model simulation</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
@@ -70,7 +71,7 @@
                         <h4 data-toc-skip class="author"><a href="https://www.cbruneel.com/" class="external-link">Christophe Bruneel-Zupanc</a></h4>
             
             <h4 data-toc-skip class="date">last modified:
-2024-12-15</h4>
+2024-12-29</h4>
       
 
       <div class="d-none name"><code>semiIVreg.Rmd</code></div>
@@ -82,6 +83,8 @@
 
 ``` r
 library(semiIVreg)
+#> Error in get(paste0(generic, ".", class), envir = get_method_env()) : 
+#>   object 'type_sum.accel' not found
 #> KernSmooth 2.23 loaded
 #> Copyright M. P. Wand 1997-2009
 #> Loading required package: zoo
@@ -137,10 +140,10 @@ Y_0 = \delta_{0} + W_0 \beta_0 + X \beta^X_{0} + U_0, \quad \quad \quad (1)
 Y_1 = \delta_{1} + W_1 \beta_1 + X \beta^X_{1} + U_1, \quad \quad \quad (2)
 </annotation></semantics></math></p>
 <p>with selection rule</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msup><mi>D</mi><mo>*</mo></msup></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mi>g</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>W</mi><mn>0</mn></msub><mo>,</mo><msub><mi>W</mi><mn>1</mn></msub><mo>,</mo><mi>X</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mi>V</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mo>−</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>α</mi><mo>+</mo><msub><mi>α</mi><mn>0</mn></msub><msub><mi>W</mi><mn>0</mn></msub><mo>+</mo><msub><mi>α</mi><mn>1</mn></msub><msub><mi>W</mi><mn>1</mn></msub><mo>+</mo><msub><mi>α</mi><mi>X</mi></msub><mi>X</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mi>V</mi><mo>,</mo><mspace width="1.0em"></mspace><mspace width="1.0em"></mspace><mspace width="1.0em"></mspace><mrow><mo stretchy="true" form="prefix">(</mo><mn>3</mn><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> with </mtext><mspace width="0.333em"></mspace></mrow><mspace width="1.0em"></mspace><mi>D</mi></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mi>𝕀</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>D</mi><mo>*</mo></msup><mo>&gt;</mo><mn>0</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msup><mi>D</mi><mo>*</mo></msup></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mi>g</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>W</mi><mn>0</mn></msub><mo>,</mo><msub><mi>W</mi><mn>1</mn></msub><mo>,</mo><mi>X</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mi>V</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>α</mi><mo>+</mo><msub><mi>α</mi><mn>0</mn></msub><msub><mi>W</mi><mn>0</mn></msub><mo>+</mo><msub><mi>α</mi><mn>1</mn></msub><msub><mi>W</mi><mn>1</mn></msub><mo>+</mo><msub><mi>α</mi><mi>X</mi></msub><mi>X</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mi>V</mi><mo>,</mo><mspace width="1.0em"></mspace><mspace width="1.0em"></mspace><mspace width="1.0em"></mspace><mrow><mo stretchy="true" form="prefix">(</mo><mn>3</mn><mo stretchy="true" form="postfix">)</mo></mrow></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> with </mtext><mspace width="0.333em"></mspace></mrow><mspace width="1.0em"></mspace><mi>D</mi></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mi>𝕀</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>D</mi><mo>*</mo></msup><mo>&gt;</mo><mn>0</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{aligned}
 D^* &amp;= g(W_0, W_1, X) - V \\
-&amp;= - (\alpha + \alpha_0 W_0 + \alpha_1 W_1 + \alpha_{X} X ) - V, \quad \quad \quad (3) \\
+&amp;= (\alpha + \alpha_0 W_0 + \alpha_1 W_1 + \alpha_{X} X ) - V, \quad \quad \quad (3) \\
 \text{ with } \quad D &amp;= \mathbb{I}(D^* &gt; 0),
 \end{aligned}
 </annotation></semantics></math></p>
@@ -358,11 +361,11 @@ with a nonparametric local polynomial regression. To specify the
 bandwidth of the local polynomial regression, use <code>bw0</code> or
 <code>bw1</code>. If not specified, the bandwidth are automatically
 computed using the method of <code>bw_method</code>. The default being a
-fast <code>"plug-in"</code> method from the library
-<code>KernSmooth</code>. We can also specify the degree of the
-polynomial with <code>pol_degree_locpoly1</code>. By default, equal to
+fast <code>"1/5</code> rule, picking a bandwidth equal to 1/5th of the
+common support. We can also specify the degree of the polynomial with
+<code>pol_degree_locpoly1</code>. By default, equal to
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>1</mn><annotation encoding="application/x-tex">1</annotation></semantics></math>
-as recommended in <span class="citation">Fan and Gijbels (2003)</span>
+as recommended in <span class="citation">Fan and Gijbels (1996)</span>
 (order of the function we target
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">+1</annotation></semantics></math>).</p></li>
 <li><p><strong>Step 2.</strong> On each subsample, compute the residuals
@@ -403,12 +406,15 @@ on
 To specify the bandwidth of the local polynomial regression, use
 <code>bw_y0</code> or <code>bw_y1</code>. If not specified, the
 bandwidth are automatically computed using the method of
-<code>bw_method</code>. The default being a fast <code>"plug-in"</code>
-method from the library <code>KernSmooth</code>. We can also specify the
-degree of the polynomial with <code>pol_degree_locpoly2</code>. By
-default, equal to
+<code>bw_method</code>. The default is again the arbitrary 1/5th rule,
+but we recommend using <code>"mse-dpi"</code> for the direct plug-in MSE
+optimal bandwidth from <span class="citation">Fan and Gijbels
+(1996)</span>, as implemented by in the <code>nprobust</code> package
+(<span class="citation">Calonico, Cattaneo, and Farrell (2019)</span>)
+instead. We can also specify the degree of the polynomial with
+<code>pol_degree_locpoly2</code>. By default, equal to
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>2</mn><annotation encoding="application/x-tex">2</annotation></semantics></math>
-as recommended in <span class="citation">Fan and Gijbels (2003)</span>
+as recommended in <span class="citation">Fan and Gijbels (1996)</span>
 because we want to estimate the derivative,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover><mi>k</mi><mo accent="true">̃</mo></mover><mi>d</mi></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>u</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><msub><mi>δ</mi><mi>d</mi></msub><mo>+</mo><msub><mi>U</mi><mi>d</mi></msub><mo stretchy="false" form="prefix">|</mo><msub><mi>U</mi><mi>D</mi></msub><mo>=</mo><mi>u</mi><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">\tilde{k}_d(u) = E[\delta_d + U_d|U_D=u]</annotation></semantics></math>.
 Once we have
@@ -577,10 +583,7 @@ local polynomial regressions.</p>
 <span></span>
 <span><span class="co"># semi-IV regression</span></span>
 <span><span class="va">semiiv</span> <span class="op">=</span> <span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">|</span><span class="va">w1</span>, data<span class="op">=</span><span class="va">roydata</span><span class="op">)</span> </span>
-<span><span class="co">#&gt; Caution: the standard errors around the plot are not correct (too small). </span></span>
-<span><span class="co">#&gt; These are standard errors around k1(v), k0(v) and k1(v) - k0(v). </span></span>
-<span><span class="co">#&gt; They do not take the propensity score estimation, nor the Robinson 1st stage estimation of the effect of the covariates. </span></span>
-<span><span class="co">#&gt; For proper standard errors, run the bootstrap in semiivreg_boot().</span></span></code></pre></div>
+<span><span class="co">#&gt; Caution: the standard errors around the plot are not correct (underestimated) because of the multiple stages. For proper standard errors, run the bootstrap in semiivreg_boot().</span></span></code></pre></div>
 <p><img src="semiIVreg_files/figure-html/mte-1.png" width="672" style="display: block; margin: auto;"></p>
 <p>One can also easily extract a plot for the marginal treatment
 responses (MTR):</p>
@@ -653,13 +656,19 @@ Political Economy</em> 125 (4): 985–1039.
 Bruneel-Zupanc, Christophe. 2024. <span>“Don’t (Fully) Exclude Me, It’s
 Not Necessary! Identification with Semi-IVs.”</span> <a href="https://arxiv.org/abs/2303.12667" class="external-link">https://arxiv.org/abs/2303.12667</a>.
 </div>
+<div id="ref-nprobust" class="csl-entry">
+Calonico, Sebastian, Matias D. Cattaneo, and Max H. Farrell. 2019.
+<span>“Nprobust: Nonparametric Kernel-Based Estimation and Robust
+Bias-Corrected Inference.”</span> <em>Journal of Statistical
+Software</em> 91 (8): 1–33. <a href="https://doi.org/10.18637/jss.v091.i08" class="external-link">https://doi.org/10.18637/jss.v091.i08</a>.
+</div>
 <div id="ref-carneiroheckmanvytlacil2011" class="csl-entry">
 Carneiro, Pedro, James J. Heckman, and Edward J. Vytlacil. 2011.
 <span>“Estimating Marginal Returns to Education.”</span> <em>The
 American Economic Review</em> 101 (6): 2754–81. <a href="http://www.jstor.org/stable/23045657" class="external-link">http://www.jstor.org/stable/23045657</a>.
 </div>
 <div id="ref-fangijbels2003" class="csl-entry">
-Fan, Jianqing., and Irène. Gijbels. 2003. <em>Local Polynomial Modelling
+Fan, Jianqing., and Irène. Gijbels. 1996. <em>Local Polynomial Modelling
 and Its Applications.</em> Monographs on Statistics and Applied
 Probability 66. Boca Raton: Chapman; Hall/CRC.
 </div>
@@ -677,7 +686,7 @@ Society</em>, 931–54.
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Christophe Bruneel.</p>
+  <p>Developed by Christophe Bruneel-Zupanc.</p>
 </div>
 
 <div class="pkgdown-footer-right">

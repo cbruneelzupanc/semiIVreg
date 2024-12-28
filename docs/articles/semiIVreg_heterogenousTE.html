@@ -43,6 +43,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-more">
 <li><a class="dropdown-item" href="../articles/semiIVreg_homogenousTE.html">Estimation with Homogenous Treatment Effect</a></li>
     <li><a class="dropdown-item" href="../articles/semiIVreg_heterogenousTE.html">Estimation with general Heterogenous Treatment Effect</a></li>
+    <li><a class="dropdown-item" href="../articles/simul_data.html">Roy model simulation</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
@@ -97,6 +98,8 @@ these can be easily included.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Model</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://www.cbruneel.com/" class="external-link">semiIVreg</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; Error in get(paste0(generic, ".", class), envir = get_method_env()) : </span></span>
+<span><span class="co">#&gt;   object 'type_sum.accel' not found</span></span>
 <span><span class="co">#&gt; KernSmooth 2.23 loaded</span></span>
 <span><span class="co">#&gt; Copyright M. P. Wand 1997-2009</span></span>
 <span><span class="co">#&gt; Loading required package: zoo</span></span>
@@ -148,10 +151,7 @@ function
 functional form.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">semiiv</span> <span class="op">=</span> <span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">|</span><span class="va">w1</span>, <span class="va">data</span>, ref_indiv <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>w0<span class="op">=</span><span class="fl">0</span>, w1<span class="op">=</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Caution: the standard errors around the plot are not correct (too small). </span></span>
-<span><span class="co">#&gt; These are standard errors around k1(v), k0(v) and k1(v) - k0(v). </span></span>
-<span><span class="co">#&gt; They do not take the propensity score estimation, nor the Robinson 1st stage estimation of the effect of the covariates. </span></span>
-<span><span class="co">#&gt; For proper standard errors, run the bootstrap in semiivreg_boot().</span></span></code></pre></div>
+<span><span class="co">#&gt; Caution: the standard errors around the plot are not correct (underestimated) because of the multiple stages. For proper standard errors, run the bootstrap in semiivreg_boot().</span></span></code></pre></div>
 <p><img src="semiIVreg_heterogenousTE_files/figure-html/raw-1.png" width="672" style="display: block; margin: auto;"></p>
 <p>Let us report also the marginal treatment responses (MTR):</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -196,17 +196,17 @@ potential outcomes. To see these:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Residuals:</span></span>
 <span><span class="co">#&gt;     Min      1Q  Median      3Q     Max </span></span>
-<span><span class="co">#&gt; -3.9190 -0.6523 -0.0047  0.6504  3.7519 </span></span>
+<span><span class="co">#&gt; -3.9114 -0.6529 -0.0006  0.6471  4.0052 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients:</span></span>
 <span><span class="co">#&gt;    Estimate Std. Error t value Pr(&gt;|t|)    </span></span>
-<span><span class="co">#&gt; w0 0.797899   0.005532   144.2   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; w0 0.800438   0.005482     146   &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Residual standard error: 0.9644 on 24914 degrees of freedom</span></span>
-<span><span class="co">#&gt; Multiple R-squared:  0.455,  Adjusted R-squared:  0.455 </span></span>
-<span><span class="co">#&gt; F-statistic: 2.08e+04 on 1 and 24914 DF,  p-value: &lt; 2.2e-16</span></span>
+<span><span class="co">#&gt; Residual standard error: 0.9599 on 25017 degrees of freedom</span></span>
+<span><span class="co">#&gt; Multiple R-squared:  0.4601, Adjusted R-squared:  0.4601 </span></span>
+<span><span class="co">#&gt; F-statistic: 2.132e+04 on 1 and 25017 DF,  p-value: &lt; 2.2e-16</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">semiiv</span><span class="op">$</span><span class="va">estimate</span><span class="op">$</span><span class="va">est1</span><span class="op">)</span>;</span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Call:</span></span>
@@ -214,17 +214,17 @@ potential outcomes. To see these:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Residuals:</span></span>
 <span><span class="co">#&gt;     Min      1Q  Median      3Q     Max </span></span>
-<span><span class="co">#&gt; -3.6988 -0.6478 -0.0045  0.6485  3.7212 </span></span>
+<span><span class="co">#&gt; -3.9289 -0.6553  0.0019  0.6580  3.3714 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients:</span></span>
 <span><span class="co">#&gt;    Estimate Std. Error t value Pr(&gt;|t|)    </span></span>
-<span><span class="co">#&gt; w1 0.508039   0.005494   92.47   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; w1 0.504403   0.005543      91   &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Residual standard error: 0.961 on 25084 degrees of freedom</span></span>
-<span><span class="co">#&gt; Multiple R-squared:  0.2542, Adjusted R-squared:  0.2542 </span></span>
-<span><span class="co">#&gt; F-statistic:  8550 on 1 and 25084 DF,  p-value: &lt; 2.2e-16</span></span>
+<span><span class="co">#&gt; Residual standard error: 0.9652 on 24981 degrees of freedom</span></span>
+<span><span class="co">#&gt; Multiple R-squared:  0.249,  Adjusted R-squared:  0.2489 </span></span>
+<span><span class="co">#&gt; F-statistic:  8282 on 1 and 24981 DF,  p-value: &lt; 2.2e-16</span></span>
 <span><span class="co"># To be compared with:</span></span>
 <span><span class="va">param_y0</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>; <span class="va">param_y1</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span></span>
 <span><span class="co">#&gt; [1] 0.8</span></span>
@@ -253,13 +253,13 @@ minimizes the (integrated) mean squared error of the
 function, using either direct plug-in (dpi) or rule-of-thumb (rot)
 formula. For more details, see <span class="citation">Calonico,
 Cattaneo, and Farrell (2019)</span> or <span class="citation">Fan and
-Gijbels (2003)</span>, or <span class="citation">Wand and Jones
+Gijbels (1996)</span>, or <span class="citation">Wand and Jones
 (1994)</span>. Later updates of the package will allow for variable
 bandwidth (as already implemented in <code>nprobust</code>). Notice that
 in the second residual regression of Robinson, we want to estimate the
 <em>derivative</em> of the local polynomial function, so we find the
 optimal bandwidth for this derivative, hence the use of the plug-in and
-rule-of-thumb methods, which are well suited for this (see <span class="citation">Fan and Gijbels (2003)</span>). The estimation of the
+rule-of-thumb methods, which are well suited for this (see <span class="citation">Fan and Gijbels (1996)</span>). The estimation of the
 optimal bandwidth on large sample can take a long time (exponential
 increase with sample size). So, by default we specify
 <code>bw_subsamp_size = 10000</code> such that the optimal bandwidth is
@@ -338,27 +338,24 @@ reporting option to see the progress of the function).</p>
 <span><span class="co">#&gt; Progress: 1/2                              Progress: 2/2                              D= 1, Robinson 1st residual regression of X on P...               </span></span>
 <span><span class="co">#&gt; Progress: 1/2                              Progress: 2/2                              Robinson 2nd stage: Bandwidth Selection...                           Robinson 2nd stage: Estimation of k0(v) and k1(v)... </span></span>
 <span><span class="co">#&gt; Estimation complete.</span></span>
-<span><span class="co">#&gt; Caution: the standard errors around the plot are not correct (too small). </span></span>
-<span><span class="co">#&gt; These are standard errors around k1(v), k0(v) and k1(v) - k0(v). </span></span>
-<span><span class="co">#&gt; They do not take the propensity score estimation, nor the Robinson 1st stage estimation of the effect of the covariates. </span></span>
-<span><span class="co">#&gt; For proper standard errors, run the bootstrap in semiivreg_boot().</span></span></code></pre></div>
+<span><span class="co">#&gt; Caution: the standard errors around the plot are not correct (underestimated) because of the multiple stages. For proper standard errors, run the bootstrap in semiivreg_boot().</span></span></code></pre></div>
 <p><img src="semiIVreg_heterogenousTE_files/figure-html/smooth2-1.png" width="672" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">semiiv</span><span class="op">$</span><span class="va">bw</span></span>
 <span><span class="co">#&gt; $bw0</span></span>
-<span><span class="co">#&gt; [1] 0.10102772 0.09845281</span></span>
+<span><span class="co">#&gt; [1] 0.1261772 0.0799657</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw1</span></span>
-<span><span class="co">#&gt; [1] 0.09251238 0.06797170</span></span>
+<span><span class="co">#&gt; [1] 0.10372718 0.09378555</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw_y0</span></span>
-<span><span class="co">#&gt; [1] 0.1854303</span></span>
+<span><span class="co">#&gt; [1] 0.2120993</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw_y1</span></span>
-<span><span class="co">#&gt; [1] 0.1854303</span></span>
+<span><span class="co">#&gt; [1] 0.2120993</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw_mte</span></span>
-<span><span class="co">#&gt; [1] 0.1854303</span></span>
+<span><span class="co">#&gt; [1] 0.2120993</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw_method</span></span>
 <span><span class="co">#&gt; [1] "mse-dpi"</span></span></code></pre></div>
@@ -369,16 +366,13 @@ bandwidth.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">semiiv</span> <span class="op">=</span> <span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">|</span><span class="va">w1</span>, <span class="va">data</span>, ref_indiv <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>w0<span class="op">=</span><span class="fl">0</span>, w1<span class="op">=</span><span class="fl">0</span><span class="op">)</span>,</span>
 <span>                   bw0<span class="op">=</span><span class="fl">0.05</span>, bw1<span class="op">=</span><span class="fl">0.05</span>, bw_y0 <span class="op">=</span> <span class="fl">0.2</span>, bw_y1 <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Caution: the standard errors around the plot are not correct (too small). </span></span>
-<span><span class="co">#&gt; These are standard errors around k1(v), k0(v) and k1(v) - k0(v). </span></span>
-<span><span class="co">#&gt; They do not take the propensity score estimation, nor the Robinson 1st stage estimation of the effect of the covariates. </span></span>
-<span><span class="co">#&gt; For proper standard errors, run the bootstrap in semiivreg_boot().</span></span></code></pre></div>
+<span><span class="co">#&gt; Caution: the standard errors around the plot are not correct (underestimated) because of the multiple stages. For proper standard errors, run the bootstrap in semiivreg_boot().</span></span></code></pre></div>
 <p><img src="semiIVreg_heterogenousTE_files/figure-html/smooth3-1.png" width="672" style="display: block; margin: auto;"></p>
 <p><strong>Polynomial degree.</strong></p>
 <p>One can also specify the degree of each local polynomial estimation
 with <code>pol_degree_locpoly1</code> and
 <code>pol_degree_locpoly2</code>. Following <span class="citation">Fan
-and Gijbels (2003)</span> of setting the degree equal to the order of
+and Gijbels (1996)</span> of setting the degree equal to the order of
 the derivative function we want to estimate
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">+1</annotation></semantics></math>,
 by default we set <code>pol_degree_locpoly1 = 1</code> because there we
@@ -399,7 +393,7 @@ is estimated will be very small.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">Phat</span> <span class="op">-</span> <span class="va">data</span><span class="op">$</span><span class="va">P</span><span class="op">)</span> <span class="co"># almost perfect; </span></span>
 <span><span class="co">#&gt;       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. </span></span>
-<span><span class="co">#&gt; -0.0045356 -0.0008791  0.0001148  0.0001021  0.0010783  0.0043298</span></span></code></pre></div>
+<span><span class="co">#&gt; -0.0015295  0.0003631  0.0013846  0.0012162  0.0020751  0.0038194</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="semi-iv-sieve-regression">semi-IV sieve regression<a class="anchor" aria-label="anchor" href="#semi-iv-sieve-regression"></a>
@@ -552,10 +546,7 @@ estimation to a given common support, it is very easy to do in
 <span>                    ref_indiv <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>w0<span class="op">=</span><span class="fl">0</span>, w1<span class="op">=</span><span class="fl">0</span><span class="op">)</span>, </span>
 <span>                    common_supp_trim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.10</span>, <span class="fl">0.90</span><span class="op">)</span>,</span>
 <span>                    plotting<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Caution: the standard errors around the plot are not correct (too small). </span></span>
-<span><span class="co">#&gt; These are standard errors around k1(v), k0(v) and k1(v) - k0(v). </span></span>
-<span><span class="co">#&gt; They do not take the propensity score estimation, nor the Robinson 1st stage estimation of the effect of the covariates. </span></span>
-<span><span class="co">#&gt; For proper standard errors, run the bootstrap in semiivreg_boot().</span></span>
+<span><span class="co">#&gt; Caution: the standard errors around the plot are not correct (underestimated) because of the multiple stages. For proper standard errors, run the bootstrap in semiivreg_boot().</span></span>
 <span><span class="va">mte_plot</span> <span class="op">=</span> <span class="va">semiiv1</span><span class="op">$</span><span class="va">plot</span><span class="op">$</span><span class="va">mte</span>; <span class="va">mtr_plot</span> <span class="op">=</span> <span class="va">semiiv1</span><span class="op">$</span><span class="va">plot</span><span class="op">$</span><span class="va">mtr</span>;</span>
 <span><span class="fu">grid.arrange</span><span class="op">(</span><span class="va">mtr_plot</span>, <span class="va">mte_plot</span>, ncol<span class="op">=</span><span class="fl">2</span><span class="op">)</span></span></code></pre></div>
 <p><img src="semiIVreg_heterogenousTE_files/figure-html/mte_trim1-1.png" width="672" style="display: block; margin: auto;"></p>
@@ -573,32 +564,32 @@ predict only at a subset of specific values of
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pred</span><span class="op">$</span><span class="va">est</span><span class="op">)</span> <span class="co"># the predicted values; -&gt; can then be used to redo plots for example. </span></span>
 <span><span class="co">#&gt;     w0 w1 id  Phat     mtr0     mtr1      mte     mte2 mtr0_lwr mtr0_upr</span></span>
 <span><span class="co">#&gt; 1   -1  0  1 0.100       NA       NA       NA       NA       NA       NA</span></span>
-<span><span class="co">#&gt; 1.1 -1  0  1 0.101 1.985285 3.859647 1.874363 1.930636 1.523762 2.446808</span></span>
-<span><span class="co">#&gt; 1.2 -1  0  1 0.102 1.986707 3.859324 1.872617 1.927814 1.528483 2.444931</span></span>
-<span><span class="co">#&gt; 1.3 -1  0  1 0.103 1.988129 3.859000 1.870871 1.924992 1.533205 2.443054</span></span>
-<span><span class="co">#&gt; 1.4 -1  0  1 0.104 1.989551 3.858677 1.869125 1.922170 1.537926 2.441176</span></span>
-<span><span class="co">#&gt; 1.5 -1  0  1 0.105 1.990981 3.858341 1.867360 1.919371 1.542571 2.439391</span></span>
+<span><span class="co">#&gt; 1.1 -1  0  1 0.101 1.743500 3.968172 2.224672 2.125863 1.292125 2.194876</span></span>
+<span><span class="co">#&gt; 1.2 -1  0  1 0.102 1.746665 3.967866 2.221201 2.123065 1.298548 2.194783</span></span>
+<span><span class="co">#&gt; 1.3 -1  0  1 0.103 1.749831 3.967561 2.217730 2.120267 1.304970 2.194691</span></span>
+<span><span class="co">#&gt; 1.4 -1  0  1 0.104 1.752996 3.967256 2.214260 2.117469 1.311393 2.194599</span></span>
+<span><span class="co">#&gt; 1.5 -1  0  1 0.105 1.756112 3.966927 2.210815 2.114692 1.317685 2.194539</span></span>
 <span><span class="co">#&gt;     mtr1_lwr mtr1_upr mte2_lwr mte2_upr       k0       k1   deltak    delta0X</span></span>
-<span><span class="co">#&gt; 1         NA       NA       NA       NA       NA       NA       NA -0.7963458</span></span>
-<span><span class="co">#&gt; 1.1 3.702339 4.016955 1.388043 2.473230 2.781631 3.859647 1.134291 -0.7963458</span></span>
-<span><span class="co">#&gt; 1.2 3.702794 4.015853 1.388987 2.466642 2.783053 3.859324 1.131469 -0.7963458</span></span>
-<span><span class="co">#&gt; 1.3 3.703249 4.014751 1.389931 2.460054 2.784475 3.859000 1.128647 -0.7963458</span></span>
-<span><span class="co">#&gt; 1.4 3.703704 4.013649 1.390875 2.453465 2.785897 3.858677 1.125825 -0.7963458</span></span>
-<span><span class="co">#&gt; 1.5 3.704131 4.012551 1.391746 2.446996 2.787327 3.858341 1.123025 -0.7963458</span></span>
-<span><span class="co">#&gt;     delta1X     se_k0      se_k1 se_deltak se_delta0X se_delta1X</span></span>
-<span><span class="co">#&gt; 1         0        NA         NA        NA 0.00568096          0</span></span>
-<span><span class="co">#&gt; 1.1       0 0.2354631 0.08025655 0.2768316 0.00568096          0</span></span>
-<span><span class="co">#&gt; 1.2       0 0.2337799 0.07985934 0.2749100 0.00568096          0</span></span>
-<span><span class="co">#&gt; 1.3       0 0.2320966 0.07946213 0.2729884 0.00568096          0</span></span>
-<span><span class="co">#&gt; 1.4       0 0.2304134 0.07906492 0.2710669 0.00568096          0</span></span>
-<span><span class="co">#&gt; 1.5       0 0.2287728 0.07867596 0.2691944 0.00568096          0</span></span>
+<span><span class="co">#&gt; 1         NA       NA       NA       NA       NA       NA       NA -0.7980243</span></span>
+<span><span class="co">#&gt; 1.1 3.811413 4.124931 1.686226 2.565500 2.541525 3.968172 1.327839 -0.7980243</span></span>
+<span><span class="co">#&gt; 1.2 3.811932 4.123801 1.686479 2.559652 2.544690 3.967866 1.325041 -0.7980243</span></span>
+<span><span class="co">#&gt; 1.3 3.812451 4.122671 1.686732 2.553803 2.547855 3.967561 1.322243 -0.7980243</span></span>
+<span><span class="co">#&gt; 1.4 3.812970 4.121541 1.686984 2.547954 2.551020 3.967256 1.319445 -0.7980243</span></span>
+<span><span class="co">#&gt; 1.5 3.813448 4.120407 1.687180 2.542203 2.554136 3.966927 1.316667 -0.7980243</span></span>
+<span><span class="co">#&gt;     delta1X     se_k0      se_k1 se_deltak  se_delta0X se_delta1X</span></span>
+<span><span class="co">#&gt; 1         0        NA         NA        NA 0.005593143          0</span></span>
+<span><span class="co">#&gt; 1.1       0 0.2302860 0.07997622 0.2243029 0.005593143          0</span></span>
+<span><span class="co">#&gt; 1.2       0 0.2286241 0.07955560 0.2227465 0.005593143          0</span></span>
+<span><span class="co">#&gt; 1.3       0 0.2269621 0.07913497 0.2211900 0.005593143          0</span></span>
+<span><span class="co">#&gt; 1.4       0 0.2253002 0.07871435 0.2196336 0.005593143          0</span></span>
+<span><span class="co">#&gt; 1.5       0 0.2236797 0.07830328 0.2181165 0.005593143          0</span></span>
 <span><span class="va">pred</span><span class="op">$</span><span class="va">deltaX</span> <span class="co"># provides the shift in effect of X and Wd -&gt; may be the only thing we care about, know that shifts the curve</span></span>
-<span><span class="co">#&gt;     w0 w1 id    delta0X delta1X se_delta0X se_delta1X</span></span>
-<span><span class="co">#&gt; 1 -1.0  0  1 -0.7963458       0 0.00568096          0</span></span>
-<span><span class="co">#&gt; 2 -0.5  0  2 -0.3981729       0 0.00284048          0</span></span>
-<span><span class="co">#&gt; 3  0.0  0  3  0.0000000       0 0.00000000          0</span></span>
-<span><span class="co">#&gt; 4  0.5  0  4  0.3981729       0 0.00284048          0</span></span>
-<span><span class="co">#&gt; 5  1.0  0  5  0.7963458       0 0.00568096          0</span></span></code></pre></div>
+<span><span class="co">#&gt;     w0 w1 id    delta0X delta1X  se_delta0X se_delta1X</span></span>
+<span><span class="co">#&gt; 1 -1.0  0  1 -0.7980243       0 0.005593143          0</span></span>
+<span><span class="co">#&gt; 2 -0.5  0  2 -0.3990121       0 0.002796572          0</span></span>
+<span><span class="co">#&gt; 3  0.0  0  3  0.0000000       0 0.000000000          0</span></span>
+<span><span class="co">#&gt; 4  0.5  0  4  0.3990121       0 0.002796572          0</span></span>
+<span><span class="co">#&gt; 5  1.0  0  5  0.7980243       0 0.005593143          0</span></span></code></pre></div>
 </div>
 <div class="section level2 unnumbered">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
@@ -615,7 +606,7 @@ Bias-Corrected Inference.”</span> <em>Journal of Statistical
 Software</em> 91 (8): 1–33. <a href="https://doi.org/10.18637/jss.v091.i08" class="external-link">https://doi.org/10.18637/jss.v091.i08</a>.
 </div>
 <div id="ref-fangijbels2003" class="csl-entry">
-Fan, Jianqing., and Irène. Gijbels. 2003. <em>Local Polynomial Modelling
+Fan, Jianqing., and Irène. Gijbels. 1996. <em>Local Polynomial Modelling
 and Its Applications.</em> Monographs on Statistics and Applied
 Probability 66. Boca Raton: Chapman; Hall/CRC.
 </div>
@@ -652,7 +643,7 @@ press.
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Christophe Bruneel.</p>
+  <p>Developed by Christophe Bruneel-Zupanc.</p>
 </div>
 
 <div class="pkgdown-footer-right">

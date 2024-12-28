@@ -49,6 +49,8 @@ navbar:
           href: articles/semiIVreg_homogenousTE.html
         - text: "Estimation with general Heterogenous Treatment Effect"
           href: articles/semiIVreg_heterogenousTE.html
+        - text: "Roy model simulation"
+          href: articles/simul_data.html
     reference:
       text: "Reference"
       href: reference/index.html

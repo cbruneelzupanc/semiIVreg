@@ -3,7 +3,7 @@ Title: Semi-Instrumental Variable (semi-IV) Regression
 Version: 1.0.0
 Authors@R: 
     person(given = "Christophe", 
-           family = "Bruneel", 
+           family = "Bruneel-Zupanc", 
            role = c("aut", "cre"),
            email = "christophe.bruneel@gmail.com", 
 	   comment = c(ORCID = "https://orcid.org/0000-0002-2758-9199",

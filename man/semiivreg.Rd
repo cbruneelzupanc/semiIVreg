@@ -92,6 +92,8 @@ Implemented completely for \code{est_method = "sieve"} for now. For \code{locpol
 
 \item{print_progress}{TRUE if wants to print the progress of the function, FALSE otherwise (default=FALSE).}
 
+\item{print_se_message}{TRUE if wants to print a message about the standard errors at the end of the function, FALSE otherwise (default=TRUE).}
+
 \item{Nboot}{Number of bootstrap samples.}
 
 \item{block_boot_var}{Variable on which to base the block bootstrap. By default, = NULL for standard bootstrap.}

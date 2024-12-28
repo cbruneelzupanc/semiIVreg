@@ -51,6 +51,7 @@
 #' Implemented completely for `est_method = "sieve"` for now. For `locpoly`, the weights are not used when computing the "optimal bandwidth".
 #' @param plotting TRUE if wants to plot at the end of the function, FALSE otherwise.
 #' @param print_progress TRUE if wants to print the progress of the function, FALSE otherwise (default=FALSE).
+#' @param print_se_message TRUE if wants to print a message about the standard errors at the end of the function, FALSE otherwise (default=TRUE).
 #'
 #'
 #'
@@ -167,7 +168,7 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
                      # Trim:
                      common_supp_trim=c(0,1), trimming_value=NULL, automatic_trim=FALSE,
                      weight_var = NULL,
-                     plotting=TRUE, print_progress = FALSE) {
+                     plotting=TRUE, print_progress = FALSE, print_se_message = TRUE) {
 
 
   # 0. Construction of the variables/objects to be used
@@ -552,7 +553,7 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
 
   # By default: plot the supp_plot and the mte_plot:
   if(plotting == TRUE) {
-    if(est_method == "locpoly") {
+    if(est_method == "locpoly" & fast_robinson2 == FALSE) {
       grid.arrange(supp_plot, mte_plot2, ncol=2)
     } else {
       grid.arrange(supp_plot, mte_plot, ncol=2)
@@ -611,12 +612,14 @@ semiivreg = function(formula, data, propensity_formula=NULL, propensity_data = N
   names(output) = c("data", "estimate", "coeff", "vcov",
                     "bw", "plot", "supp", "call")
 
-  if(est_method == "locpoly") {
-    if (identical(parent.frame(), globalenv())) {
-      message("Caution: the standard errors around the plot are not correct (too small). \nThese are standard errors around k1(v), k0(v) and k1(v) - k0(v). \nThey do not take the propensity score estimation, nor the Robinson 1st stage estimation of the effect of the covariates. \nFor proper standard errors, run the bootstrap in semiivreg_boot().")
+  # Print a message if the standard errors are not correct
+  if(print_se_message == TRUE){
+    if(est_method == "locpoly") {
+      if (identical(parent.frame(), globalenv())) {
+        message("Caution: the standard errors around the plot are not correct (underestimated) because of the multiple stages. For proper standard errors, run the bootstrap in semiivreg_boot().") # \nThese are standard errors around k1(v), k0(v) and k1(v) - k0(v). \nThey do not take the propensity score estimation, nor the Robinson 1st stage estimation of the effect of the covariates. \nFor proper standard errors, run the bootstrap in semiivreg_boot().")
+      }
     }
   }
-
   return(output)
 }
 
@@ -693,7 +696,7 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
                           pol_degree_sieve = pol_degree_sieve, conf_level = conf_level,
                           common_supp_trim = common_supp_trim, trimming_value = trimming_value, automatic_trim = automatic_trim,
                           weight_var = weight_var,
-                          plotting=FALSE, print_progress = print_progress_main)
+                          plotting=FALSE, print_progress = print_progress_main, print_se_message=FALSE)
     },
     warning = function(w) {
       warning_message <- conditionMessage(w)
@@ -813,7 +816,7 @@ semiivreg_boot = function(formula, Nboot=500, data, propensity_formula=NULL, pro
                            common_supp_trim = common_supp_trim_boot, trimming_value=NULL, automatic_trim=FALSE,
                            weight_var = NULL, # always NULL! Because the weights are placed INTO the bootstrap draw probabilities;
                            plotting=FALSE,
-                           print_progress = FALSE))
+                           print_progress = FALSE, print_se_message=FALSE))
       },
       warning = function(w) {
         warning_message <- conditionMessage(w)

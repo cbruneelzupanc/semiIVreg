@@ -43,6 +43,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-more">
 <li><a class="dropdown-item" href="../articles/semiIVreg_homogenousTE.html">Estimation with Homogenous Treatment Effect</a></li>
     <li><a class="dropdown-item" href="../articles/semiIVreg_heterogenousTE.html">Estimation with general Heterogenous Treatment Effect</a></li>
+    <li><a class="dropdown-item" href="../articles/simul_data.html">Roy model simulation</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
@@ -101,6 +102,8 @@ these can be easily included.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Model 1</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://www.cbruneel.com/" class="external-link">semiIVreg</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; Error in get(paste0(generic, ".", class), envir = get_method_env()) : </span></span>
+<span><span class="co">#&gt;   object 'type_sum.accel' not found</span></span>
 <span><span class="co">#&gt; KernSmooth 2.23 loaded</span></span>
 <span><span class="co">#&gt; Copyright M. P. Wand 1997-2009</span></span>
 <span><span class="co">#&gt; Loading required package: zoo</span></span>
@@ -176,20 +179,20 @@ would estimate the same coefficients (but with more noise).</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Residuals:</span></span>
 <span><span class="co">#&gt;     Min      1Q  Median      3Q     Max </span></span>
-<span><span class="co">#&gt; -4.0776 -0.6767  0.0018  0.6924  3.9086 </span></span>
+<span><span class="co">#&gt; -3.7288 -0.6830 -0.0099  0.6902  4.1096 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients:</span></span>
 <span><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)    </span></span>
-<span><span class="co">#&gt; (Intercept)  2.70023    0.01464  184.47   &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; d            1.17707    0.02126   55.37   &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; w0           0.28488    0.01068   26.66   &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; w1           0.36167    0.01075   33.66   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept)  2.93718    0.01473  199.34   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; d            1.16911    0.02152   54.33   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; w0           0.51447    0.01080   47.65   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; w1           0.13181    0.01087   12.13   &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Residual standard error: 1.008 on 9996 degrees of freedom</span></span>
-<span><span class="co">#&gt; Multiple R-squared:   0.45,  Adjusted R-squared:  0.4498 </span></span>
-<span><span class="co">#&gt; F-statistic:  2726 on 3 and 9996 DF,  p-value: &lt; 2.2e-16</span></span></code></pre></div>
+<span><span class="co">#&gt; Residual standard error: 1.013 on 9996 degrees of freedom</span></span>
+<span><span class="co">#&gt; Multiple R-squared:  0.4414, Adjusted R-squared:  0.4412 </span></span>
+<span><span class="co">#&gt; F-statistic:  2633 on 3 and 9996 DF,  p-value: &lt; 2.2e-16</span></span></code></pre></div>
 <p>Obviously, the naive OLS estimator is biased, because there is
 endogeneity:
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>U</mi><annotation encoding="application/x-tex">U</annotation></semantics></math>
@@ -221,8 +224,8 @@ the more likely one is to select
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">D=1</annotation></semantics></math>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">U1</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">d</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span><span class="op">]</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">U0</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">data</span><span class="op">$</span><span class="va">d</span><span class="op">==</span><span class="fl">0</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.3521838</span></span>
-<span><span class="co">#&gt; [1] -0.3516911</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.3463958</span></span>
+<span><span class="co">#&gt; [1] -0.3404052</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="wrongly-assuming-that-the-semi-ivs-are-valid-ivs">Wrongly assuming that the semi-IVs are valid IVs<a class="anchor" aria-label="anchor" href="#wrongly-assuming-that-the-semi-ivs-are-valid-ivs"></a>
@@ -242,24 +245,24 @@ potential outcomes)?</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Residuals:</span></span>
 <span><span class="co">#&gt;      Min       1Q   Median       3Q      Max </span></span>
-<span><span class="co">#&gt; -5.42133 -0.82741  0.01821  0.83379  4.51746 </span></span>
+<span><span class="co">#&gt; -6.10300 -0.88364  0.05067  0.92956  4.86443 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients:</span></span>
 <span><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)    </span></span>
-<span><span class="co">#&gt; (Intercept)  2.85027    0.04109   69.37   &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; d            0.88099    0.07832   11.25   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept)  3.53194    0.04235   83.40   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; d           -0.02261    0.08084   -0.28     0.78    </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Diagnostic tests:</span></span>
-<span><span class="co">#&gt;                   df1  df2 statistic  p-value    </span></span>
-<span><span class="co">#&gt; Weak instruments    3 9996    371.29  &lt; 2e-16 ***</span></span>
-<span><span class="co">#&gt; Wu-Hausman          1 9997     12.88 0.000333 ***</span></span>
-<span><span class="co">#&gt; Sargan              2   NA   3268.63  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt;                   df1  df2 statistic p-value    </span></span>
+<span><span class="co">#&gt; Weak instruments    3 9996     425.3  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; Wu-Hausman          1 9997     232.6  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; Sargan              2   NA    2753.8  &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Residual standard error: 1.24 on 9998 degrees of freedom</span></span>
-<span><span class="co">#&gt; Multiple R-Squared: 0.1681,  Adjusted R-squared: 0.1681 </span></span>
-<span><span class="co">#&gt; Wald test: 126.5 on 1 and 9998 DF,  p-value: &lt; 2.2e-16</span></span></code></pre></div>
+<span><span class="co">#&gt; Residual standard error: 1.36 on 9998 degrees of freedom</span></span>
+<span><span class="co">#&gt; Multiple R-Squared: -0.006437,   Adjusted R-squared: -0.006538 </span></span>
+<span><span class="co">#&gt; Wald test: 0.0782 on 1 and 9998 DF,  p-value: 0.7798</span></span></code></pre></div>
 <p>The estimated coefficients is also completely biased here, because it
 assumes the semi-IVs have no effect on the outcomes while they do.</p>
 </div>
@@ -278,11 +281,11 @@ and
 <code class="sourceCode R"><span><span class="va">semiiv</span> <span class="op">=</span> <span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">|</span><span class="va">w1</span>, <span class="va">data</span>, est_method<span class="op">=</span><span class="st">"homogenous"</span>, plotting<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">summary_coeff</span> <span class="op">=</span> <span class="va">semiiv</span><span class="op">$</span><span class="va">estimate</span><span class="op">$</span><span class="va">est</span> <span class="co"># extract the coefficients from the homogenous TE specification</span></span>
 <span><span class="va">summary_coeff</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="op">]</span> <span class="co"># only print the first 4 coefficients, the other correspond to the control function of P</span></span>
-<span><span class="co">#&gt;      Variable  Estimate  Std_Error   t_value           p_value</span></span>
-<span><span class="co">#&gt; 1 (Intercept) 3.2058476 0.03386160 94.675015 0.000000000000000</span></span>
-<span><span class="co">#&gt; 2        I(d) 0.3890825 0.06510590  5.976149 0.000000002362833</span></span>
-<span><span class="co">#&gt; 3 I(1 - d):w0 0.8029398 0.01191954 67.363298 0.000000000000000</span></span>
-<span><span class="co">#&gt; 4     I(d):w1 0.4972506 0.01185955 41.928280 0.000000000000000</span></span>
+<span><span class="co">#&gt;      Variable  Estimate  Std_Error   t_value              p_value</span></span>
+<span><span class="co">#&gt; 1 (Intercept) 3.1863801 0.03231518 98.603188 0.000000000000000000</span></span>
+<span><span class="co">#&gt; 2        I(d) 0.4270397 0.06232988  6.851283 0.000000000007750587</span></span>
+<span><span class="co">#&gt; 3 I(1 - d):w0 0.8111934 0.01184340 68.493289 0.000000000000000000</span></span>
+<span><span class="co">#&gt; 4     I(d):w1 0.4957197 0.01192402 41.573190 0.000000000000000000</span></span>
 <span><span class="va">true_param</span></span>
 <span><span class="co">#&gt; [1] 3.2 0.4 0.8 0.5</span></span></code></pre></div>
 <p>The estimated coefficients are very close to the truth, with
@@ -307,10 +310,10 @@ below.</p>
 <span><span class="va">res</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">summary_coeff</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>, <span class="va">boot_se</span><span class="op">)</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Variable"</span>, <span class="st">"Estimate"</span>, <span class="st">"wrong analytic SE"</span>, <span class="st">"Bootstrapped SE"</span><span class="op">)</span></span>
 <span><span class="va">res</span></span>
 <span><span class="co">#&gt;      Variable  Estimate wrong analytic SE Bootstrapped SE</span></span>
-<span><span class="co">#&gt; 1 (Intercept) 3.2058476        0.03386160      0.03462913</span></span>
-<span><span class="co">#&gt; 2        I(d) 0.3890825        0.06510590      0.06628878</span></span>
-<span><span class="co">#&gt; 3 I(1 - d):w0 0.8029398        0.01191954      0.01299299</span></span>
-<span><span class="co">#&gt; 4     I(d):w1 0.4972506        0.01185955      0.01344433</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 (Intercept) 3.1863801        0.03231518      0.03216107</span></span>
+<span><span class="co">#&gt; 2        I(d) 0.4270397        0.06232988      0.06223232</span></span>
+<span><span class="co">#&gt; 3 I(1 - d):w0 0.8111934        0.01184340      0.01257085</span></span>
+<span><span class="co">#&gt; 4     I(d):w1 0.4957197        0.01192402      0.01325476</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="alternative-semi-iv-strategy-based-on-iv-quantile-regression">Alternative semi-IV strategy: based on IV-quantile regression<a class="anchor" aria-label="anchor" href="#alternative-semi-iv-strategy-based-on-iv-quantile-regression"></a>
@@ -341,28 +344,28 @@ in R.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Residuals:</span></span>
 <span><span class="co">#&gt;       Min        1Q    Median        3Q       Max </span></span>
-<span><span class="co">#&gt; -3.315219 -0.647210 -0.002237  0.644122  3.580389 </span></span>
+<span><span class="co">#&gt; -3.908497 -0.788064 -0.002065  0.784300  4.103002 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients:</span></span>
-<span><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)    </span></span>
-<span><span class="co">#&gt; (Intercept)   2.9539     0.8646   3.417 0.000637 ***</span></span>
-<span><span class="co">#&gt; d             0.8944     1.7323   0.516 0.605655    </span></span>
-<span><span class="co">#&gt; I(1 - d):w0   0.6523     0.5202   1.254 0.209907    </span></span>
-<span><span class="co">#&gt; I(d):w1       0.6460     0.4998   1.293 0.196159    </span></span>
+<span><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)   </span></span>
+<span><span class="co">#&gt; (Intercept)   3.4781     1.1086   3.137  0.00171 **</span></span>
+<span><span class="co">#&gt; d            -0.1613     2.2375  -0.072  0.94253   </span></span>
+<span><span class="co">#&gt; I(1 - d):w0   0.6272     0.6888   0.911  0.36251   </span></span>
+<span><span class="co">#&gt; I(d):w1       0.6764     0.6890   0.982  0.32621   </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Diagnostic tests:</span></span>
 <span><span class="co">#&gt;                                 df1  df2 statistic p-value    </span></span>
-<span><span class="co">#&gt; Weak instruments (d)              3 9996    371.29  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; Weak instruments (I(1 - d):w0)    3 9996   3228.13  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; Weak instruments (I(d):w1)        3 9996   3503.39  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; Wu-Hausman                        3 9993     46.22  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; Weak instruments (d)              3 9996    425.28  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; Weak instruments (I(1 - d):w0)    3 9996   3356.26  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; Weak instruments (I(d):w1)        3 9996   3457.41  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; Wu-Hausman                        3 9993     45.09  &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; Sargan                            0   NA        NA      NA    </span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Residual standard error: 0.9535 on 9996 degrees of freedom</span></span>
-<span><span class="co">#&gt; Multiple R-Squared: 0.5082,  Adjusted R-squared: 0.5081 </span></span>
-<span><span class="co">#&gt; Wald test:  1914 on 3 and 9996 DF,  p-value: &lt; 2.2e-16</span></span></code></pre></div>
+<span><span class="co">#&gt; Residual standard error: 1.141 on 9996 degrees of freedom</span></span>
+<span><span class="co">#&gt; Multiple R-Squared: 0.2913,  Adjusted R-squared: 0.2911 </span></span>
+<span><span class="co">#&gt; Wald test:  1303 on 3 and 9996 DF,  p-value: &lt; 2.2e-16</span></span></code></pre></div>
 <p>In this baseline model, the interaction is not significant in the
 first stage, so we have a problem of weak IVs. This is not the case in
 this baseline model, so the estimation blow up because the IV is
@@ -399,39 +402,39 @@ It is different from 0 here. So the IVQR strategy should work.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Residuals:</span></span>
 <span><span class="co">#&gt;       Min        1Q    Median        3Q       Max </span></span>
-<span><span class="co">#&gt; -3.611960 -0.676872 -0.003606  0.669898  3.886447 </span></span>
+<span><span class="co">#&gt; -3.590688 -0.667083 -0.006262  0.664900  3.860807 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients:</span></span>
-<span><span class="co">#&gt;             Estimate Std. Error t value  Pr(&gt;|t|)    </span></span>
-<span><span class="co">#&gt; (Intercept)  3.21013    0.03615  88.811   &lt; 2e-16 ***</span></span>
-<span><span class="co">#&gt; d            0.37626    0.08777   4.287 0.0000183 ***</span></span>
-<span><span class="co">#&gt; I(1 - d):w0  0.80317    0.01516  52.976   &lt; 2e-16 ***</span></span>
-<span><span class="co">#&gt; I(d):w1      0.49653    0.04179  11.882   &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt;             Estimate Std. Error t value   Pr(&gt;|t|)    </span></span>
+<span><span class="co">#&gt; (Intercept)  3.18552    0.05274  60.405    &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; d            0.42566    0.09107   4.674 0.00000299 ***</span></span>
+<span><span class="co">#&gt; I(1 - d):w0  0.80693    0.04120  19.586    &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; I(d):w1      0.49942    0.01849  27.004    &lt; 2e-16 ***</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Diagnostic tests:</span></span>
 <span><span class="co">#&gt;                                 df1  df2 statistic p-value    </span></span>
-<span><span class="co">#&gt; Weak instruments (d)              3 9996    405.38  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; Weak instruments (I(1 - d):w0)    3 9996   8024.23  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; Weak instruments (I(d):w1)        3 9996   1676.42  &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; Wu-Hausman                        3 9993     50.75  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; Weak instruments (d)              3 9996    411.88  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; Weak instruments (I(1 - d):w0)    3 9996   1645.20  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; Weak instruments (I(d):w1)        3 9996   7846.17  &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; Wu-Hausman                        3 9993     42.32  &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; Sargan                            0   NA        NA      NA    </span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Residual standard error: 1.005 on 9996 degrees of freedom</span></span>
-<span><span class="co">#&gt; Multiple R-Squared: 0.4829,  Adjusted R-squared: 0.4828 </span></span>
-<span><span class="co">#&gt; Wald test:  2101 on 3 and 9996 DF,  p-value: &lt; 2.2e-16</span></span></code></pre></div>
+<span><span class="co">#&gt; Residual standard error: 0.9964 on 9996 degrees of freedom</span></span>
+<span><span class="co">#&gt; Multiple R-Squared: 0.4283,  Adjusted R-squared: 0.4281 </span></span>
+<span><span class="co">#&gt; Wald test:  1385 on 3 and 9996 DF,  p-value: &lt; 2.2e-16</span></span></code></pre></div>
 <p>Indeed, it estimates the coefficients well. Notice that the
 <code><a href="../reference/semiivreg.html">semiivreg()</a></code> function also works there:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">semiiv2</span> <span class="op">=</span> <span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">|</span><span class="va">w1</span>, data<span class="op">=</span><span class="va">data2</span>, est_method<span class="op">=</span><span class="st">"homogenous"</span>, plotting<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">summary_coeff2</span> <span class="op">=</span> <span class="va">semiiv2</span><span class="op">$</span><span class="va">estimate</span><span class="op">$</span><span class="va">est</span> <span class="co"># extract the coefficients from the homogenous TE specification</span></span>
 <span><span class="va">summary_coeff2</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="op">]</span> <span class="co"># only print the first 4 coefficients, the other correspond to the control function of P</span></span>
-<span><span class="co">#&gt;      Variable  Estimate  Std_Error  t_value       p_value</span></span>
-<span><span class="co">#&gt; 1 (Intercept) 3.2053784 0.04084850 78.46991  0.000000e+00</span></span>
-<span><span class="co">#&gt; 2        I(d) 0.3868430 0.09585951  4.03552  5.488775e-05</span></span>
-<span><span class="co">#&gt; 3 I(1 - d):w0 0.8048831 0.00960523 83.79634  0.000000e+00</span></span>
-<span><span class="co">#&gt; 4     I(d):w1 0.5004888 0.01866240 26.81803 4.784644e-153</span></span>
+<span><span class="co">#&gt;      Variable  Estimate  Std_Error   t_value        p_value</span></span>
+<span><span class="co">#&gt; 1 (Intercept) 3.1671559 0.05868908 53.964995 0.000000000000</span></span>
+<span><span class="co">#&gt; 2        I(d) 0.4551946 0.10268723  4.432826 0.000009399856</span></span>
+<span><span class="co">#&gt; 3 I(1 - d):w0 0.8244073 0.01517866 54.313584 0.000000000000</span></span>
+<span><span class="co">#&gt; 4     I(d):w1 0.4952332 0.01192557 41.527014 0.000000000000</span></span>
 <span><span class="va">true_param</span></span>
 <span><span class="co">#&gt; [1] 3.2 0.4 0.8 0.5</span></span></code></pre></div>
 <p>Thus <code><a href="../reference/semiivreg.html">semiivreg()</a></code>is more flexible and should be used in
@@ -460,27 +463,27 @@ the propensity score because of the wrong formula)</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients:</span></span>
 <span><span class="co">#&gt;             Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
-<span><span class="co">#&gt; (Intercept) -0.02004    0.01483  -1.351    0.177    </span></span>
-<span><span class="co">#&gt; w0           0.24314    0.01391  17.475   &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; w1          -0.32813    0.01424 -23.043   &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; w0:w1       -0.23864    0.01014 -23.535   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept) -0.01376    0.01483  -0.927    0.354    </span></span>
+<span><span class="co">#&gt; w0          -0.23785    0.01392 -17.089   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; w1           0.32054    0.01424  22.517   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; w0:w1        0.25106    0.01025  24.482   &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; (Dispersion parameter for binomial family taken to be 1)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     Null deviance: 13620  on 9999  degrees of freedom</span></span>
-<span><span class="co">#&gt; Residual deviance: 12366  on 9996  degrees of freedom</span></span>
-<span><span class="co">#&gt; AIC: 12374</span></span>
+<span><span class="co">#&gt;     Null deviance: 13672  on 9999  degrees of freedom</span></span>
+<span><span class="co">#&gt; Residual deviance: 12385  on 9996  degrees of freedom</span></span>
+<span><span class="co">#&gt; AIC: 12393</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Number of Fisher Scoring iterations: 4</span></span>
 <span><span class="va">summary_coeff3</span> <span class="op">=</span> <span class="va">semiiv3</span><span class="op">$</span><span class="va">estimate</span><span class="op">$</span><span class="va">est</span> <span class="co"># extract the coefficients from the homogenous TE specification</span></span>
 <span><span class="va">summary_coeff3</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>,<span class="op">]</span> <span class="co"># only print the first 4 coefficients, the other correspond to the control function of P</span></span>
-<span><span class="co">#&gt;      Variable  Estimate   Std_Error    t_value       p_value</span></span>
-<span><span class="co">#&gt; 1 (Intercept) 3.2071842 0.027427671 116.932429  0.000000e+00</span></span>
-<span><span class="co">#&gt; 2        I(d) 0.3847556 0.061775953   6.228242  4.906916e-10</span></span>
-<span><span class="co">#&gt; 3 I(1 - d):w0 0.8032558 0.009526755  84.315781  0.000000e+00</span></span>
-<span><span class="co">#&gt; 4     I(d):w1 0.5013325 0.015732198  31.866653 2.577489e-212</span></span>
+<span><span class="co">#&gt;      Variable  Estimate  Std_Error   t_value      p_value</span></span>
+<span><span class="co">#&gt; 1 (Intercept) 3.1768312 0.03566453 89.075380 0.000000e+00</span></span>
+<span><span class="co">#&gt; 2        I(d) 0.4403100 0.06103333  7.214254 5.816986e-13</span></span>
+<span><span class="co">#&gt; 3 I(1 - d):w0 0.8227038 0.01466641 56.094412 0.000000e+00</span></span>
+<span><span class="co">#&gt; 4     I(d):w1 0.4985490 0.01020502 48.853314 0.000000e+00</span></span>
 <span><span class="va">true_param</span></span>
 <span><span class="co">#&gt; [1] 3.2 0.4 0.8 0.5</span></span></code></pre></div>
 </div>
@@ -507,7 +510,7 @@ Quantile Treatment Effects.”</span> <em>Econometrica</em> 73 (1):
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Christophe Bruneel.</p>
+  <p>Developed by Christophe Bruneel-Zupanc.</p>
 </div>
 
 <div class="pkgdown-footer-right">

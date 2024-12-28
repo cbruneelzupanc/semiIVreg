@@ -29,6 +29,7 @@ Use semiivreg_boot to obtain 'correct' bootstrapped confidence intervals (takes 
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-more" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">More</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-more"><li><a class="dropdown-item" href="../articles/semiIVreg_homogenousTE.html">Estimation with Homogenous Treatment Effect</a></li>
     <li><a class="dropdown-item" href="../articles/semiIVreg_heterogenousTE.html">Estimation with general Heterogenous Treatment Effect</a></li>
+    <li><a class="dropdown-item" href="../articles/simul_data.html">Roy model simulation</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -195,6 +196,10 @@ Implemented completely for <code>est_method = "sieve"</code> for now. For <code>
 <dd><p>TRUE if wants to print the progress of the function, FALSE otherwise (default=FALSE).</p></dd>
 
 
+<dt id="arg-print-se-message">print_se_message<a class="anchor" aria-label="anchor" href="#arg-print-se-message"></a></dt>
+<dd><p>TRUE if wants to print a message about the standard errors at the end of the function, FALSE otherwise (default=TRUE).</p></dd>
+
+
 <dt id="arg-nboot">Nboot<a class="anchor" aria-label="anchor" href="#arg-nboot"></a></dt>
 <dd><p>Number of bootstrap samples.</p></dd>
 
@@ -351,7 +356,7 @@ Calonico, S., Cattaneo, M. D., &amp; Farrell, M. H. (2019). nprobust: Nonparamet
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Christophe Bruneel.</p>
+  <p>Developed by Christophe Bruneel-Zupanc.</p>
 </div>
 
 <div class="pkgdown-footer-right">

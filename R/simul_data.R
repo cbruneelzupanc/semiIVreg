@@ -192,11 +192,13 @@ simul_data = function(N, model_type="heterogenous", param_y0, param_y1, param_p,
   # Logit formulation:
   latent = param_p[1] + w0*param_p[2] + w1*param_p[3] + w0*w1*param_p[4] + Xbinary*param_p[5] + Xcontinuous*param_p[6]
 
-  Dstar = - latent - V # - latent to correspond to Heckman, Urzua and Vytlacil (2006) process.
+  Dstar = latent - V
+  # Close to Heckman, Urzua and Vytlacil (2006) process. But change of sign for the latent
+  # - latent to correspond to Heckman, Urzua and Vytlacil (2006) process.
   # Should be the same as Dstar = U1 - U0 - C - latent; since Ud = -(U1 - U0 - C)
   D = ifelse(Dstar > 0, 1, 0)
 
-  P = pnorm(-latent, mean=mean_V, sd=sqrt(var_V))
+  P = pnorm(latent, mean=mean_V, sd=sqrt(var_V))
 
 
   # vi) Observable outcome:

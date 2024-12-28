@@ -38,11 +38,12 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../index.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../articles/semiIVreg.html">Model and Guidelines</a></li>
-<li class="nav-item dropdown">
+<li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-more" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">More</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-more">
 <li><a class="dropdown-item" href="../articles/semiIVreg_homogenousTE.html">Estimation with Homogenous Treatment Effect</a></li>
     <li><a class="dropdown-item" href="../articles/semiIVreg_heterogenousTE.html">Estimation with general Heterogenous Treatment Effect</a></li>
+    <li><a class="dropdown-item" href="../articles/simul_data.html">Roy model simulation</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
@@ -121,10 +122,10 @@ Y = (1-D) Y_0 + D Y_1.
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>D</mi><annotation encoding="application/x-tex">D</annotation></semantics></math>
 represents the (binary) treatment decision (e.g., education choice),
 given by the following selection rule:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msup><mi>D</mi><mo>*</mo></msup></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mi>g</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>W</mi><mn>0</mn></msub><mo>,</mo><msub><mi>W</mi><mn>1</mn></msub><mo>,</mo><mi>X</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mi>V</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mo>−</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>α</mi><mo>+</mo><msub><mi>α</mi><mn>0</mn></msub><msub><mi>W</mi><mn>0</mn></msub><mo>+</mo><msub><mi>α</mi><mn>1</mn></msub><msub><mi>W</mi><mn>1</mn></msub><mo>+</mo><msub><mi>α</mi><mn>2</mn></msub><msub><mi>W</mi><mn>0</mn></msub><mo>×</mo><msub><mi>W</mi><mn>1</mn></msub><mo>+</mo><msub><mi>α</mi><msub><mi>X</mi><mn>1</mn></msub></msub><msub><mi>X</mi><mn>1</mn></msub><mo>+</mo><msub><mi>α</mi><msub><mi>X</mi><mn>2</mn></msub></msub><msub><mi>X</mi><mn>2</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mi>V</mi><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> with </mtext><mspace width="0.333em"></mspace></mrow><mspace width="1.0em"></mspace><mi>D</mi></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mi>𝕀</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>D</mi><mo>*</mo></msup><mo>&gt;</mo><mn>0</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right"><msup><mi>D</mi><mo>*</mo></msup></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mi>g</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>W</mi><mn>0</mn></msub><mo>,</mo><msub><mi>W</mi><mn>1</mn></msub><mo>,</mo><mi>X</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mi>V</mi></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>α</mi><mo>+</mo><msub><mi>α</mi><mn>0</mn></msub><msub><mi>W</mi><mn>0</mn></msub><mo>+</mo><msub><mi>α</mi><mn>1</mn></msub><msub><mi>W</mi><mn>1</mn></msub><mo>+</mo><msub><mi>α</mi><mn>2</mn></msub><msub><mi>W</mi><mn>0</mn></msub><mo>×</mo><msub><mi>W</mi><mn>1</mn></msub><mo>+</mo><msub><mi>α</mi><msub><mi>X</mi><mn>1</mn></msub></msub><msub><mi>X</mi><mn>1</mn></msub><mo>+</mo><msub><mi>α</mi><msub><mi>X</mi><mn>2</mn></msub></msub><msub><mi>X</mi><mn>2</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>−</mo><mi>V</mi><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right"><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> with </mtext><mspace width="0.333em"></mspace></mrow><mspace width="1.0em"></mspace><mi>D</mi></mtd><mtd columnalign="left" style="text-align: left"><mo>=</mo><mi>𝕀</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>D</mi><mo>*</mo></msup><mo>&gt;</mo><mn>0</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>,</mo></mtd></mtr></mtable><annotation encoding="application/x-tex">
 \begin{aligned}
 D^* &amp;= g(W_0, W_1, X) - V \\
-&amp;= - ( \alpha + \alpha_0 W_0 + \alpha_1 W_1 + \alpha_2 W_0 \times W_1 + \alpha_{X_1} X_1 + \alpha_{X_2} X_2) - V, \\
+&amp;= ( \alpha + \alpha_0 W_0 + \alpha_1 W_1 + \alpha_2 W_0 \times W_1 + \alpha_{X_1} X_1 + \alpha_{X_2} X_2) - V, \\
 \text{ with } \quad D &amp;= \mathbb{I}(D^* &gt; 0),
 \end{aligned}
 </annotation></semantics></math></p>
@@ -181,6 +182,8 @@ V = -(U_1 - U_0 - C).
 </annotation></semantics></math></p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://www.cbruneel.com/" class="external-link">semiIVreg</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; Error in get(paste0(generic, ".", class), envir = get_method_env()) : </span></span>
+<span><span class="co">#&gt;   object 'type_sum.accel' not found</span></span>
 <span><span class="co">#&gt; KernSmooth 2.23 loaded</span></span>
 <span><span class="co">#&gt; Copyright M. P. Wand 1997-2009</span></span>
 <span><span class="co">#&gt; Loading required package: zoo</span></span>
@@ -293,8 +296,8 @@ their respective outcomes to zero. The coefficients can be adjusted to
 mimic the Roy models of <span class="citation">James J. Heckman, Urzua,
 and Vytlacil (2006)</span>, or <span class="citation">James J. Heckman
 and Vytlacil (2007)</span>. Small adjustments inside the function allow
-mimicking the simulation of <span class="citation">(<strong>andresen2018?</strong>)</span> (mtefe in
-Stata), but with only 2 regions (state).</p>
+mimicking the simulation of <span class="citation">Andresen
+(2018)</span> (mtefe in Stata), but with only 2 regions (state).</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Example of generalized Roy Model where the semi-IVs are valid IVs</span></span>
 <span><span class="va">N</span> <span class="op">=</span> <span class="fl">50000</span>; <span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1234</span><span class="op">)</span></span>
@@ -316,6 +319,11 @@ Stata), but with only 2 regions (state).</p>
 <h3 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h3>
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="ref-andresen2018exploring" class="csl-entry">
+Andresen, Martin Eckhoff. 2018. <span>“Exploring Marginal Treatment
+Effects: Flexible Estimation Using Stata.”</span> <em>The Stata
+Journal</em> 18 (1): 118–58.
+</div>
 <div id="ref-bruneel2024" class="csl-entry">
 Bruneel-Zupanc, Christophe. 2024. <span>“Don’t (Fully) Exclude Me, It’s
 Not Necessary! Identification with Semi-IVs.”</span> <a href="https://arxiv.org/abs/2303.12667" class="external-link">https://arxiv.org/abs/2303.12667</a>.
@@ -345,7 +353,7 @@ https://doi.org/<a href="https://doi.org/10.1016/S1573-4412(07)06071-0" class="e
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Christophe Bruneel.</p>
+  <p>Developed by Christophe Bruneel-Zupanc.</p>
 </div>
 
 <div class="pkgdown-footer-right">
