@@ -43,19 +43,22 @@ navbar:
       text: "Model and Guidelines"
       href: articles/semiIVreg.html
     articles:
-      text: "More"
+      text: "Simulations"
       menu:
         - text: "Estimation with Homogenous Treatment Effect"
           href: articles/semiIVreg_homogenousTE.html
         - text: "Estimation with general Heterogenous Treatment Effect"
           href: articles/semiIVreg_heterogenousTE.html
+    more:
+      text: "More"
+      menu:
         - text: "Roy model simulation"
           href: articles/simul_data.html
     reference:
       text: "Reference"
       href: reference/index.html
   structure:
-    left: [intro, main, articles, reference]
+    left: [intro, main, articles, more, reference]
     right: [search, twitter, github]
 #  right:
 #    - icon: fa-search

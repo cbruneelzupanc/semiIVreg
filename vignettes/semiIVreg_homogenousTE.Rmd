@@ -34,7 +34,7 @@ options(scipen=8)
 
 
 Let us compare the performance of the semi-IV estimator under different violation of the standard IV assumptions. 
-This note mimics the Appendix on @bruneel2024. 
+This note mimics the Homogenous Treatment Effect Appendix on @bruneel2024. 
 
 ## Simulating data
 
@@ -48,16 +48,18 @@ In every simulation we do not include covariates (set all their effect to 0), bu
 ### Simulate data
 
 ```{r model1} 
-# Model 1
+# Specification 1
 library(semiIVreg)
 N = 10000; set.seed(1234)
 model_type = "homogenous"
-param_error = c(1, 1.5, -0.6) # var_u, var_v, cov_uv # if homogenous
-param_Z = c(0, 0, 0, 0, 1.5, 1.5, 0.9) # meanW0 state0, meanW1 state0, meanW0 state1, meanW1 state1, varW0, varW1, covW0W1
-param_p = c(0, -0.5, 0.5, 0, 0, 0) # constant, alphaW0, alphaW1, alphaW0W1, effect of state, effect of parent educ
+param_error = c(1, 1, 0.6) # var_u, var_v, cov_uv # if homogenous
+param_Z = c(0, 0, 0, 0, 1, 1, 0.5) # meanW0 state0, meanW1 state0, meanW0 state1, meanW1 state1, varW0, varW1, covW0W1
+param_p = c(0, -0.7, 0.7, 0, 0, 0) # constant, alphaW0, alphaW1, alphaW0W1, effect of state, effect of parent educ
 param_y0 = c(3.2, 0.8, 0, 0) # intercept, effect of Wd, effect of state, effect of parent educ;
 param_y1 = c(3.2+0.4, 0.5, 0, 0) # the +0.2 = Average treatment effect; effect of W1, effect of state, effect of parent educ;
 param_genX = c(0.4, 0, 2) # probability state=1 (instead of 0), mean_parenteduc, sd_parenteduc (parenteduc drawn as continuous)
+# Remark: mean_V and the constant in the probit are playing the same role; normalize one to zero.
+param = list(param_error, param_Z, param_p, param_y0, param_y1, param_genX, model_type)
 
 data = simul_data(N, model_type, param_y0, param_y1, param_p, param_Z, param_genX, param_error)
 ```
@@ -188,6 +190,20 @@ summary_coeff3[1:4,] # only print the first 4 coefficients, the other correspond
 true_param
 ```
 
+
+
+## Specification 2: semi-IVs are in fact valid IVs
+To run the specification 2 of @bruneel2024, where the semi-IVs are in fact valid IVs, we need to change the parameters of the model. We only need to remove (set to zero) the direct effect of the semi-IVs on their potential outcomes. 
+
+```{r modelspecification2} 
+# Specification 2
+param_y0 = c(3.2, 0, 0, 0) # intercept, effect of Wd, effect of state, effect of parent educ;
+param_y1 = c(3.2+0.4, 0, 0, 0) # the +0.2 = Average treatment effect; effect of W1, effect of state, effect of parent educ;
+param = list(param_error, param_Z, param_p, param_y0, param_y1, param_genX, model_type)
+```
+
+Then, simply run the previous code. 
+To replicate the Monte Carlo simulations of the paper, run it several times. 
 
 ## References
 

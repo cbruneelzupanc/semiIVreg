@@ -32,7 +32,7 @@ library(ivreg)
 options(scipen=8)
 ```
 
-Let us compare the performance of the semi-IV estimator in a **generalized Roy model** with **heterogenous treatment effects**. The simulation specification comes from @bruneel2024. It is close to the counterpart standard IV simulated Roy models used in @heckman2006understanding or @heckmanvytlacil2007b. 
+Let us compare the performance of the semi-IV estimator in a **generalized Roy model** with **heterogenous treatment effects**. The simulation specification comes from the Appendix of @bruneel2024 (Monte Carlo with Heterogenous treatment effect). It is close to the counterpart standard IV simulated Roy models used in @heckman2006understanding or @heckmanvytlacil2007b. 
 
 
 ## Simulate data
@@ -49,11 +49,11 @@ library(semiIVreg)
 N = 50000; set.seed(1234)
 # Specification
 model_type = "heterogenous"
-param_error = c(1, 1, 0.6, 0.5) # var_u0, var_u1, cov_u0u1, var_cost (the mean cost = constant in D*) # if heterogenous
-param_Z = c(0, 0, 0, 0, 1.5, 1.5, 0.9) # meanW0 state0, meanW1 state0, meanW0 state1, meanW1 state1, varW0, varW1, covW0W1
-param_p = c(0, -0.7, 0.7, 0, 0, 0) # constant, alphaW0, alphaW1, alphaW0W1, effect of state, effect of parent educ
-param_y0 = c(3.2, 0.8, 0, 0) # intercept, effect of Wd, effect of state, effect of parent educ;
-param_y1 = c(3.2+0.4, 0.5, 0, 0) # the +0.2 = Average treatment effect; effect of W1, effect of state, effect of parent educ;
+param_error = c(1, 1.5, 0.5, 1.5) # var_u0, var_u1, cov_u0u1, var_cost (the mean cost = constant in D*) # if heterogenous
+param_Z = c(0, 0, 0, 0, 1, 0.8, 0.3) # meanW0 state0, meanW1 state0, meanW0 state1, meanW1 state1, varW0, varW1, covW0W1
+param_p = c(-0.2, -1.2, 1, 0, 0, 0) # constant, alphaW0, alphaW1, alphaW0W1, effect of state, effect of parent educ
+param_y0 = c(3.2, 1, 0, 0) # intercept, effect of Wd, effect of state, effect of parent educ;
+param_y1 = c(3.2+0.4, 1.3, 0, 0) # the +0.2 = Average treatment effect; effect of W1, effect of state, effect of parent educ;
 param_genX = c(0.4, 0, 2)
 
 data = simul_data(N, model_type, param_y0, param_y1, param_p, param_Z, param_genX, param_error)

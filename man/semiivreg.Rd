@@ -15,7 +15,7 @@ semiivreg(formula, data, propensity_formula=NULL, propensity_data = NULL,
                  pol_degree_locpoly1 = 1, pol_degree_locpoly2 = 2,
                  pol_degree_sieve = 5, conf_level = 0.05,
                  common_supp_trim=c(0,1), trimming_value=NULL, automatic_trim=FALSE,
-                 plotting=TRUE, print_progress=FALSE)
+                 plotting=TRUE, print_progress=FALSE, print_se_message=FALSE)
 
 semiivreg_boot(formula, Nboot=500, data, propensity_formula=NULL, ref_indiv =NULL,
                firststage_model="probit", est_method = "locpoly", se_type="HC1",

@@ -38,12 +38,17 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../index.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../articles/semiIVreg.html">Model and Guidelines</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-simulations" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Simulations</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-simulations">
+<li><a class="dropdown-item" href="../articles/semiIVreg_homogenousTE.html">Estimation with Homogenous Treatment Effect</a></li>
+    <li><a class="dropdown-item" href="../articles/semiIVreg_heterogenousTE.html">Estimation with general Heterogenous Treatment Effect</a></li>
+  </ul>
+</li>
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-more" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">More</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-more">
-<li><a class="dropdown-item" href="../articles/semiIVreg_homogenousTE.html">Estimation with Homogenous Treatment Effect</a></li>
-    <li><a class="dropdown-item" href="../articles/semiIVreg_heterogenousTE.html">Estimation with general Heterogenous Treatment Effect</a></li>
-    <li><a class="dropdown-item" href="../articles/simul_data.html">Roy model simulation</a></li>
+<li><a class="dropdown-item" href="../articles/simul_data.html">Roy model simulation</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
@@ -182,8 +187,6 @@ V = -(U_1 - U_0 - C).
 </annotation></semantics></math></p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://www.cbruneel.com/" class="external-link">semiIVreg</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Error in get(paste0(generic, ".", class), envir = get_method_env()) : </span></span>
-<span><span class="co">#&gt;   object 'type_sum.accel' not found</span></span>
 <span><span class="co">#&gt; KernSmooth 2.23 loaded</span></span>
 <span><span class="co">#&gt; Copyright M. P. Wand 1997-2009</span></span>
 <span><span class="co">#&gt; Loading required package: zoo</span></span>

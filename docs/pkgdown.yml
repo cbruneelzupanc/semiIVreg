@@ -2,11 +2,13 @@ pandoc: 3.1.11
 pkgdown: 2.1.0
 pkgdown_sha: ~
 articles:
+  semiIVpaper_heterogenous: semiIVpaper_heterogenous.html
+  semiIVpaper_homogenous: semiIVpaper_homogenous.html
   semiIVreg_heterogenousTE: semiIVreg_heterogenousTE.html
   semiIVreg_homogenousTE: semiIVreg_homogenousTE.html
   semiIVreg: semiIVreg.html
   simul_data: simul_data.html
-last_built: 2024-12-28T23:10Z
+last_built: 2025-01-31T20:37Z
 urls:
   reference: https://cbruneelzupanc.github.io/semiIVreg/reference
   article: https://cbruneelzupanc.github.io/semiIVreg/articles

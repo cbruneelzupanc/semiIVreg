@@ -39,11 +39,16 @@
 <li class="nav-item"><a class="nav-link" href="../index.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../articles/semiIVreg.html">Model and Guidelines</a></li>
 <li class="active nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-more" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">More</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-more">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-simulations" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Simulations</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-simulations">
 <li><a class="dropdown-item" href="../articles/semiIVreg_homogenousTE.html">Estimation with Homogenous Treatment Effect</a></li>
     <li><a class="dropdown-item" href="../articles/semiIVreg_heterogenousTE.html">Estimation with general Heterogenous Treatment Effect</a></li>
-    <li><a class="dropdown-item" href="../articles/simul_data.html">Roy model simulation</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-more" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">More</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-more">
+<li><a class="dropdown-item" href="../articles/simul_data.html">Roy model simulation</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
@@ -81,8 +86,9 @@
     
 <p>Let us compare the performance of the semi-IV estimator in a
 <strong>generalized Roy model</strong> with <strong>heterogenous
-treatment effects</strong>. The simulation specification comes from
-<span class="citation">Bruneel-Zupanc (2024)</span>. It is close to the
+treatment effects</strong>. The simulation specification comes from the
+Appendix of <span class="citation">Bruneel-Zupanc (2024)</span> (Monte
+Carlo with Heterogenous treatment effect). It is close to the
 counterpart standard IV simulated Roy models used in <span class="citation">James J. Heckman, Urzua, and Vytlacil (2006)</span> or
 <span class="citation">James J. Heckman and Vytlacil (2007)</span>.</p>
 <div class="section level2">
@@ -98,8 +104,6 @@ these can be easily included.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Model</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://www.cbruneel.com/" class="external-link">semiIVreg</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Error in get(paste0(generic, ".", class), envir = get_method_env()) : </span></span>
-<span><span class="co">#&gt;   object 'type_sum.accel' not found</span></span>
 <span><span class="co">#&gt; KernSmooth 2.23 loaded</span></span>
 <span><span class="co">#&gt; Copyright M. P. Wand 1997-2009</span></span>
 <span><span class="co">#&gt; Loading required package: zoo</span></span>
@@ -114,11 +118,11 @@ these can be easily included.</p>
 <span><span class="va">N</span> <span class="op">=</span> <span class="fl">50000</span>; <span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1234</span><span class="op">)</span></span>
 <span><span class="co"># Specification</span></span>
 <span><span class="va">model_type</span> <span class="op">=</span> <span class="st">"heterogenous"</span></span>
-<span><span class="va">param_error</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0.6</span>, <span class="fl">0.5</span><span class="op">)</span> <span class="co"># var_u0, var_u1, cov_u0u1, var_cost (the mean cost = constant in D*) # if heterogenous</span></span>
-<span><span class="va">param_Z</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1.5</span>, <span class="fl">1.5</span>, <span class="fl">0.9</span><span class="op">)</span> <span class="co"># meanW0 state0, meanW1 state0, meanW0 state1, meanW1 state1, varW0, varW1, covW0W1</span></span>
-<span><span class="va">param_p</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="op">-</span><span class="fl">0.7</span>, <span class="fl">0.7</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span> <span class="co"># constant, alphaW0, alphaW1, alphaW0W1, effect of state, effect of parent educ</span></span>
-<span><span class="va">param_y0</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3.2</span>, <span class="fl">0.8</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span> <span class="co"># intercept, effect of Wd, effect of state, effect of parent educ;</span></span>
-<span><span class="va">param_y1</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3.2</span><span class="op">+</span><span class="fl">0.4</span>, <span class="fl">0.5</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span> <span class="co"># the +0.2 = Average treatment effect; effect of W1, effect of state, effect of parent educ;</span></span>
+<span><span class="va">param_error</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1.5</span>, <span class="fl">0.5</span>, <span class="fl">1.5</span><span class="op">)</span> <span class="co"># var_u0, var_u1, cov_u0u1, var_cost (the mean cost = constant in D*) # if heterogenous</span></span>
+<span><span class="va">param_Z</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0.8</span>, <span class="fl">0.3</span><span class="op">)</span> <span class="co"># meanW0 state0, meanW1 state0, meanW0 state1, meanW1 state1, varW0, varW1, covW0W1</span></span>
+<span><span class="va">param_p</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.2</span>, <span class="op">-</span><span class="fl">1.2</span>, <span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span> <span class="co"># constant, alphaW0, alphaW1, alphaW0W1, effect of state, effect of parent educ</span></span>
+<span><span class="va">param_y0</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3.2</span>, <span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span> <span class="co"># intercept, effect of Wd, effect of state, effect of parent educ;</span></span>
+<span><span class="va">param_y1</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3.2</span><span class="op">+</span><span class="fl">0.4</span>, <span class="fl">1.3</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span> <span class="co"># the +0.2 = Average treatment effect; effect of W1, effect of state, effect of parent educ;</span></span>
 <span><span class="va">param_genX</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.4</span>, <span class="fl">0</span>, <span class="fl">2</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">data</span> <span class="op">=</span> <span class="fu"><a href="../reference/simul_data.html">simul_data</a></span><span class="op">(</span><span class="va">N</span>, <span class="va">model_type</span>, <span class="va">param_y0</span>, <span class="va">param_y1</span>, <span class="va">param_p</span>, <span class="va">param_Z</span>, <span class="va">param_genX</span>, <span class="va">param_error</span><span class="op">)</span></span></code></pre></div>
@@ -196,17 +200,17 @@ potential outcomes. To see these:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Residuals:</span></span>
 <span><span class="co">#&gt;     Min      1Q  Median      3Q     Max </span></span>
-<span><span class="co">#&gt; -3.9114 -0.6529 -0.0006  0.6471  4.0052 </span></span>
+<span><span class="co">#&gt; -3.7603 -0.6498 -0.0060  0.6563  3.6457 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients:</span></span>
 <span><span class="co">#&gt;    Estimate Std. Error t value Pr(&gt;|t|)    </span></span>
-<span><span class="co">#&gt; w0 0.800438   0.005482     146   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; w0 0.996692   0.008595     116   &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Residual standard error: 0.9599 on 25017 degrees of freedom</span></span>
-<span><span class="co">#&gt; Multiple R-squared:  0.4601, Adjusted R-squared:  0.4601 </span></span>
-<span><span class="co">#&gt; F-statistic: 2.132e+04 on 1 and 25017 DF,  p-value: &lt; 2.2e-16</span></span>
+<span><span class="co">#&gt; Residual standard error: 0.9762 on 26778 degrees of freedom</span></span>
+<span><span class="co">#&gt; Multiple R-squared:  0.3343, Adjusted R-squared:  0.3343 </span></span>
+<span><span class="co">#&gt; F-statistic: 1.345e+04 on 1 and 26778 DF,  p-value: &lt; 2.2e-16</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">semiiv</span><span class="op">$</span><span class="va">estimate</span><span class="op">$</span><span class="va">est1</span><span class="op">)</span>;</span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Call:</span></span>
@@ -214,21 +218,21 @@ potential outcomes. To see these:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Residuals:</span></span>
 <span><span class="co">#&gt;     Min      1Q  Median      3Q     Max </span></span>
-<span><span class="co">#&gt; -3.9289 -0.6553  0.0019  0.6580  3.3714 </span></span>
+<span><span class="co">#&gt; -4.5990 -0.7789 -0.0022  0.7614  4.3267 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients:</span></span>
 <span><span class="co">#&gt;    Estimate Std. Error t value Pr(&gt;|t|)    </span></span>
-<span><span class="co">#&gt; w1 0.504403   0.005543      91   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; w1 1.287222   0.009057   142.1   &lt;2e-16 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Residual standard error: 0.9652 on 24981 degrees of freedom</span></span>
-<span><span class="co">#&gt; Multiple R-squared:  0.249,  Adjusted R-squared:  0.2489 </span></span>
-<span><span class="co">#&gt; F-statistic:  8282 on 1 and 24981 DF,  p-value: &lt; 2.2e-16</span></span>
+<span><span class="co">#&gt; Residual standard error: 1.14 on 23220 degrees of freedom</span></span>
+<span><span class="co">#&gt; Multiple R-squared:  0.4652, Adjusted R-squared:  0.4652 </span></span>
+<span><span class="co">#&gt; F-statistic: 2.02e+04 on 1 and 23220 DF,  p-value: &lt; 2.2e-16</span></span>
 <span><span class="co"># To be compared with:</span></span>
 <span><span class="va">param_y0</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>; <span class="va">param_y1</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span></span>
-<span><span class="co">#&gt; [1] 0.8</span></span>
-<span><span class="co">#&gt; [1] 0.5</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 1</span></span>
+<span><span class="co">#&gt; [1] 1.3</span></span></code></pre></div>
 <p>Notice that these standard errors are biased because they do not take
 into account that the propensity score is estimated.</p>
 <p><strong>Standard errors.</strong></p>
@@ -343,19 +347,19 @@ reporting option to see the progress of the function).</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">semiiv</span><span class="op">$</span><span class="va">bw</span></span>
 <span><span class="co">#&gt; $bw0</span></span>
-<span><span class="co">#&gt; [1] 0.1261772 0.0799657</span></span>
+<span><span class="co">#&gt; [1] 0.08202580 0.04809258</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw1</span></span>
-<span><span class="co">#&gt; [1] 0.10372718 0.09378555</span></span>
+<span><span class="co">#&gt; [1] 0.1326332 0.1089366</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw_y0</span></span>
-<span><span class="co">#&gt; [1] 0.2120993</span></span>
+<span><span class="co">#&gt; [1] 0.1261527</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw_y1</span></span>
-<span><span class="co">#&gt; [1] 0.2120993</span></span>
+<span><span class="co">#&gt; [1] 0.1261527</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw_mte</span></span>
-<span><span class="co">#&gt; [1] 0.2120993</span></span>
+<span><span class="co">#&gt; [1] 0.1261527</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $bw_method</span></span>
 <span><span class="co">#&gt; [1] "mse-dpi"</span></span></code></pre></div>
@@ -392,8 +396,8 @@ is estimated will be very small.</p>
 <span><span class="va">Phat</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">firststage</span>, newdata<span class="op">=</span><span class="va">data</span>, type<span class="op">=</span><span class="st">"response"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">Phat</span> <span class="op">-</span> <span class="va">data</span><span class="op">$</span><span class="va">P</span><span class="op">)</span> <span class="co"># almost perfect; </span></span>
-<span><span class="co">#&gt;       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. </span></span>
-<span><span class="co">#&gt; -0.0015295  0.0003631  0.0013846  0.0012162  0.0020751  0.0038194</span></span></code></pre></div>
+<span><span class="co">#&gt;        Min.     1st Qu.      Median        Mean     3rd Qu.        Max. </span></span>
+<span><span class="co">#&gt; -0.00145960 -0.00086220  0.00010782  0.00002379  0.00092685  0.00132015</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="semi-iv-sieve-regression">semi-IV sieve regression<a class="anchor" aria-label="anchor" href="#semi-iv-sieve-regression"></a>
@@ -564,32 +568,32 @@ predict only at a subset of specific values of
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">pred</span><span class="op">$</span><span class="va">est</span><span class="op">)</span> <span class="co"># the predicted values; -&gt; can then be used to redo plots for example. </span></span>
 <span><span class="co">#&gt;     w0 w1 id  Phat     mtr0     mtr1      mte     mte2 mtr0_lwr mtr0_upr</span></span>
 <span><span class="co">#&gt; 1   -1  0  1 0.100       NA       NA       NA       NA       NA       NA</span></span>
-<span><span class="co">#&gt; 1.1 -1  0  1 0.101 1.743500 3.968172 2.224672 2.125863 1.292125 2.194876</span></span>
-<span><span class="co">#&gt; 1.2 -1  0  1 0.102 1.746665 3.967866 2.221201 2.123065 1.298548 2.194783</span></span>
-<span><span class="co">#&gt; 1.3 -1  0  1 0.103 1.749831 3.967561 2.217730 2.120267 1.304970 2.194691</span></span>
-<span><span class="co">#&gt; 1.4 -1  0  1 0.104 1.752996 3.967256 2.214260 2.117469 1.311393 2.194599</span></span>
-<span><span class="co">#&gt; 1.5 -1  0  1 0.105 1.756112 3.966927 2.210815 2.114692 1.317685 2.194539</span></span>
-<span><span class="co">#&gt;     mtr1_lwr mtr1_upr mte2_lwr mte2_upr       k0       k1   deltak    delta0X</span></span>
-<span><span class="co">#&gt; 1         NA       NA       NA       NA       NA       NA       NA -0.7980243</span></span>
-<span><span class="co">#&gt; 1.1 3.811413 4.124931 1.686226 2.565500 2.541525 3.968172 1.327839 -0.7980243</span></span>
-<span><span class="co">#&gt; 1.2 3.811932 4.123801 1.686479 2.559652 2.544690 3.967866 1.325041 -0.7980243</span></span>
-<span><span class="co">#&gt; 1.3 3.812451 4.122671 1.686732 2.553803 2.547855 3.967561 1.322243 -0.7980243</span></span>
-<span><span class="co">#&gt; 1.4 3.812970 4.121541 1.686984 2.547954 2.551020 3.967256 1.319445 -0.7980243</span></span>
-<span><span class="co">#&gt; 1.5 3.813448 4.120407 1.687180 2.542203 2.554136 3.966927 1.316667 -0.7980243</span></span>
+<span><span class="co">#&gt; 1.1 -1  0  1 0.101 1.912715       NA       NA 2.213390 1.494762 2.330669</span></span>
+<span><span class="co">#&gt; 1.2 -1  0  1 0.102 1.913002 4.137639 2.224637 2.211793 1.498057 2.327946</span></span>
+<span><span class="co">#&gt; 1.3 -1  0  1 0.103 1.913288 4.136595 2.223306 2.210195 1.501353 2.325224</span></span>
+<span><span class="co">#&gt; 1.4 -1  0  1 0.104 1.913575 4.135551 2.221976 2.208598 1.504648 2.322502</span></span>
+<span><span class="co">#&gt; 1.5 -1  0  1 0.105 1.913901 4.134507 2.220606 2.206981 1.507910 2.319893</span></span>
+<span><span class="co">#&gt;     mtr1_lwr mtr1_upr mte2_lwr mte2_upr       k0       k1   deltak   delta0X</span></span>
+<span><span class="co">#&gt; 1         NA       NA       NA       NA       NA       NA       NA -1.001563</span></span>
+<span><span class="co">#&gt; 1.1       NA       NA 1.789696 2.637084 2.914278       NA 1.211827 -1.001563</span></span>
+<span><span class="co">#&gt; 1.2 3.963550 4.311727 1.791001 2.632585 2.914565 4.137639 1.210230 -1.001563</span></span>
+<span><span class="co">#&gt; 1.3 3.963395 4.309794 1.792306 2.628085 2.914852 4.136595 1.208632 -1.001563</span></span>
+<span><span class="co">#&gt; 1.4 3.963240 4.307861 1.793610 2.623586 2.915138 4.135551 1.207035 -1.001563</span></span>
+<span><span class="co">#&gt; 1.5 3.963085 4.305928 1.794824 2.619139 2.915465 4.134507 1.205418 -1.001563</span></span>
 <span><span class="co">#&gt;     delta1X     se_k0      se_k1 se_deltak  se_delta0X se_delta1X</span></span>
-<span><span class="co">#&gt; 1         0        NA         NA        NA 0.005593143          0</span></span>
-<span><span class="co">#&gt; 1.1       0 0.2302860 0.07997622 0.2243029 0.005593143          0</span></span>
-<span><span class="co">#&gt; 1.2       0 0.2286241 0.07955560 0.2227465 0.005593143          0</span></span>
-<span><span class="co">#&gt; 1.3       0 0.2269621 0.07913497 0.2211900 0.005593143          0</span></span>
-<span><span class="co">#&gt; 1.4       0 0.2253002 0.07871435 0.2196336 0.005593143          0</span></span>
-<span><span class="co">#&gt; 1.5       0 0.2236797 0.07830328 0.2181165 0.005593143          0</span></span>
+<span><span class="co">#&gt; 1         0        NA         NA        NA 0.009050053          0</span></span>
+<span><span class="co">#&gt; 1.1       0 0.2132349         NA 0.2161686 0.009050053          0</span></span>
+<span><span class="co">#&gt; 1.2       0 0.2116998 0.08881748 0.2146880 0.009050053          0</span></span>
+<span><span class="co">#&gt; 1.3       0 0.2101647 0.08836390 0.2132074 0.009050053          0</span></span>
+<span><span class="co">#&gt; 1.4       0 0.2086296 0.08791032 0.2117268 0.009050053          0</span></span>
+<span><span class="co">#&gt; 1.5       0 0.2071320 0.08745674 0.2102828 0.009050053          0</span></span>
 <span><span class="va">pred</span><span class="op">$</span><span class="va">deltaX</span> <span class="co"># provides the shift in effect of X and Wd -&gt; may be the only thing we care about, know that shifts the curve</span></span>
 <span><span class="co">#&gt;     w0 w1 id    delta0X delta1X  se_delta0X se_delta1X</span></span>
-<span><span class="co">#&gt; 1 -1.0  0  1 -0.7980243       0 0.005593143          0</span></span>
-<span><span class="co">#&gt; 2 -0.5  0  2 -0.3990121       0 0.002796572          0</span></span>
+<span><span class="co">#&gt; 1 -1.0  0  1 -1.0015633       0 0.009050053          0</span></span>
+<span><span class="co">#&gt; 2 -0.5  0  2 -0.5007816       0 0.004525027          0</span></span>
 <span><span class="co">#&gt; 3  0.0  0  3  0.0000000       0 0.000000000          0</span></span>
-<span><span class="co">#&gt; 4  0.5  0  4  0.3990121       0 0.002796572          0</span></span>
-<span><span class="co">#&gt; 5  1.0  0  5  0.7980243       0 0.005593143          0</span></span></code></pre></div>
+<span><span class="co">#&gt; 4  0.5  0  4  0.5007816       0 0.004525027          0</span></span>
+<span><span class="co">#&gt; 5  1.0  0  5  1.0015633       0 0.009050053          0</span></span></code></pre></div>
 </div>
 <div class="section level2 unnumbered">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
