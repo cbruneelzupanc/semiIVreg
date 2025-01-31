@@ -134,13 +134,17 @@ semiiv = semiivreg(y~d|w0|w1, data, ref_indiv = data.frame(w0=0, w1=0),
                    bw_method = "mse-dpi", bw_subsamp_size=10000, 
                    print_progress=TRUE)
 semiiv$bw
+
 ```
 
 Now, illustrate how we can directly specify the bandwidth (which adjusts the smoothness of the estimation). Remark: the `bw_method` does not matter if we specify all the bandwidth. 
 
 ```{r smooth3, fig.height=3, fig.width=7, fig.align='center'}
 semiiv = semiivreg(y~d|w0|w1, data, ref_indiv = data.frame(w0=0, w1=0),
-                   bw0=0.05, bw1=0.05, bw_y0 = 0.2, bw_y1 = 0.2)
+                   bw0=0.05, bw1=0.05, bw_y0 = 0.126, bw_y1 = 0.126)
+# Update the mtr and mte plots with the "optimal" bw 
+mte_plot = semiiv$plot$mte; 
+mtr_plot = semiiv$plot$mtr;
 ```
 
 
@@ -176,7 +180,7 @@ Another approach is to simply specify flexibly $\kappa_d(u)$, with polynomials f
 
 ```{r sieve, fig.height=3, fig.width=7, fig.align='center'}
 semiiv2 = semiivreg(y~d|w0|w1, data, ref_indiv = data.frame(w0=0, w1=0), 
-                    est_method="sieve", pol_degree_sieve=5, 
+                    est_method="sieve", pol_degree_sieve=3, 
                     plotting=FALSE)
 
 mte_plot2 = semiiv2$plot$mte; mtr_plot2 = semiiv2$plot$mtr
@@ -209,6 +213,7 @@ dat2$Treatment = as.factor(dat2$Treatment)
 mtr_plot2 = mtr_plot2 + geom_line(aes(x=V, y=mtr, col=Treatment, group=Treatment), linetype="dashed", na.rm=TRUE, data=dat2)
 
 grid.arrange(mte_plot2, mtr_plot2, ncol=2)
+
 
 ```
 
@@ -255,20 +260,22 @@ Evaluate the MTR and MTE at $(w_0, w_1) = (0, 0)$.
 
 
 ```{r mte_true, fig.height=3, fig.width=7, fig.align='center'}
-# True MTE and MTR estimations 
-seq_p = seq(0, 1, by=0.001); 
-w0 = 0; w1 = 0; 
+
+# Underlying true MTE and MTR:
+seq_p = seq(0, 1, by=0.001);
+w0 = 0; w1 = 0;
 sigma_V2 = param_error[1] + param_error[2] - 2*param_error[3] + param_error[4] # = var(V); var(data$V)
 covU0V = param_error[1] - param_error[3] # = cov(data$U0, data$V)
 covU1V = -param_error[2] + param_error[3] # = cov(data$U1, data$V)
-ku0 = covU0V/sigma_V2*(qnorm(seq_p) - 0) # 0 = mean(V)
-ku1 = covU1V/sigma_V2*(qnorm(seq_p) - 0) # 0 = mean(V)
+ku0 = covU0V/sigma_V2*(qnorm(seq_p, mean=0, sd=sqrt(sigma_V2)) - 0) # 0 = mean(V)
+ku1 = covU1V/sigma_V2*(qnorm(seq_p, mean=0, sd=sqrt(sigma_V2)) - 0) # 0 = mean(V)
 true_mtr0 = param_y0[1] + param_y0[2]*w0 + ku0
 true_mtr1 = param_y1[1] + param_y1[2]*w1 + ku1
 true_mte = true_mtr1 - true_mtr0
 
 newdata = data.frame(Ud=seq_p, w0=0, w1=0)
 newdata$true_mte = true_mte; newdata$true_mtr1 = true_mtr1; newdata$true_mtr0 = true_mtr0
+
 
 ## # Remark: alternative estimation method if the truth does not have a simple closed form formula:
 ## data$diff = data$y1 - data$y0; pol_degree=5

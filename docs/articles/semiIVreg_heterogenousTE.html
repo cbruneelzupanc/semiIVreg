@@ -369,9 +369,13 @@ adjusts the smoothness of the estimation). Remark: the
 bandwidth.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">semiiv</span> <span class="op">=</span> <span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">|</span><span class="va">w1</span>, <span class="va">data</span>, ref_indiv <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>w0<span class="op">=</span><span class="fl">0</span>, w1<span class="op">=</span><span class="fl">0</span><span class="op">)</span>,</span>
-<span>                   bw0<span class="op">=</span><span class="fl">0.05</span>, bw1<span class="op">=</span><span class="fl">0.05</span>, bw_y0 <span class="op">=</span> <span class="fl">0.2</span>, bw_y1 <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span></span>
+<span>                   bw0<span class="op">=</span><span class="fl">0.05</span>, bw1<span class="op">=</span><span class="fl">0.05</span>, bw_y0 <span class="op">=</span> <span class="fl">0.126</span>, bw_y1 <span class="op">=</span> <span class="fl">0.126</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Caution: the standard errors around the plot are not correct (underestimated) because of the multiple stages. For proper standard errors, run the bootstrap in semiivreg_boot().</span></span></code></pre></div>
 <p><img src="semiIVreg_heterogenousTE_files/figure-html/smooth3-1.png" width="672" style="display: block; margin: auto;"></p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Update the mtr and mte plots with the "optimal" bw </span></span>
+<span><span class="va">mte_plot</span> <span class="op">=</span> <span class="va">semiiv</span><span class="op">$</span><span class="va">plot</span><span class="op">$</span><span class="va">mte</span>; </span>
+<span><span class="va">mtr_plot</span> <span class="op">=</span> <span class="va">semiiv</span><span class="op">$</span><span class="va">plot</span><span class="op">$</span><span class="va">mtr</span>;</span></code></pre></div>
 <p><strong>Polynomial degree.</strong></p>
 <p>One can also specify the degree of each local polynomial estimation
 with <code>pol_degree_locpoly1</code> and
@@ -390,7 +394,7 @@ number of observation, the fit is almost perfect and the bias due to the
 fact that
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>P</mi><annotation encoding="application/x-tex">P</annotation></semantics></math>
 is estimated will be very small.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">firststage</span> <span class="op">=</span> <span class="va">semiiv</span><span class="op">$</span><span class="va">estimate</span><span class="op">$</span><span class="va">propensity</span></span>
 <span><span class="co"># Cannot be compared with param_p directly if V gets rescaled -&gt; but can compare the predicted P with the truth</span></span>
 <span><span class="va">Phat</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">firststage</span>, newdata<span class="op">=</span><span class="va">data</span>, type<span class="op">=</span><span class="st">"response"</span><span class="op">)</span></span>
@@ -411,9 +415,9 @@ advantage of being faster and giving analytical confidence intervals
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>P</mi><annotation encoding="application/x-tex">P</annotation></semantics></math>
 is estimated). To use this estimation method, specify
 <code>est_method="sieve"</code>.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">semiiv2</span> <span class="op">=</span> <span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">|</span><span class="va">w1</span>, <span class="va">data</span>, ref_indiv <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>w0<span class="op">=</span><span class="fl">0</span>, w1<span class="op">=</span><span class="fl">0</span><span class="op">)</span>, </span>
-<span>                    est_method<span class="op">=</span><span class="st">"sieve"</span>, pol_degree_sieve<span class="op">=</span><span class="fl">5</span>, </span>
+<span>                    est_method<span class="op">=</span><span class="st">"sieve"</span>, pol_degree_sieve<span class="op">=</span><span class="fl">3</span>, </span>
 <span>                    plotting<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">mte_plot2</span> <span class="op">=</span> <span class="va">semiiv2</span><span class="op">$</span><span class="va">plot</span><span class="op">$</span><span class="va">mte</span>; <span class="va">mtr_plot2</span> <span class="op">=</span> <span class="va">semiiv2</span><span class="op">$</span><span class="va">plot</span><span class="op">$</span><span class="va">mtr</span></span>
@@ -424,7 +428,7 @@ function that is used, by controlling the degree of the polynomial used.
 By default we set it to
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>5</mn><annotation encoding="application/x-tex">5</annotation></semantics></math>.</p>
 <p>Let us compare the two estimation methods results.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># If want to plot on the same plot, need some manipulation of the data</span></span>
 <span></span>
 <span><span class="va">dat</span> <span class="op">=</span> <span class="va">semiiv</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">RES</span> <span class="co"># take the original data</span></span>
@@ -494,21 +498,23 @@ MTE(w_0, w_1, u) &amp;= MTR_1(w_0, u) - MTR_0(w_1, u)
 </annotation></semantics></math></p>
 <p>Evaluate the MTR and MTE at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>w</mi><mn>0</mn></msub><mo>,</mo><msub><mi>w</mi><mn>1</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>0</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">(w_0, w_1) = (0, 0)</annotation></semantics></math>.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># True MTE and MTR estimations </span></span>
-<span><span class="va">seq_p</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, by<span class="op">=</span><span class="fl">0.001</span><span class="op">)</span>; </span>
-<span><span class="va">w0</span> <span class="op">=</span> <span class="fl">0</span>; <span class="va">w1</span> <span class="op">=</span> <span class="fl">0</span>; </span>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># Underlying true MTE and MTR:</span></span>
+<span><span class="va">seq_p</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, by<span class="op">=</span><span class="fl">0.001</span><span class="op">)</span>;</span>
+<span><span class="va">w0</span> <span class="op">=</span> <span class="fl">0</span>; <span class="va">w1</span> <span class="op">=</span> <span class="fl">0</span>;</span>
 <span><span class="va">sigma_V2</span> <span class="op">=</span> <span class="va">param_error</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">+</span> <span class="va">param_error</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">-</span> <span class="fl">2</span><span class="op">*</span><span class="va">param_error</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">+</span> <span class="va">param_error</span><span class="op">[</span><span class="fl">4</span><span class="op">]</span> <span class="co"># = var(V); var(data$V)</span></span>
 <span><span class="va">covU0V</span> <span class="op">=</span> <span class="va">param_error</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">-</span> <span class="va">param_error</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="co"># = cov(data$U0, data$V)</span></span>
 <span><span class="va">covU1V</span> <span class="op">=</span> <span class="op">-</span><span class="va">param_error</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">+</span> <span class="va">param_error</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="co"># = cov(data$U1, data$V)</span></span>
-<span><span class="va">ku0</span> <span class="op">=</span> <span class="va">covU0V</span><span class="op">/</span><span class="va">sigma_V2</span><span class="op">*</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">qnorm</a></span><span class="op">(</span><span class="va">seq_p</span><span class="op">)</span> <span class="op">-</span> <span class="fl">0</span><span class="op">)</span> <span class="co"># 0 = mean(V)</span></span>
-<span><span class="va">ku1</span> <span class="op">=</span> <span class="va">covU1V</span><span class="op">/</span><span class="va">sigma_V2</span><span class="op">*</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">qnorm</a></span><span class="op">(</span><span class="va">seq_p</span><span class="op">)</span> <span class="op">-</span> <span class="fl">0</span><span class="op">)</span> <span class="co"># 0 = mean(V)</span></span>
+<span><span class="va">ku0</span> <span class="op">=</span> <span class="va">covU0V</span><span class="op">/</span><span class="va">sigma_V2</span><span class="op">*</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">qnorm</a></span><span class="op">(</span><span class="va">seq_p</span>, mean<span class="op">=</span><span class="fl">0</span>, sd<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">sigma_V2</span><span class="op">)</span><span class="op">)</span> <span class="op">-</span> <span class="fl">0</span><span class="op">)</span> <span class="co"># 0 = mean(V)</span></span>
+<span><span class="va">ku1</span> <span class="op">=</span> <span class="va">covU1V</span><span class="op">/</span><span class="va">sigma_V2</span><span class="op">*</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">qnorm</a></span><span class="op">(</span><span class="va">seq_p</span>, mean<span class="op">=</span><span class="fl">0</span>, sd<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">sigma_V2</span><span class="op">)</span><span class="op">)</span> <span class="op">-</span> <span class="fl">0</span><span class="op">)</span> <span class="co"># 0 = mean(V)</span></span>
 <span><span class="va">true_mtr0</span> <span class="op">=</span> <span class="va">param_y0</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">+</span> <span class="va">param_y0</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">*</span><span class="va">w0</span> <span class="op">+</span> <span class="va">ku0</span></span>
 <span><span class="va">true_mtr1</span> <span class="op">=</span> <span class="va">param_y1</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> <span class="op">+</span> <span class="va">param_y1</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">*</span><span class="va">w1</span> <span class="op">+</span> <span class="va">ku1</span></span>
 <span><span class="va">true_mte</span> <span class="op">=</span> <span class="va">true_mtr1</span> <span class="op">-</span> <span class="va">true_mtr0</span></span>
 <span></span>
 <span><span class="va">newdata</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Ud<span class="op">=</span><span class="va">seq_p</span>, w0<span class="op">=</span><span class="fl">0</span>, w1<span class="op">=</span><span class="fl">0</span><span class="op">)</span></span>
 <span><span class="va">newdata</span><span class="op">$</span><span class="va">true_mte</span> <span class="op">=</span> <span class="va">true_mte</span>; <span class="va">newdata</span><span class="op">$</span><span class="va">true_mtr1</span> <span class="op">=</span> <span class="va">true_mtr1</span>; <span class="va">newdata</span><span class="op">$</span><span class="va">true_mtr0</span> <span class="op">=</span> <span class="va">true_mtr0</span></span>
+<span></span>
 <span></span>
 <span><span class="co">## # Remark: alternative estimation method if the truth does not have a simple closed form formula:</span></span>
 <span><span class="co">## data$diff = data$y1 - data$y0; pol_degree=5</span></span>
@@ -545,7 +551,7 @@ common support is not entirely satisfied, while the MTE is only
 identified on the common support. If one wants to restrict the
 estimation to a given common support, it is very easy to do in
 <code><a href="../reference/semiivreg.html">semiivreg()</a></code>.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">semiiv1</span> <span class="op">=</span> <span class="fu"><a href="../reference/semiivreg.html">semiivreg</a></span><span class="op">(</span><span class="va">y</span><span class="op">~</span><span class="va">d</span><span class="op">|</span><span class="va">w0</span><span class="op">|</span><span class="va">w1</span>, <span class="va">data</span>, </span>
 <span>                    ref_indiv <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>w0<span class="op">=</span><span class="fl">0</span>, w1<span class="op">=</span><span class="fl">0</span><span class="op">)</span>, </span>
 <span>                    common_supp_trim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.10</span>, <span class="fl">0.90</span><span class="op">)</span>,</span>
@@ -561,7 +567,7 @@ running the initial regression. But if it’s already estimated, one can
 simply use the <code>semiiv_predict</code> function. It also allows to
 predict only at a subset of specific values of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>V</mi><annotation encoding="application/x-tex">V</annotation></semantics></math>.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">newdata</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>w0<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, by<span class="op">=</span><span class="fl">0.5</span><span class="op">)</span>, w1<span class="op">=</span><span class="fl">0</span><span class="op">)</span> <span class="co"># Predict the outcome</span></span>
 <span></span>
 <span><span class="va">pred</span> <span class="op">=</span> <span class="fu"><a href="../reference/semiivreg.html">semiiv_predict</a></span><span class="op">(</span><span class="va">semiiv1</span>, newdata<span class="op">=</span><span class="va">newdata</span><span class="op">)</span></span>
